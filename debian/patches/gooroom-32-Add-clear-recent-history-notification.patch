@@ -1,0 +1,60 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-32-Add-clear-recent-history-notification
+
+---
+ panels/usage/cc-usage-panel.c | 10 ++++++++++
+ po/ko.po                      | 12 ++++++++++++
+ 2 files changed, 22 insertions(+)
+
+diff --git a/panels/usage/cc-usage-panel.c b/panels/usage/cc-usage-panel.c
+index 39e67a5..2ccca39 100644
+--- a/panels/usage/cc-usage-panel.c
++++ b/panels/usage/cc-usage-panel.c
+@@ -46,6 +46,8 @@ struct _CcUsagePanel
+ 
+ CC_PANEL_REGISTER (CcUsagePanel, cc_usage_panel)
+ 
++static gboolean run_warning (CcUsagePanel *panel, const gchar *prompt, const gchar *text, const gchar *button_title);
++
+ static void
+ purge_after_combo_changed_cb (CcUsagePanel *self)
+ {
+@@ -316,6 +318,14 @@ static void
+ clear_recent (CcUsagePanel *self)
+ {
+   GtkRecentManager *m;
++  gboolean result;
++
++  result = run_warning (self, _("Clear all items in Recent?"),
++                        _("All items in the Recent will be cleared."),
++                        _("_Clear Recent"));
++
++  if (!result)
++    return;
+ 
+   m = gtk_recent_manager_get_default ();
+   gtk_recent_manager_purge_items (m, NULL);
+diff --git a/po/ko.po b/po/ko.po
+index f2eb687..4fd8a26 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -6758,6 +6758,18 @@ msgstr "색상 효과:"
+ msgid "Color Effects"
+ msgstr "색상 효과"
+ 
++#: panels/usage/cc-usage-panel.c:325
++msgid "Clear all items in Recent?"
++msgstr "모든 최근 기록을 비우시겠습니까?"
++
++#: panels/usage/cc-usage-panel.c:326
++msgid "All items in the Recent will be cleared."
++msgstr "모든 최근 기록을 완전히 정리합니다."
++
++#: panels/usage/cc-usage-panel.c:327
++msgid "_Clear Recent"
++msgstr "최근 기록 비우기(_C)"
++
+ #: panels/usage/cc-usage-panel.c:154
+ msgid "Empty all items from Trash?"
+ msgstr "휴지통의 모든 항목을 비우시겠습니까?"

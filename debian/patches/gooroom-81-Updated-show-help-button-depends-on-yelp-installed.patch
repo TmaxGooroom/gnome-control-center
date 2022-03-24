@@ -1,0 +1,52 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-81-Updated-show-help-button-depends-on-yelp-installed
+
+---
+ shell/cc-window.c  | 5 +++++
+ shell/cc-window.ui | 2 ++
+ 2 files changed, 7 insertions(+)
+
+diff --git a/shell/cc-window.c b/shell/cc-window.c
+index 2082576..e5f1aed 100644
+--- a/shell/cc-window.c
++++ b/shell/cc-window.c
+@@ -73,6 +73,7 @@ struct _CcWindow
+   GtkWidget  *current_panel;
+   char       *current_panel_id;
+   GQueue     *previous_panels;
++  GMenu      *primary_menu;
+ 
+   GPtrArray  *custom_widgets;
+ 
+@@ -905,6 +906,7 @@ cc_window_class_init (CcWindowClass *klass)
+   gtk_widget_class_bind_template_child (widget_class, CcWindow, stack);
+   gtk_widget_class_bind_template_child (widget_class, CcWindow, top_left_box);
+   gtk_widget_class_bind_template_child (widget_class, CcWindow, top_right_box);
++  gtk_widget_class_bind_template_child (widget_class, CcWindow, primary_menu);
+ 
+   gtk_widget_class_bind_template_callback (widget_class, back_button_clicked_cb);
+   gtk_widget_class_bind_template_callback (widget_class, gdk_window_set_cb);
+@@ -936,6 +938,9 @@ cc_window_init (CcWindow *self)
+   /* Add a custom CSS class on development builds */
+   if (in_flatpak_sandbox ())
+     gtk_style_context_add_class (gtk_widget_get_style_context (GTK_WIDGET (self)), "devel");
++
++  if (!g_file_test ("/usr/share/gooroom-yelp-adjustments", G_FILE_TEST_EXISTS))
++    g_menu_remove (self->primary_menu, 1);
+ }
+ 
+ CcWindow *
+diff --git a/shell/cc-window.ui b/shell/cc-window.ui
+index 7b3426e..0fa5107 100644
+--- a/shell/cc-window.ui
++++ b/shell/cc-window.ui
+@@ -327,6 +327,8 @@
+         <attribute name="label" translatable="yes">Keyboard Shortcuts</attribute>
+         <attribute name="action">win.show-help-overlay</attribute>
+       </item>
++    </section>
++    <section>
+       <item>
+         <attribute name="label" translatable="yes">Help</attribute>
+         <attribute name="action">app.help</attribute>

@@ -1,0 +1,143 @@
+From: HaeRyong Jeong <jeong89@gooroom.kr>
+Date: Mon, 22 Jun 2020 10:37:55 +0900
+Subject: [PATCH] [Bug:2091] Update ko.po Disabled high contrast and scale
+ display
+
+---
+ panels/keyboard/50-accessibility.xml.in |  2 ++
+ panels/universal-access/cc-ua-panel.c   | 15 -----------
+ panels/universal-access/cc-ua-panel.ui  | 48 ---------------------------------
+ 3 files changed, 2 insertions(+), 63 deletions(-)
+
+diff --git a/panels/keyboard/50-accessibility.xml.in b/panels/keyboard/50-accessibility.xml.in
+index 34bcb04..bd87ea3 100644
+--- a/panels/keyboard/50-accessibility.xml.in
++++ b/panels/keyboard/50-accessibility.xml.in
+@@ -1,6 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <KeyListEntries group="system" name="Accessibility" schema="org.gnome.settings-daemon.plugins.media-keys">
+ 
++<!--
+ 	<KeyListEntry name="magnifier" description="Turn zoom on or off"/>
+ 
+ 	<KeyListEntry name="magnifier-zoom-in" description="Zoom in"/>
+@@ -16,5 +17,6 @@
+ 	<KeyListEntry name="decrease-text-size" description="Decrease text size"/>
+ 
+ 	<KeyListEntry name="toggle-contrast" description="High contrast on or off"/>
++-->
+ 
+ </KeyListEntries>
+diff --git a/panels/universal-access/cc-ua-panel.c b/panels/universal-access/cc-ua-panel.c
+index 1a5acfd..e382a91 100644
+--- a/panels/universal-access/cc-ua-panel.c
++++ b/panels/universal-access/cc-ua-panel.c
+@@ -160,7 +160,6 @@ struct _CcUaPanel
+   GtkWidget *value_accessx;
+   GtkWidget *value_click_assist;
+   GtkWidget *value_cursor_size;
+-  GtkWidget *value_highcontrast;
+   GtkWidget *value_large_text;
+   GtkWidget *value_repeat_keys;
+   //GtkWidget *value_row_cursor_blinking;
+@@ -297,7 +296,6 @@ cc_ua_panel_class_init (CcUaPanelClass *klass)
+   gtk_widget_class_bind_template_child (widget_class, CcUaPanel, value_accessx);
+   gtk_widget_class_bind_template_child (widget_class, CcUaPanel, value_click_assist);
+   gtk_widget_class_bind_template_child (widget_class, CcUaPanel, value_cursor_size);
+-  gtk_widget_class_bind_template_child (widget_class, CcUaPanel, value_highcontrast);
+   gtk_widget_class_bind_template_child (widget_class, CcUaPanel, value_large_text);
+   gtk_widget_class_bind_template_child (widget_class, CcUaPanel, value_repeat_keys);
+   //gtk_widget_class_bind_template_child (widget_class, CcUaPanel, value_row_cursor_blinking);
+@@ -590,11 +588,6 @@ activate_row (CcUaPanel *self, GtkListBoxRow *row)
+   widget_name = gtk_buildable_get_name (GTK_BUILDABLE (row));
+   if (widget_name)
+     {
+-      if (!g_strcmp0 (widget_name, "row_highcontrast"))
+-        {
+-          toggle_switch (self->value_highcontrast);
+-          return;
+-        }
+       if (!g_strcmp0 (widget_name, "row_large_text"))
+         {
+           toggle_switch (self->value_large_text);
+@@ -639,14 +632,6 @@ cc_ua_panel_init_seeing (CcUaPanel *self)
+   g_signal_connect_object (self->list_seeing, "row-activated",
+                            G_CALLBACK (activate_row), self, G_CONNECT_SWAPPED);
+ 
+-  g_settings_bind_with_mapping (self->interface_settings, KEY_GTK_THEME,
+-                                self->value_highcontrast,
+-                                "active", G_SETTINGS_BIND_DEFAULT,
+-                                get_contrast_mapping,
+-                                set_contrast_mapping,
+-                                self,
+-                                NULL);
+-
+   /* large text */
+ 
+   g_settings_bind_with_mapping (self->interface_settings, KEY_TEXT_SCALING_FACTOR,
+diff --git a/panels/universal-access/cc-ua-panel.ui b/panels/universal-access/cc-ua-panel.ui
+index 606273b..e3d98e0 100644
+--- a/panels/universal-access/cc-ua-panel.ui
++++ b/panels/universal-access/cc-ua-panel.ui
+@@ -105,53 +105,6 @@
+                                     <accessibility>
+                                       <relation target="heading_seeing" type="labelled-by"/>
+                                     </accessibility>
+-                                    <child>
+-                                      <object class="GtkListBoxRow" id="row_highcontrast">
+-                                        <property name="visible">True</property>
+-                                        <property name="can_focus">True</property>
+-                                        <property name="selectable">False</property>
+-                                        <property name="activatable">False</property>
+-                                        <child>
+-                                          <object class="GtkBox" id="box_highcontrast">
+-                                            <property name="visible">True</property>
+-                                            <child>
+-                                              <object class="GtkLabel" id="heading_highcontrast">
+-                                                <property name="visible">True</property>
+-                                                <property name="can_focus">False</property>
+-                                                <property name="margin_start">12</property>
+-                                                <property name="margin_end">12</property>
+-                                                <property name="margin_top">6</property>
+-                                                <property name="margin_bottom">6</property>
+-                                                <property name="xalign">0</property>
+-                                                <property name="label" translatable="yes">_High Contrast</property>
+-                                                <property name="use_underline">True</property>
+-                                                <property name="mnemonic_widget">value_highcontrast</property>
+-                                              </object>
+-                                              <packing>
+-                                                <property name="expand">True</property>
+-                                                <property name="fill">True</property>
+-                                                <property name="position">0</property>
+-                                              </packing>
+-                                            </child>
+-                                            <child>
+-                                              <object class="GtkSwitch" id="value_highcontrast">
+-                                                <property name="visible">True</property>
+-                                                <property name="can_focus">True</property>
+-                                                <property name="margin_start">12</property>
+-                                                <property name="margin_end">12</property>
+-                                                <property name="margin_top">12</property>
+-                                                <property name="margin_bottom">12</property>
+-                                              </object>
+-                                              <packing>
+-                                                <property name="expand">False</property>
+-                                                <property name="fill">True</property>
+-                                                <property name="position">1</property>
+-                                              </packing>
+-                                            </child>
+-                                          </object>
+-                                        </child>
+-                                      </object>
+-                                    </child>
+                                     <child>
+                                       <object class="GtkListBoxRow" id="row_large_text">
+                                         <property name="visible">True</property>
+@@ -1009,7 +962,6 @@
+   <object class="GtkSizeGroup" id="rows_sizegroup">
+     <property name="mode">vertical</property>
+     <widgets>
+-      <widget name="row_highcontrast"/>
+       <widget name="row_large_text"/>
+       <widget name="row_cursor_size"/>
+       <!--widget name="row_zoom"/-->

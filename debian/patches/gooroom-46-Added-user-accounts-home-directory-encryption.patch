@@ -1,0 +1,344 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-46-Added-user-accounts-home-directory-encryption
+
+---
+ panels/user-accounts/cc-add-user-dialog.c  |  7 +++-
+ panels/user-accounts/cc-add-user-dialog.ui | 36 +++++++++++++++------
+ panels/user-accounts/cc-user-panel.c       | 51 +++++++++++++++++++++---------
+ panels/user-accounts/cc-user-panel.ui      | 18 +++++++++++
+ po/ko.po                                   | 26 +++++++++++++++
+ 5 files changed, 112 insertions(+), 26 deletions(-)
+
+diff --git a/panels/user-accounts/cc-add-user-dialog.c b/panels/user-accounts/cc-add-user-dialog.c
+index 919b06e..e53b573 100644
+--- a/panels/user-accounts/cc-add-user-dialog.c
++++ b/panels/user-accounts/cc-add-user-dialog.c
+@@ -80,6 +80,7 @@ struct _CcAddUserDialog {
+         GtkLevelBar        *local_strength_indicator;
+         GtkEntry           *local_verify_entry;
+         GtkLabel           *local_verify_hint_label;
++        GtkCheckButton     *home_directory_encrypt;
+         GtkGrid            *offline_grid;
+         GtkSpinner         *spinner;
+         GtkStack           *stack;
+@@ -223,20 +224,23 @@ local_create_user (CcAddUserDialog *self)
+         const gchar *username;
+         const gchar *name;
+         gint account_type;
++        gboolean encrypt_home;
+ 
+         begin_action (self);
+ 
+         name = gtk_entry_get_text (self->local_name_entry);
+         username = gtk_combo_box_text_get_active_text (self->local_username_combo);
+         account_type = (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->local_account_type_standard)) ? ACT_USER_ACCOUNT_TYPE_STANDARD : ACT_USER_ACCOUNT_TYPE_ADMINISTRATOR);
++        encrypt_home = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->home_directory_encrypt));
+ 
+         g_debug ("Creating local user: %s", username);
+ 
+         manager = act_user_manager_get_default ();
+-        act_user_manager_create_user_async (manager,
++        act_user_manager_create_user_encrypt_async (manager,
+                                             g_ascii_strdown (username, -1),
+                                             name,
+                                             account_type,
++                                            encrypt_home,
+                                             self->cancellable,
+                                             (GAsyncReadyCallback)create_user_done,
+                                             self);
+@@ -1738,6 +1742,7 @@ cc_add_user_dialog_class_init (CcAddUserDialogClass *klass)
+         gtk_widget_class_bind_template_child (widget_class, CcAddUserDialog, local_strength_indicator);
+         gtk_widget_class_bind_template_child (widget_class, CcAddUserDialog, local_verify_entry);
+         gtk_widget_class_bind_template_child (widget_class, CcAddUserDialog, local_verify_hint_label);
++        gtk_widget_class_bind_template_child (widget_class, CcAddUserDialog, home_directory_encrypt);
+         gtk_widget_class_bind_template_child (widget_class, CcAddUserDialog, offline_grid);
+         gtk_widget_class_bind_template_child (widget_class, CcAddUserDialog, spinner);
+         gtk_widget_class_bind_template_child (widget_class, CcAddUserDialog, stack);
+diff --git a/panels/user-accounts/cc-add-user-dialog.ui b/panels/user-accounts/cc-add-user-dialog.ui
+index e2d87d5..1298145 100644
+--- a/panels/user-accounts/cc-add-user-dialog.ui
++++ b/panels/user-accounts/cc-add-user-dialog.ui
+@@ -114,6 +114,21 @@
+                     <property name="top_attach">2</property>
+                   </packing>
+                 </child>
++                <child>
++                  <object class="GtkCheckButton" id="home_directory_encrypt">
++                    <property name="label" translatable="yes">Home directory _Encryption</property>
++                    <property name="visible">True</property>
++                    <property name="can_focus">True</property>
++                    <property name="receives_default">False</property>
++                    <property name="tooltip_text" translatable="yes">Encrypt all files in user's home directory with user's login password to protect sensitive data from people who can access to user's computer.</property>
++                    <property name="use_underline">True</property>
++                    <property name="draw_indicator">True</property>
++                  </object>
++                  <packing>
++                    <property name="left_attach">1</property>
++                    <property name="top_attach">3</property>
++                  </packing>
++                </child>
+                 <child>
+                   <object class="GtkLabel" id="local_username_hint_label">
+                     <property name="visible">True</property>
+@@ -136,7 +151,7 @@
+                   </object>
+                   <packing>
+                     <property name="left_attach">1</property>
+-                    <property name="top_attach">3</property>
++                    <property name="top_attach">4</property>
+                   </packing>
+                 </child>
+                 <child>
+@@ -256,7 +271,7 @@
+                   </object>
+                   <packing>
+                     <property name="left_attach">0</property>
+-                    <property name="top_attach">4</property>
++                    <property name="top_attach">5</property>
+                   </packing>
+                 </child>
+                 <child>
+@@ -297,7 +312,7 @@
+                   </object>
+                   <packing>
+                     <property name="left_attach">0</property>
+-                    <property name="top_attach">5</property>
++                    <property name="top_attach">6</property>
+                     <property name="width">2</property>
+                     <property name="height">1</property>
+                   </packing>
+@@ -317,7 +332,7 @@
+                   </object>
+                   <packing>
+                     <property name="left_attach">0</property>
+-                    <property name="top_attach">6</property>
++                    <property name="top_attach">7</property>
+                     <property name="width">1</property>
+                     <property name="height">1</property>
+                   </packing>
+@@ -343,7 +358,7 @@
+                   </object>
+                   <packing>
+                     <property name="left_attach">1</property>
+-                    <property name="top_attach">6</property>
++                    <property name="top_attach">7</property>
+                     <property name="width">1</property>
+                     <property name="height">1</property>
+                   </packing>
+@@ -365,7 +380,7 @@
+                   </object>
+                   <packing>
+                     <property name="left_attach">1</property>
+-                    <property name="top_attach">7</property>
++                    <property name="top_attach">8</property>
+                     <property name="width">1</property>
+                     <property name="height">1</property>
+                   </packing>
+@@ -393,7 +408,7 @@
+                   </object>
+                   <packing>
+                     <property name="left_attach">1</property>
+-                    <property name="top_attach">8</property>
++                    <property name="top_attach">9</property>
+                     <property name="width">1</property>
+                     <property name="height">1</property>
+                   </packing>
+@@ -413,7 +428,7 @@
+                   </object>
+                   <packing>
+                     <property name="left_attach">0</property>
+-                    <property name="top_attach">9</property>
++                    <property name="top_attach">10</property>
+                     <property name="width">1</property>
+                     <property name="height">1</property>
+                   </packing>
+@@ -434,7 +449,7 @@
+                   </object>
+                   <packing>
+                     <property name="left_attach">1</property>
+-                    <property name="top_attach">9</property>
++                    <property name="top_attach">10</property>
+                     <property name="width">1</property>
+                     <property name="height">1</property>
+                   </packing>
+@@ -460,7 +475,7 @@
+                   </object>
+                   <packing>
+                     <property name="left_attach">1</property>
+-                    <property name="top_attach">10</property>
++                    <property name="top_attach">11</property>
+                     <property name="width">1</property>
+                     <property name="height">1</property>
+                   </packing>
+@@ -821,6 +836,7 @@
+   </object>
+   <object class="GtkSizeGroup">
+     <widgets>
++      <widget name="home_directory_encrypt"/>
+       <widget name="local_username_combo"/>
+       <widget name="local_username_hint_label"/>
+       <widget name="local_name_entry"/>
+diff --git a/panels/user-accounts/cc-user-panel.c b/panels/user-accounts/cc-user-panel.c
+index 88a993d..7db84c1 100644
+--- a/panels/user-accounts/cc-user-panel.c
++++ b/panels/user-accounts/cc-user-panel.c
+@@ -80,6 +80,7 @@ struct _CcUserPanel {
+         GtkListBoxRow   *autologin_row;
+         GtkSwitch       *autologin_switch;
+         CcCarousel      *carousel;
++        GtkLabel        *encrypt_home_check_label;
+         GtkLabel        *fingerprint_state_label;
+         GtkListBoxRow   *fingerprint_row;
+         GtkStack        *full_name_stack;
+@@ -121,6 +122,7 @@ struct _CcUserPanel {
+ 
+ CC_PANEL_REGISTER (CcUserPanel, cc_user_panel)
+ 
++static gboolean is_ecryptfs_user (const gchar *user);
+ static void show_restart_notification (CcUserPanel *self, const gchar *locale);
+ static gint user_compare (gconstpointer i, gconstpointer u);
+ 
+@@ -637,21 +639,38 @@ delete_user (CcUserPanel *self)
+                                   G_CALLBACK (gtk_widget_destroy), NULL);
+         }
+         else if (act_user_is_local_account (user)) {
+-                dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (self))),
+-                                                 0,
+-                                                 GTK_MESSAGE_QUESTION,
+-                                                 GTK_BUTTONS_NONE,
+-                                                 _("Do you want to keep %s’s files?"),
+-                                                get_real_or_user_name (user));
+-
+-                gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog),
+-                                                          _("It is possible to keep the home directory, mail spool and temporary files around when deleting a user account."));
+-
+-                gtk_dialog_add_buttons (GTK_DIALOG (dialog),
+-                                        _("_Delete Files"), GTK_RESPONSE_NO,
+-                                        _("_Keep Files"), GTK_RESPONSE_YES,
+-                                        _("_Cancel"), GTK_RESPONSE_CANCEL,
+-                                        NULL);
++                if (is_ecryptfs_user (act_user_get_user_name (user))) {
++                        dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (self))),
++                                                         0,
++                                                         GTK_MESSAGE_QUESTION,
++                                                         GTK_BUTTONS_NONE,
++                                                         _("Do you want to delete user %s?"),
++                                                         get_real_or_user_name (user));
++
++                        gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog),
++                                                                  _("All data related with user %s will be deleted."), get_real_or_user_name (user));
++
++                        gtk_dialog_add_buttons (GTK_DIALOG (dialog),
++                                                _("_Delete Files"), GTK_RESPONSE_NO,
++                                                _("_Cancel"), GTK_RESPONSE_CANCEL,
++                                                NULL);
++                } else {
++                        dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (self))),
++                                                         0,
++                                                         GTK_MESSAGE_QUESTION,
++                                                         GTK_BUTTONS_NONE,
++                                                         _("Do you want to keep %s’s files?"),
++                                                         get_real_or_user_name (user));
++
++                        gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog),
++                                                                  _("It is possible to keep the home directory, mail spool and temporary files around when deleting a user account."));
++
++                        gtk_dialog_add_buttons (GTK_DIALOG (dialog),
++                                                _("_Delete Files"), GTK_RESPONSE_NO,
++                                                _("_Keep Files"), GTK_RESPONSE_YES,
++                                                _("_Cancel"), GTK_RESPONSE_CANCEL,
++                                                NULL);
++                }
+ 
+                 gtk_window_set_icon_name (GTK_WINDOW (dialog), "system-users");
+ 
+@@ -965,6 +984,7 @@ show_user (ActUser *user, CcUserPanel *self)
+         show = is_ecryptfs_user (act_user_get_user_name (user));
+         //act_user_is_local_account (user);
+         gtk_widget_set_visible (GTK_WIDGET (self->autologin_row), !show);
++        gtk_widget_set_visible (GTK_WIDGET (self->encrypt_home_check_label), show);
+ 
+ #ifdef HAVE_MALCONTENT
+         /* Parental Controls: Unavailable if user is admin */
+@@ -1682,6 +1702,7 @@ cc_user_panel_class_init (CcUserPanelClass *klass)
+         gtk_widget_class_bind_template_child (widget_class, CcUserPanel, autologin_row);
+         gtk_widget_class_bind_template_child (widget_class, CcUserPanel, autologin_switch);
+         gtk_widget_class_bind_template_child (widget_class, CcUserPanel, carousel);
++        gtk_widget_class_bind_template_child (widget_class, CcUserPanel, encrypt_home_check_label);
+         gtk_widget_class_bind_template_child (widget_class, CcUserPanel, fingerprint_state_label);
+         gtk_widget_class_bind_template_child (widget_class, CcUserPanel, fingerprint_row);
+         gtk_widget_class_bind_template_child (widget_class, CcUserPanel, full_name_stack);
+diff --git a/panels/user-accounts/cc-user-panel.ui b/panels/user-accounts/cc-user-panel.ui
+index b965280..7881c61 100644
+--- a/panels/user-accounts/cc-user-panel.ui
++++ b/panels/user-accounts/cc-user-panel.ui
+@@ -582,6 +582,23 @@
+                                 </child>
+                               </object>
+                             </child>
++                            <child>
++                              <object class="GtkLabel" id="encrypt_home_check_label">
++                                <property name="visible">True</property>
++                                <property name="can_focus">False</property>
++                                <property name="yalign">0</property>
++                                <property name="xalign">0</property>
++                                <property name="margin-start">15</property>
++                                <property name="label" translatable="yes">Applied Home Directory Encryption.</property>
++                                <property name="height-request">15</property>
++                                <property name="wrap">True</property>
++                                <property name="wrap_mode">word-char</property>
++                                <property name="hexpand">True</property>
++                                <style>
++                                  <class name="dim-label"/>
++                                </style>
++                              </object>
++                            </child>
+                           </object>
+                         </child>
+                         <child>
+@@ -663,6 +680,7 @@
+       <widget name="fingerprint_row"/>
+       <widget name="autologin_row"/>
+       <widget name="last_login_row"/>
++      <widget name="encrypt_home_check_label"/>
+     </widgets>
+   </object>
+ </interface>
+diff --git a/po/ko.po b/po/ko.po
+index 6cc4ca5..2d108f0 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -7014,6 +7014,32 @@ msgstr "도메인을 찾을 수 없습니다. 잘못 쓰신 것이 아닙니까?
+ msgid "Add User"
+ msgstr "사용자 추가"
+ 
++#: panels/user-accounts/cc-add-user-dialog.ui:18
++msgid "Home directory _Encryption"
++msgstr "홈폴더 암호화(_E)"
++
++#: panels/user-accounts/cc-user-panel.c:626
++msgid "Do you want to delete user %s?"
++msgstr "정말로 %s 사용자를 삭제하시겠습니까?"
++
++#: panels/user-accounts/cc-user-panel.c:630
++msgid "All data related with user %s will be deleted."
++msgstr ""
++"%s 사용자와 관련된 모든 데이터가 삭제됩니다. 홈폴더 암호화가 적용된 계정은"
++" 계정 삭제시 항상 모든 데이터를 삭제합니다."
++
++#: panels/user-accounts/cc-add-user-dialog.ui:18
++msgid ""
++"Encrypt all files in user's home directory with user's login password"
++" to protect sensitive data from people who can access to user's computer."
++msgstr ""
++"사용자의 홈폴더에 있는 모든 파일을 사용자의 로그인 암호로 암호화하여"
++" 사용자의 컴퓨터에 물리적으로 접근 가능한 사람으로부터 민감한 정보를 보호합니다."
++
++#: panels/user-accounts/cc-user-panel.ui:429
++msgid "Applied Home Directory Encryption."
++msgstr "홈폴더 암호화가 적용되어 있습니다."
++
+ #: panels/user-accounts/cc-add-user-dialog.ui:180
+ msgid "_Full Name"
+ msgstr "전체 이름(_F)"

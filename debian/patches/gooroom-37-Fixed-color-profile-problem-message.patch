@@ -1,0 +1,40 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-37-Fixed-color-profile-problem-message
+
+---
+ panels/color/cc-color-panel.ui | 2 +-
+ po/ko.po                       | 6 ++----
+ 2 files changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/panels/color/cc-color-panel.ui b/panels/color/cc-color-panel.ui
+index 74355c1..f73ef61 100644
+--- a/panels/color/cc-color-panel.ui
++++ b/panels/color/cc-color-panel.ui
+@@ -729,7 +729,7 @@
+                 <property name="visible">True</property>
+                 <property name="can_focus">False</property>
+                 <property name="xalign">0</property>
+-                <property name="label" translatable="yes">Problems detected. The profile may not work correctly. &lt;a href=""&gt;Show details.&lt;/a&gt;</property>
++                <property name="label" translatable="yes">Problems detected. The profile may not work correctly.</property>
+                 <property name="use_markup">True</property>
+                 <property name="wrap">True</property>
+               </object>
+diff --git a/po/ko.po b/po/ko.po
+index 4fd8a26..3e28f9d 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -941,11 +941,9 @@ msgstr "추가(_A)"
+ 
+ #: panels/color/cc-color-panel.ui:732
+ msgid ""
+-"Problems detected. The profile may not work correctly. <a href=\"\">Show "
+-"details.</a>"
++"Problems detected. The profile may not work correctly."
+ msgstr ""
+-"문제가 발생했습니다. 프로파일이 동작하지 않을 수도 있습니다. <a href=\"\">자"
+-"세히 보기.</a>"
++"문제가 발생했습니다. 프로파일이 동작하지 않을 수도 있습니다."
+ 
+ #: panels/color/cc-color-panel.ui:788
+ msgid "Each device needs an up to date color profile to be color managed."

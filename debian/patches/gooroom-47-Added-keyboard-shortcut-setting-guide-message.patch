@@ -1,0 +1,99 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-47-Added-keyboard-shortcut-setting-guide-message
+
+---
+ panels/keyboard/cc-keyboard-shortcut-editor.c  |  7 +++++++
+ panels/keyboard/cc-keyboard-shortcut-editor.ui | 13 +++++++++++++
+ po/ko.po                                       |  8 ++++++++
+ 3 files changed, 28 insertions(+)
+
+diff --git a/panels/keyboard/cc-keyboard-shortcut-editor.c b/panels/keyboard/cc-keyboard-shortcut-editor.c
+index b08f2e1..5c7c93c 100644
+--- a/panels/keyboard/cc-keyboard-shortcut-editor.c
++++ b/panels/keyboard/cc-keyboard-shortcut-editor.c
+@@ -45,6 +45,7 @@ struct _CcKeyboardShortcutEditor
+   GtkButton          *reset_custom_button;
+   GtkButton          *set_button;
+   GtkShortcutLabel   *shortcut_accel_label;
++  GtkLabel           *shortcut_reset_label;
+   GtkLabel           *shortcut_conflict_label;
+   GtkBox             *standard_box;
+   GtkStack           *stack;
+@@ -448,6 +449,7 @@ setup_custom_shortcut (CcKeyboardShortcutEditor *self)
+       label = is_custom_shortcut (self) ? self->new_shortcut_conflict_label : self->shortcut_conflict_label;
+ 
+       gtk_label_set_markup (label, collision_text);
++      gtk_widget_set_visible (label, collision_item != NULL);
+     }
+ 
+   /*
+@@ -569,6 +571,9 @@ reset_item_clicked_cb (CcKeyboardShortcutEditor *self)
+     self->custom_combo->mask = default_combo->mask;
+   }
+ 
++  gtk_widget_set_visible (GTK_WIDGET (self->shortcut_reset_label), FALSE);
++  gtk_widget_set_visible (GTK_WIDGET (self->shortcut_conflict_label), FALSE);
++
+   self->edited = FALSE;
+   setup_custom_shortcut (self);
+ 
+@@ -660,6 +665,7 @@ setup_keyboard_item (CcKeyboardShortcutEditor *self,
+ 
+       release_grab (self);
+     }
++  gtk_widget_set_visible (GTK_WIDGET (self->shortcut_reset_label), TRUE);
+ 
+   /* Show the appropriate view */
+   set_shortcut_editor_page (self, is_custom ? PAGE_CUSTOM : PAGE_EDIT);
+@@ -924,6 +930,7 @@ cc_keyboard_shortcut_editor_class_init (CcKeyboardShortcutEditorClass *klass)
+   gtk_widget_class_bind_template_child (widget_class, CcKeyboardShortcutEditor, reset_custom_button);
+   gtk_widget_class_bind_template_child (widget_class, CcKeyboardShortcutEditor, set_button);
+   gtk_widget_class_bind_template_child (widget_class, CcKeyboardShortcutEditor, shortcut_accel_label);
++  gtk_widget_class_bind_template_child (widget_class, CcKeyboardShortcutEditor, shortcut_reset_label);
+   gtk_widget_class_bind_template_child (widget_class, CcKeyboardShortcutEditor, shortcut_conflict_label);
+   gtk_widget_class_bind_template_child (widget_class, CcKeyboardShortcutEditor, standard_box);
+   gtk_widget_class_bind_template_child (widget_class, CcKeyboardShortcutEditor, stack);
+diff --git a/panels/keyboard/cc-keyboard-shortcut-editor.ui b/panels/keyboard/cc-keyboard-shortcut-editor.ui
+index 922c6f3..a79d0ee 100644
+--- a/panels/keyboard/cc-keyboard-shortcut-editor.ui
++++ b/panels/keyboard/cc-keyboard-shortcut-editor.ui
+@@ -106,6 +106,19 @@
+                     </child>
+                   </object>
+                 </child>
++                <child>
++                  <object class="GtkLabel" id="shortcut_reset_label">
++                    <property name="visible">True</property>
++                    <property name="can_focus">False</property>
++                    <property name="label" translatable="yes">Press reset button on the right to change the command to default setting. Close current window to enter another command.</property>
++                    <property name="hexpand">True</property>
++                    <property name="wrap">True</property>
++                    <property name="wrap_mode">word-char</property>
++                    <property name="width_chars">15</property>
++                    <property name="max_width_chars">20</property>
++                    <property name="xalign">0</property>
++                  </object>
++                </child>
+                 <child>
+                   <object class="GtkLabel" id="shortcut_conflict_label">
+                     <property name="visible">True</property>
+diff --git a/po/ko.po b/po/ko.po
+index 2d108f0..7e52f8d 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -2279,6 +2279,14 @@ msgstr ""
+ "키보드 바로 가기 입력에서 Esc를 누르면 취소하고, 백스페이스를 누르면 사용하"
+ "지 않습니다."
+ 
++#: panels/keyboard/cc-keyboard-shortcut-editor.ui:60
++msgid ""
++"Press reset button on the right to change the command to default setting. "
++"Close current window to enter another command."
++msgstr ""
++"단축키를 기본 설정으로 변경하려면 우측 초기화 버튼을 눌러야 합니다. "
++"다른 단축키를 입력하려면 현재 창을 닫아야 합니다"
++
+ #: panels/keyboard/cc-keyboard-shortcut-editor.ui:135
+ #: panels/printers/pp-details-dialog.ui:40
+ msgid "Name"

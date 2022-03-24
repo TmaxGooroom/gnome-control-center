@@ -1,0 +1,20 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-38-Fixed-font-underline-problem
+
+---
+ panels/font/cc-font-chooser-widget.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/panels/font/cc-font-chooser-widget.c b/panels/font/cc-font-chooser-widget.c
+index c9f770c..09c334d 100644
+--- a/panels/font/cc-font-chooser-widget.c
++++ b/panels/font/cc-font-chooser-widget.c
+@@ -556,6 +556,7 @@ cc_font_chooser_widget_update_preview_attributes (CcFontChooserWidget *fontchoos
+   if (priv->language)
+     pango_attr_list_insert (attrs, pango_attr_language_new (priv->language));
+ 
++  gtk_entry_reset_im_context (GTK_ENTRY (priv->preview));
+   gtk_entry_set_attributes (GTK_ENTRY (priv->preview), attrs);
+   pango_attr_list_unref (attrs);
+ }

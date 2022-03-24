@@ -1,0 +1,151 @@
+From: HaeRyong Jeong <jeong89@gooroom.kr>
+Date: Mon, 29 Jun 2020 10:21:52 +0900
+Subject: [PATCH] Fixed color ui file
+
+---
+ panels/color/cc-color-panel.c  | 19 ++++++++--
+ panels/color/cc-color-panel.ui | 79 +++++++++++++++++++++++++++++-------------
+ 2 files changed, 71 insertions(+), 27 deletions(-)
+
+diff --git a/panels/color/cc-color-panel.c b/panels/color/cc-color-panel.c
+index 35c78b2..5c11be1 100644
+--- a/panels/color/cc-color-panel.c
++++ b/panels/color/cc-color-panel.c
+@@ -72,7 +72,10 @@ struct _CcColorPanel
+   GtkTreeModel  *liststore_calib_sensor;
+   GtkWidget     *main_window;
+   GtkWidget     *toolbar_devices;
++  GtkWidget     *toolbutton_device_stack;
+   GtkWidget     *toolbutton_device_calibrate;
++  GtkWidget     *toolbox_device_default;
++  GtkWidget     *toolbox_device_enable;
+   GtkWidget     *toolbutton_device_default;
+   GtkWidget     *toolbutton_device_enable;
+   GtkWidget     *toolbutton_profile_add;
+@@ -1784,11 +1787,18 @@ gcm_prefs_refresh_toolbar_buttons (CcColorPanel *panel)
+   else
+     g_assert_not_reached ();
+ 
+-  gtk_widget_set_visible (panel->toolbutton_device_default, !is_device && cc_color_profile_get_is_default (CC_COLOR_PROFILE (row)));
+   if (profile)
+-    gtk_widget_set_sensitive (panel->toolbutton_device_default, !cd_profile_get_is_system_wide (profile));
+-  gtk_widget_set_visible (panel->toolbutton_device_enable, !is_device && !cc_color_profile_get_is_default (CC_COLOR_PROFILE (row)));
++    gtk_widget_set_sensitive (panel->toolbox_device_default, !cd_profile_get_is_system_wide (profile));
++
++  if (!is_device) {
++    gboolean is_profile = cc_color_profile_get_is_default (CC_COLOR_PROFILE (row));
++    if (is_profile)
++      gtk_stack_set_visible_child (GTK_STACK (panel->toolbutton_device_stack), panel->toolbox_device_default);
++    else
++      gtk_stack_set_visible_child (GTK_STACK (panel->toolbutton_device_stack), panel->toolbox_device_enable);
++  }
+   gtk_widget_set_visible (panel->toolbutton_device_calibrate, is_device);
++
+   gtk_widget_set_visible (panel->toolbutton_profile_add, is_device);
+   gtk_widget_set_visible (panel->toolbutton_profile_view, !is_device);
+   gtk_widget_set_visible (panel->toolbutton_profile_remove, !is_device);
+@@ -1969,7 +1979,10 @@ cc_color_panel_class_init (CcColorPanelClass *klass)
+   gtk_widget_class_bind_template_child (widget_class, CcColorPanel, liststore_calib_kind);
+   gtk_widget_class_bind_template_child (widget_class, CcColorPanel, liststore_calib_sensor);
+   gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbar_devices);
++  gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbutton_device_stack);
+   gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbutton_device_calibrate);
++  gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbox_device_default);
++  gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbox_device_enable);
+   gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbutton_device_default);
+   gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbutton_device_enable);
+   gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbutton_profile_add);
+diff --git a/panels/color/cc-color-panel.ui b/panels/color/cc-color-panel.ui
+index 34f6727..74355c1 100644
+--- a/panels/color/cc-color-panel.ui
++++ b/panels/color/cc-color-panel.ui
+@@ -859,34 +859,65 @@
+                                 <property name="visible">True</property>
+                                 <property name="can_focus">False</property>
+                                 <child>
+-                                  <object class="GtkButton" id="toolbutton_device_default">
+-                                    <property name="label" translatable="yes">_Set for all users</property>
+-                                    <property name="can_focus">True</property>
+-                                    <property name="receives_default">False</property>
+-                                    <property name="has_tooltip">True</property>
+-                                    <property name="tooltip_text" translatable="yes">Set this profile for all users on this computer</property>
+-                                    <property name="use_underline">True</property>
++                                  <object class="GtkStack" id="toolbutton_device_stack">
++                                    <property name="visible">True</property>
++                                    <property name="can_focus">False</property>
++                                    <child>
++                                      <object class="GtkBox" id="toolbox_device_default">
++                                        <property name="visible">True</property>
++                                        <property name="can_focus">False</property>
++                                        <child>
++                                          <object class="GtkButton" id="toolbutton_device_default">
++                                            <property name="label" translatable="yes">_Set for all users</property>
++                                            <property name="visible">True</property>
++                                            <property name="can_focus">True</property>
++                                            <property name="receives_default">False</property>
++                                            <property name="has_tooltip">True</property>
++                                            <property name="tooltip_text" translatable="yes">Set this profile for all users on this computer</property>
++                                            <property name="use_underline">True</property>
++                                          </object>
++                                          <packing>
++                                            <property name="expand">False</property>
++                                            <property name="fill">True</property>
++                                          </packing>
++                                        </child>
++                                      </object>
++                                      <packing>
++                                        <property name="name">page0</property>
++                                        <property name="title" translatable="yes">page0</property>
++                                      </packing>
++                                    </child>
++                                    <child>
++                                      <object class="GtkBox" id="toolbox_device_enable">
++                                        <property name="visible">True</property>
++                                        <property name="can_focus">False</property>
++                                        <child>
++                                          <object class="GtkButton" id="toolbutton_device_enable">
++                                            <property name="label" translatable="yes">_Enable</property>
++                                            <property name="visible">True</property>
++                                            <property name="can_focus">True</property>
++                                            <property name="receives_default">True</property>
++                                            <property name="has_tooltip">True</property>
++                                            <property name="tooltip_markup" translatable="yes">Set this profile for all users on this computer</property>
++                                            <property name="tooltip_text" translatable="yes">Set this profile for all users on this computer</property>
++                                            <property name="use_underline">True</property>
++                                          </object>
++                                          <packing>
++                                            <property name="expand">False</property>
++                                            <property name="fill">True</property>
++                                          </packing>
++                                        </child>
++                                      </object>
++                                      <packing>
++                                        <property name="name">page1</property>
++                                        <property name="title" translatable="yes">page1</property>
++                                      </packing>
++                                    </child>
+                                   </object>
+                                   <packing>
+                                     <property name="expand">False</property>
+                                     <property name="fill">True</property>
+-                                    <property name="position">1</property>
+-                                  </packing>
+-                                </child>
+-                                <child>
+-                                  <object class="GtkButton" id="toolbutton_device_enable">
+-                                    <property name="label" translatable="yes">_Enable</property>
+-                                    <property name="can_focus">True</property>
+-                                    <property name="receives_default">True</property>
+-                                    <property name="has_tooltip">True</property>
+-                                    <property name="tooltip_markup" translatable="yes">Set this profile for all users on this computer</property>
+-                                    <property name="tooltip_text" translatable="yes">Set this profile for all users on this computer</property>
+-                                    <property name="use_underline">True</property>
+-                                  </object>
+-                                  <packing>
+-                                    <property name="expand">False</property>
+-                                    <property name="fill">True</property>
+-                                    <property name="position">2</property>
++                                    <property name="position">0</property>
+                                   </packing>
+                                 </child>
+                               </object>

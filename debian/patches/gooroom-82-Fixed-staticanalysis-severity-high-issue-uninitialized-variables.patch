@@ -1,0 +1,22 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: 
+ gooroom-82-Fixed-staticanalysis-severity-high-issue-uninitialized-variables
+
+---
+ panels/background/cc-background-chooser.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/panels/background/cc-background-chooser.c b/panels/background/cc-background-chooser.c
+index 9843379..6cb82df 100644
+--- a/panels/background/cc-background-chooser.c
++++ b/panels/background/cc-background-chooser.c
+@@ -97,7 +97,7 @@ on_file_dialog_response_cb (GtkDialog           *dialog,
+                             gint                 response,
+                             CcBackgroundChooser *chooser)
+ {
+-  gboolean result;
++  gboolean result = TRUE;
+ 
+   if (response == GTK_RESPONSE_ACCEPT) {
+     g_autofree gchar *filename = NULL;

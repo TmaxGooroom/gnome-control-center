@@ -1,0 +1,1012 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-59-Fixed-locale-setting-error
+
+---
+ panels/region/cc-region-panel.c                    | 703 ++++++++++++---------
+ panels/region/meson.build                          |  20 +
+ .../org.gnome.controlcenter.region.policy.in.in    |  17 +
+ 3 files changed, 433 insertions(+), 307 deletions(-)
+ create mode 100644 panels/region/org.gnome.controlcenter.region.policy.in.in
+
+diff --git a/panels/region/cc-region-panel.c b/panels/region/cc-region-panel.c
+index 777966c..3317236 100644
+--- a/panels/region/cc-region-panel.c
++++ b/panels/region/cc-region-panel.c
+@@ -47,12 +47,23 @@
+ #define GNOME_SYSTEM_LOCALE_DIR "org.gnome.system.locale"
+ #define KEY_REGION "region"
+ 
++#define INPUT_SOURCE_TYPE_XKB "xkb"
++#define INPUT_SOURCE_TYPE_IBUS "ibus"
++
+ #define DEFAULT_LOCALE "ko_KR.utf-8"
+ #define XSESSIONRC ".xsessionrc"
+ 
+-static const gchar *xsessionrc_template = "export LANG=%s\n";
+-                                           //export LANGUAGE=%s:%s\n
+-                                           //export ";
++static const gchar *xsessionrc_template = "export LANG=%s\n"
++                                          "export LC_TIME=%s";
++
++typedef enum {
++        CHOOSE_LANGUAGE,
++        CHOOSE_REGION,
++        ADD_INPUT,
++        REMOVE_INPUT,
++        MOVE_UP_INPUT,
++        MOVE_DOWN_INPUT,
++} SystemOp;
+ 
+ struct _CcRegionPanel {
+         CcPanel          parent_instance;
+@@ -69,8 +80,8 @@ struct _CcRegionPanel {
+         GtkRevealer     *restart_revealer;
+ 
+         gboolean     login;
+-        gboolean     login_auto_apply;
+         GPermission *permission;
++        SystemOp     op;
+         GDBusProxy  *localed;
+         GDBusProxy  *session;
+ 
+@@ -87,6 +98,8 @@ struct _CcRegionPanel {
+ 
+ CC_PANEL_REGISTER (CcRegionPanel, cc_region_panel)
+ 
++static void update_language_label (CcRegionPanel *self);
++
+ typedef struct
+ {
+         CcRegionPanel *panel;
+@@ -144,6 +157,129 @@ cc_region_panel_get_help_uri (CcPanel *panel)
+         return "help:gnome-help/prefs-language";
+ }
+ 
++static void
++set_account_property (const gchar *prop_name, const gchar *value)
++{
++        g_return_if_fail (prop_name || value);
++
++        GVariant   *variant;
++        GDBusProxy *proxy;
++        GError     *error = NULL;
++        gchar      *user_path = NULL;
++
++        user_path = g_strdup_printf ("/org/freedesktop/Accounts/User%i", getuid ());
++
++        proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
++                                               G_DBUS_CALL_FLAGS_NONE,
++                                               NULL,
++                                               "org.freedesktop.Accounts",
++                                               user_path,
++                                               "org.freedesktop.Accounts.User",
++                                               NULL,
++                                               &error);
++
++        if (!proxy) {
++                g_warning ("%s\n", error->message);
++                g_free (user_path);
++                g_error_free (error);
++                return;
++        }
++
++        variant = g_dbus_proxy_call_sync (proxy,
++                                          prop_name,
++                                          g_variant_new ("(s)", value),
++                                          G_DBUS_CALL_FLAGS_NONE,
++                                          -1,
++                                          NULL,
++                                          &error);
++
++        if (!variant) {
++                g_warning ("%s\n", error->message);
++                g_error_free (error);
++        } else {
++                g_variant_unref (variant);
++        }
++
++        g_free (user_path);
++        g_object_unref (proxy);
++}
++
++static gchar *
++get_account_property (const gchar *prop_name)
++{
++        GDBusConnection  *bus;
++        gchar            *user_path;
++        GError           *error = NULL;
++        GVariant         *properties;
++        GVariantIter     *iter;
++        gchar            *key;
++        GVariant         *value;
++        gchar            *ret = NULL;
++
++        bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, NULL);
++        user_path = g_strdup_printf ("/org/freedesktop/Accounts/User%i", getuid ());
++
++        properties = g_dbus_connection_call_sync (bus,
++                        "org.freedesktop.Accounts",
++                        user_path,
++                        "org.freedesktop.DBus.Properties",
++                        "GetAll",
++                        g_variant_new ("(s)", "org.freedesktop.Accounts.User"),
++                        G_VARIANT_TYPE ("(a{sv})"),
++                        G_DBUS_CALL_FLAGS_NONE,
++                        -1,
++                        NULL,
++                        &error);
++        if (!properties) {
++                g_warning ("Error calling GetAll() when retrieving properties for %s: %s", user_path, error->message);
++                g_error_free (error);
++                goto out;
++        }
++
++        g_variant_get (properties, "(a{sv})", &iter);
++        while (g_variant_iter_loop (iter, "{&sv}", &key, &value)) {
++                if (g_strcmp0 (key, prop_name) == 0) {
++                        g_variant_get (value, "s", &ret);
++                        break;
++                }
++        }
++
++        g_variant_unref (properties);
++        g_variant_iter_free (iter);
++
++out:
++        g_object_unref (bus);
++        g_free (user_path);
++
++        return ret;
++}
++
++static char *
++get_session_property (CcRegionPanel *self, int category)
++{
++        gchar *ret = NULL;
++        GVariant *variant = NULL;
++
++        if (self->session) {
++                variant = g_dbus_proxy_call_sync (self->session,
++                                                  "GetLocale",
++                                                  g_variant_new ("(i)", category),
++                                                  G_DBUS_CALL_FLAGS_NONE,
++                                                  -1,
++                                                  NULL,
++                                                  NULL);
++        }
++
++        if (variant) {
++                const gchar *current_locale;
++                g_variant_get (variant, "(&s)", &current_locale);
++                ret = g_strdup (current_locale);
++                g_variant_unref (variant);
++        }
++
++        return ret;
++}
++
+ static GFile *
+ get_needs_restart_file (void)
+ {
+@@ -175,26 +311,20 @@ set_restart_notification_visible (CcRegionPanel *self,
+                                   const gchar   *locale,
+                                   gboolean       visible)
+ {
+-        locale_t new_locale;
+-        locale_t current_locale;
++        g_autofree gchar *current_locale = NULL;
+         g_autoptr(GFile) file = NULL;
+         g_autoptr(GFileOutputStream) output_stream = NULL;
+         g_autoptr(GError) error = NULL;
+ 
+         if (locale) {
+-                new_locale = newlocale (LC_MESSAGES_MASK, locale, (locale_t) 0);
+-                if (new_locale == (locale_t) 0)
+-                        g_warning ("Failed to create locale %s: %s", locale, g_strerror (errno));
+-                else
+-                        current_locale = uselocale (new_locale);
++                current_locale = g_strdup (setlocale (LC_MESSAGES, NULL));
++                setlocale (LC_MESSAGES, locale);
+         }
+ 
+-        gtk_revealer_set_reveal_child (self->restart_revealer, visible);
++        gtk_revealer_set_reveal_child (GTK_REVEALER (self->restart_revealer), visible);
+ 
+-        if (locale && new_locale != (locale_t) 0) {
+-                uselocale (current_locale);
+-                freelocale (new_locale);
+-        }
++        if (locale)
++                setlocale (LC_MESSAGES, current_locale);
+ 
+         file = get_needs_restart_file ();
+ 
+@@ -210,156 +340,60 @@ set_restart_notification_visible (CcRegionPanel *self,
+         }
+ }
+ 
+-typedef struct {
+-        CcRegionPanel *self;
+-        int category;
+-        gchar *target_locale;
+-} MaybeNotifyData;
+-
+-static void
+-maybe_notify_data_free (MaybeNotifyData *data)
+-{
+-        g_free (data->target_locale);
+-        g_free (data);
+-}
+-
+-G_DEFINE_AUTOPTR_CLEANUP_FUNC (MaybeNotifyData, maybe_notify_data_free)
+-
+-static void
+-maybe_notify_finish (GObject      *source,
+-                     GAsyncResult *res,
+-                     gpointer      data)
+-{
+-        g_autoptr(MaybeNotifyData) mnd = data;
+-        CcRegionPanel *self = mnd->self;
+-        g_autoptr(GError) error = NULL;
+-        g_autoptr(GVariant) retval = NULL;
+-        g_autofree gchar *current_lang_code = NULL;
+-        g_autofree gchar *current_country_code = NULL;
+-        g_autofree gchar *target_lang_code = NULL;
+-        g_autofree gchar *target_country_code = NULL;
+-        const gchar *current_locale = NULL;
+-
+-        retval = g_dbus_proxy_call_finish (G_DBUS_PROXY (source), res, &error);
+-        if (!retval) {
+-                if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+-                        g_warning ("Failed to get locale: %s\n", error->message);
+-                return;
+-        }
+-
+-        g_variant_get (retval, "(&s)", &current_locale);
+-
+-        if (!gnome_parse_locale (current_locale,
+-                                 &current_lang_code,
+-                                 &current_country_code,
+-                                 NULL,
+-                                 NULL))
+-                return;
+-
+-        if (!(self->login)){
+-                if (mnd->category == LC_MESSAGES) {
+-
+-                        if (!gnome_parse_locale (self->region,
+-                                                 NULL,
+-                                                 &target_country_code,
+-                                                 NULL,
+-                                                 NULL))
+-                                return;
+-
+-                        if (!gnome_parse_locale (mnd->target_locale,
+-                                                 &target_lang_code,
+-                                                 NULL,
+-                                                 NULL,
+-                                                 NULL))
+-                                return;
+-
+-                } else {
+-
+-                        if (!gnome_parse_locale (self->language,
+-                                                 &target_lang_code,
+-                                                 NULL,
+-                                                 NULL,
+-                                                 NULL))
+-                                return;
+-
+-                        if (!gnome_parse_locale (mnd->target_locale,
+-                                                 NULL,
+-                                                 &target_country_code,
+-                                                 NULL,
+-                                                 NULL))
+-                                return;
+-
+-                }
+-        } else {
+-                if (mnd->category == LC_MESSAGES) {
+-
+-                        if (!gnome_parse_locale (self->system_region,
+-                                                 NULL,
+-                                                 &target_country_code,
+-                                                 NULL,
+-                                                 NULL))
+-                                return;
+-
+-                        if (!gnome_parse_locale (mnd->target_locale,
+-                                                 &target_lang_code,
+-                                                 NULL,
+-                                                 NULL,
+-                                                 NULL))
+-                                return;
+-
+-                } else {
+-
+-                        if (!gnome_parse_locale (self->system_language,
+-                                                 &target_lang_code,
+-                                                 NULL,
+-                                                 NULL,
+-                                                 NULL))
+-                                return;
+-
+-                        if (!gnome_parse_locale (mnd->target_locale,
+-                                                 NULL,
+-                                                 &target_country_code,
+-                                                 NULL,
+-                                                 NULL))
+-                                return;
+-
+-                }
+-        }
+-
+-        if (g_str_equal (current_lang_code, target_lang_code) == FALSE ||
+-            g_str_equal (current_country_code, target_country_code) == FALSE)
+-                set_restart_notification_visible (self,
+-                                                  mnd->category == LC_MESSAGES ? mnd->target_locale : NULL,
+-                                                  TRUE);
+-        else
+-                set_restart_notification_visible (self,
+-                                                  mnd->category == LC_MESSAGES ? mnd->target_locale : NULL,
+-                                                  FALSE);
+-}
+-
+ static void
+ maybe_notify (CcRegionPanel *self,
+               int            category,
+               const gchar   *target_locale)
+ {
+-        MaybeNotifyData *mnd;
++        gboolean changed = FALSE;
++        gchar **init_language_tokens;
++        gchar **init_region_tokens;
++        gchar **target_locale_tokens;
++        gchar *init_language = NULL;
++        gchar *init_region = NULL;
++
++        init_language = get_session_property (self, LC_MESSAGES);
++        init_region = get_session_property (self, LC_TIME);
++
++        init_language_tokens = g_strsplit (init_language, ".", -1);
++        init_region_tokens = g_strsplit (init_region, ".", -1);
++
++        target_locale_tokens = g_strsplit (target_locale, ".", -1);
++
++        if (category == LC_MESSAGES) {
++                gchar **current_region_tokens = NULL;
++                if (self->region)
++                        current_region_tokens = g_strsplit (self->region, ".", -1);
++                if (!g_str_equal (init_language_tokens[0], target_locale_tokens[0]))
++                        changed = TRUE;
++                if (current_region_tokens &&
++                    !g_str_equal (init_region_tokens[0], current_region_tokens[0]))
++                        changed = TRUE;
++                g_strfreev (current_region_tokens);
++        } else {
++                gchar **current_language_tokens = NULL;
++                if (self->language)
++                        current_language_tokens = g_strsplit (self->language, ".", -1);
++                if (!g_str_equal (init_region_tokens[0], target_locale_tokens[0]))
++                        changed = TRUE;
++                if (current_language_tokens &&
++                    !g_str_equal (init_language_tokens[0], current_language_tokens[0]))
++                        changed = TRUE;
++                g_strfreev (current_language_tokens);
++        }
+ 
+-        mnd = g_new0 (MaybeNotifyData, 1);
+-        mnd->self = self;
+-        mnd->category = category;
+-        mnd->target_locale = g_strdup (target_locale);
++        g_strfreev (init_language_tokens);
++        g_strfreev (init_region_tokens);
++        g_strfreev (target_locale_tokens);
++        g_free (init_language);
++        g_free (init_region);
+ 
+-        g_dbus_proxy_call (self->session,
+-                           "GetLocale",
+-                           g_variant_new ("(i)", category),
+-                           G_DBUS_CALL_FLAGS_NONE,
+-                           -1,
+-                           cc_panel_get_cancellable (CC_PANEL (self)),
+-                           maybe_notify_finish,
+-                           mnd);
++        set_restart_notification_visible (self,
++                                          category == LC_MESSAGES ? target_locale : NULL,
++                                          changed);
+ }
+ 
+-static void set_localed_locale (CcRegionPanel *self);
++static void set_localed_locale (CcRegionPanel *self, gboolean lang_changed);
+ 
+ static void
+ set_system_language (CcRegionPanel *self,
+@@ -371,22 +405,21 @@ set_system_language (CcRegionPanel *self,
+         g_free (self->system_language);
+         self->system_language = g_strdup (language);
+ 
+-        set_localed_locale (self);
++        set_localed_locale (self, TRUE);
+ }
+ 
+ static void
+-set_user_language (CcRegionPanel *self,
+-                   const gchar   *language)
++update_xsessionrc (CcRegionPanel *self,
++                   const gchar   *language,
++                   const gchar   *region)
+ {
+         g_autofree gchar *xsessionrc;
+         g_autofree gchar *contents;
+ 
+-
+         xsessionrc = g_build_filename (g_get_home_dir (), XSESSIONRC, NULL);
+-        contents = g_strdup_printf (xsessionrc_template, language);
++        contents = g_strdup_printf (xsessionrc_template, language, region);
+ 
+         g_file_set_contents (xsessionrc, contents, -1, NULL);
+-        act_user_set_language (self->user, language);
+ }
+ 
+ static void
+@@ -398,11 +431,11 @@ update_language (CcRegionPanel *self,
+         } else {
+                 if (g_strcmp0 (language, self->language) == 0)
+                         return;
+-                set_user_language (self, language);
+-                if (self->login_auto_apply)
+-                        set_system_language (self, language);
++                set_account_property ("SetLanguage", language);
++                update_xsessionrc (self, language, self->region);
++                update_language_label (self);
++                maybe_notify (self, LC_MESSAGES, language);
+         }
+-        maybe_notify (self, LC_MESSAGES, language);
+ }
+ 
+ static void
+@@ -430,7 +463,7 @@ set_system_region (CcRegionPanel *self,
+         g_free (self->system_region);
+         self->system_region = g_strdup (region);
+ 
+-        set_localed_locale (self);
++        set_localed_locale (self, FALSE);
+ }
+ 
+ static void
+@@ -443,10 +476,9 @@ update_region (CcRegionPanel *self,
+                 if (g_strcmp0 (region, self->region) == 0)
+                         return;
+                 g_settings_set_string (self->locale_settings, KEY_REGION, region);
+-                if (self->login_auto_apply)
+-                        set_system_region (self, region);
++                update_xsessionrc (self, self->language, region);
++                maybe_notify (self, LC_TIME, region);
+         }
+-        maybe_notify (self, LC_TIME, region);
+ }
+ 
+ static void
+@@ -518,34 +550,35 @@ show_region_chooser (CcRegionPanel *self)
+         gtk_window_present (GTK_WINDOW (chooser));
+ }
+ 
+-static gboolean
+-permission_acquired (GPermission *permission, GAsyncResult *res, const gchar *action)
++static void
++permission_acquired (GObject      *source,
++                     GAsyncResult *res,
++                     gpointer      data)
+ {
++        CcRegionPanel *self = data;
+         g_autoptr(GError) error = NULL;
++        gboolean allowed;
+ 
+-        if (!g_permission_acquire_finish (permission, res, &error)) {
++        allowed = g_permission_acquire_finish (self->permission, res, &error);
++        if (error) {
+                 if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+-                        g_warning ("Failed to acquire permission to %s: %s\n", error->message, action);
+-                return FALSE;
++                        g_warning ("Failed to acquire permission: %s\n", error->message);
++                return;
+         }
+ 
+-        return FALSE;
+-}
+-
+-static void
+-choose_language_permission_cb (GObject *source, GAsyncResult *res, gpointer user_data)
+-{
+-        CcRegionPanel *self = user_data;
+-        if (permission_acquired (G_PERMISSION (source), res, "choose language"))
+-                show_language_chooser (self);
+-}
+-
+-static void
+-choose_region_permission_cb (GObject *source, GAsyncResult *res, gpointer user_data)
+-{
+-        CcRegionPanel *self = user_data;
+-        if (permission_acquired (G_PERMISSION (source), res, "choose region"))
+-                show_region_chooser (self);
++        if (allowed) {
++                switch (self->op) {
++                case CHOOSE_LANGUAGE:
++                        show_language_chooser (self);
++                        break;
++                case CHOOSE_REGION:
++                        show_region_chooser (self);
++                        break;
++                default:
++                        g_warning ("Unknown privileged operation: %d\n", self->op);
++                        break;
++                }
++        }
+ }
+ 
+ static void
+@@ -556,18 +589,20 @@ activate_language_row (CcRegionPanel *self,
+                 if (!self->login || g_permission_get_allowed (self->permission)) {
+                         show_language_chooser (self);
+                 } else if (g_permission_get_can_acquire (self->permission)) {
++                        self->op = CHOOSE_LANGUAGE;
+                         g_permission_acquire_async (self->permission,
+                                                     cc_panel_get_cancellable (CC_PANEL (self)),
+-                                                    choose_language_permission_cb,
++                                                    permission_acquired,
+                                                     self);
+                 }
+         } else if (row == self->formats_row) {
+                 if (!self->login || g_permission_get_allowed (self->permission)) {
+                         show_region_chooser (self);
+                 } else if (g_permission_get_can_acquire (self->permission)) {
++                        self->op = CHOOSE_REGION;
+                         g_permission_acquire_async (self->permission,
+                                                     cc_panel_get_cancellable (CC_PANEL (self)),
+-                                                    choose_region_permission_cb,
++                                                    permission_acquired,
+                                                     self);
+                 }
+         }
+@@ -593,12 +628,19 @@ update_region_from_setting (CcRegionPanel *self)
+ {
+         g_free (self->region);
+         self->region = g_settings_get_string (self->locale_settings, KEY_REGION);
++        if (!self->region || g_str_equal (self->region, "")) {
++                g_free (self->region);
++                self->region = get_session_property (self, LC_TIME);
++        }
++
+         update_region_label (self);
++        maybe_notify (self, LC_TIME, self->region);
+ }
+ 
+ static void
+ update_language_label (CcRegionPanel *self)
+ {
++        self->language = get_account_property ("Language");
+         const gchar *language = get_effective_language (self);
+         g_autofree gchar *name = NULL;
+ 
+@@ -609,25 +651,21 @@ update_language_label (CcRegionPanel *self)
+                 name = gnome_get_language_from_locale (DEFAULT_LOCALE, DEFAULT_LOCALE);
+ 
+         gtk_label_set_label (self->language_label, name);
+-
+-        /* Formats will change too if not explicitly set. */
+-        update_region_label (self);
+ }
+ 
+ static void
+ update_language_from_user (CcRegionPanel *self)
+ {
+-        const gchar *language = NULL;
+-
+-        if (act_user_is_loaded (self->user))
+-                language = act_user_get_language (self->user);
++        g_free (self->language);
++        self->language = get_account_property ("Language");
+ 
+-        if (language == NULL || *language == '\0')
+-                language = setlocale (LC_MESSAGES, NULL);
++        if (!self->language || g_str_equal (self->language, "")) {
++                g_free (self->language);
++                self->language = get_session_property (self, LC_MESSAGES);
++        }
+ 
+-        g_free (self->language);
+-        self->language = g_strdup (language);
+         update_language_label (self);
++        maybe_notify (self, LC_MESSAGES, self->language);
+ }
+ 
+ static void
+@@ -636,8 +674,6 @@ setup_language_section (CcRegionPanel *self)
+         self->user = act_user_manager_get_user_by_id (self->user_manager, getuid ());
+         g_signal_connect_object (self->user, "notify::language",
+                                  G_CALLBACK (update_language_from_user), self, G_CONNECT_SWAPPED);
+-        g_signal_connect_object (self->user, "notify::is-loaded",
+-                                 G_CALLBACK (update_language_from_user), self, G_CONNECT_SWAPPED);
+ 
+         self->locale_settings = g_settings_new (GNOME_SYSTEM_LOCALE_DIR);
+         g_signal_connect_object (self->locale_settings, "changed::" KEY_REGION,
+@@ -681,78 +717,116 @@ find_sibling (GtkContainer *container, GtkWidget *child)
+ }
+ 
+ static void
+-on_localed_properties_changed (CcRegionPanel  *self,
+-                               GVariant       *changed_properties,
+-                               const gchar   **invalidated_properties)
++options_response (GtkDialog     *options,
++                  gint           response_id,
++                  CcRegionPanel *self)
+ {
+-        g_autoptr(GVariant) v = NULL;
++        gtk_widget_destroy (GTK_WIDGET (options));
++}
+ 
+-        v = g_dbus_proxy_get_cached_property (G_DBUS_PROXY (self->localed), "Locale");
+-        if (v) {
+-                g_autofree const gchar **strv = NULL;
+-                gsize len;
+-                gint i;
+-                const gchar *lang, *messages, *time;
++static void
++update_locale_done_cb (GPid pid, gint status, gpointer data)
++{
++  g_spawn_close_pid (pid);
++}
+ 
+-                strv = g_variant_get_strv (v, &len);
++static void
++set_localed_locale (CcRegionPanel *self, gboolean lang_changed)
++{
++         GPid pid;
++         gchar **argv = NULL;
++         gchar *cmd = NULL, *args = NULL;
++ 
++         if (lang_changed) {
++                 args = g_strdup_printf ("LANG=%s", self->system_language);
++        } else {
++                 args = g_strdup_printf ("LC_TIME=%s LC_NUMERIC=%s "
++                                         "LC_COLLATE=%s LC_MONETARY=%s "
++                                         "LC_PAPER=%s LC_NAME=%s "
++                                         "LC_ADDRESS=%s LC_TELEPHONE=%s "
++                                         "LC_MEASUREMENT=%s LC_IDENTIFICATION=%s",
++                                         self->system_region, self->system_region,
++                                         self->system_region, self->system_region,
++                                         self->system_region, self->system_region,
++                                         self->system_region, self->system_region,
++                                         self->system_region, self->system_region);
++         }
++ 
++         cmd = g_strdup_printf ("/usr/bin/pkexec /usr/sbin/update-locale %s", args);
++ 
++         g_shell_parse_argv (cmd, NULL, &argv, NULL);
++ 
++         if (g_spawn_async (NULL, argv, NULL,
++                            G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD,
++                            NULL, NULL, &pid, NULL)) {
++                 g_child_watch_add (pid, (GChildWatchFunc) update_locale_done_cb, NULL);
++         }
++ 
++         g_free (args);
++         g_free (cmd);
++         g_strfreev (argv);
++}
+ 
+-                lang = messages = time = NULL;
+-                for (i = 0; strv[i]; i++) {
+-                        if (g_str_has_prefix (strv[i], "LANG=")) {
+-                                lang = strv[i] + strlen ("LANG=");
+-                        } else if (g_str_has_prefix (strv[i], "LC_MESSAGES=")) {
+-                                messages = strv[i] + strlen ("LC_MESSAGES=");
+-                        } else if (g_str_has_prefix (strv[i], "LC_TIME=")) {
+-                                time = strv[i] + strlen ("LC_TIME=");
+-                        }
+-                }
+-                if (!lang) {
+-                        lang = setlocale (LC_MESSAGES, NULL);
+-                }
+-                if (!messages) {
+-                        messages = lang;
++static void
++update_system_locale (CcRegionPanel *self)
++{
++        gchar **lines = NULL;
++        gchar *contents = NULL;
++        gchar *lang = NULL, *messages = NULL, *region = NULL;
++
++        g_file_get_contents ("/etc/default/locale", &contents, NULL, NULL);
++        if (contents) {
++                guint i = 0;
++                lines = g_strsplit (contents, "\n", -1);
++                for (i = 0; lines[i] != NULL; i++) {
++                        if (g_str_has_prefix (lines[i], "LANG=")) {
++                                lang = lines[i] + strlen ("LANG=");
++                        } else if (g_str_has_prefix (lines[i], "LC_MESSAGES")) {
++                                messages = lines[i] + strlen ("LC_MESSAGES=");
++                        } else if (g_str_has_prefix (lines[i], "LC_TIME")) {
++                                region = lines[i] + strlen ("LC_TIME=");
++                        }/* else if (g_str_has_prefix (lines[i], "LC_NUMERIC")) {
++                                region = lines[i] + strlen ("LC_NUMERIC=");
++                        } else if (g_str_has_prefix (lines[i], "LC_COLLATE")) {
++                                region = lines[i] + strlen ("LC_COLLATE=");
++                        } else if (g_str_has_prefix (lines[i], "LC_MONETARY")) {
++                                region = lines[i] + strlen ("LC_MONETARY=");
++                        } else if (g_str_has_prefix (lines[i], "LC_PAPER")) {
++                                region = lines[i] + strlen ("LC_PAPER=");
++                        } else if (g_str_has_prefix (lines[i], "LC_NAME")) {
++                                region = lines[i] + strlen ("LC_NAME=");
++                        } else if (g_str_has_prefix (lines[i], "LC_ADDRESS")) {
++                                region = lines[i] + strlen ("LC_ADDRESS=");
++                        } else if (g_str_has_prefix (lines[i], "LC_TELEPHONE")) {
++                                region = lines[i] + strlen ("LC_TELEPHONE=");
++                        } else if (g_str_has_prefix (lines[i], "LC_MEASUREMENT")) {
++                                region = lines[i] + strlen ("LC_MEASUREMENT=");
++                        } else if (g_str_has_prefix (lines[i], "LC_IDENTIFICATION")) {
++                                region = lines[i] + strlen ("LC_IDENTIFICATION=");
++                        }*/
+                 }
+-                g_free (self->system_language);
+-                self->system_language = g_strdup (messages);
+-                g_free (self->system_region);
+-                self->system_region = g_strdup (time);
++        }
+ 
+-                update_language_label (self);
++        if (!lang) {
++                lang = setlocale (LC_MESSAGES, NULL);
++        }
++        if (!messages) {
++                messages = lang;
++        }
++        if (!region) {
++                region = lang;
+         }
+-}
+ 
+-static void
+-set_localed_locale (CcRegionPanel *self)
+-{
+-        g_autoptr(GVariantBuilder) b = NULL;
+-        g_autofree gchar *lang_value = NULL;
++        g_free (self->system_language);
++        self->system_language = g_strdup (messages);
++        g_free (self->system_region);
++        self->system_region = g_strdup (region);
+ 
+-        b = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+-        lang_value = g_strconcat ("LANG=", self->system_language, NULL);
+-        g_variant_builder_add (b, "s", lang_value);
++        update_language_label (self);
++        update_region_label (self);
+ 
+-        if (self->system_region != NULL) {
+-                g_autofree gchar *time_value = NULL;
+-                g_autofree gchar *numeric_value = NULL;
+-                g_autofree gchar *monetary_value = NULL;
+-                g_autofree gchar *measurement_value = NULL;
+-                g_autofree gchar *paper_value = NULL;
+-                time_value = g_strconcat ("LC_TIME=", self->system_region, NULL);
+-                g_variant_builder_add (b, "s", time_value);
+-                numeric_value = g_strconcat ("LC_NUMERIC=", self->system_region, NULL);
+-                g_variant_builder_add (b, "s", numeric_value);
+-                monetary_value = g_strconcat ("LC_MONETARY=", self->system_region, NULL);
+-                g_variant_builder_add (b, "s", monetary_value);
+-                measurement_value = g_strconcat ("LC_MEASUREMENT=", self->system_region, NULL);
+-                g_variant_builder_add (b, "s", measurement_value);
+-                paper_value = g_strconcat ("LC_PAPER=", self->system_region, NULL);
+-                g_variant_builder_add (b, "s", paper_value);
+-        }
+-        g_dbus_proxy_call (self->localed,
+-                           "SetLocale",
+-                           g_variant_new ("(asb)", b, TRUE),
+-                           G_DBUS_CALL_FLAGS_NONE,
+-                           -1, NULL, NULL, NULL);
++        if (contents) g_free (contents);
++        if (lines) g_strfreev (lines);
+ }
+ 
+ static void
+@@ -776,9 +850,31 @@ localed_proxy_ready (GObject      *source,
+ 
+         gtk_widget_set_sensitive (GTK_WIDGET (self->login_button), TRUE);
+ 
+-        g_signal_connect_object (self->localed, "g-properties-changed",
+-                                 G_CALLBACK (on_localed_properties_changed), self, G_CONNECT_SWAPPED);
+-        on_localed_properties_changed (self, NULL, NULL);
++        update_system_locale (self);
++}
++
++static void
++locale_file_changed_cb (GFileMonitor      *monitor,
++                        GFile             *file,
++                        GFile             *other_file,
++                        GFileMonitorEvent  event_type,
++                        gpointer           user_data)
++{
++        CcRegionPanel *self = CC_REGION_PANEL (user_data);
++
++        switch (event_type)
++        {
++            case G_FILE_MONITOR_EVENT_CHANGED:
++            case G_FILE_MONITOR_EVENT_DELETED:
++            case G_FILE_MONITOR_EVENT_CREATED:
++            {
++                    update_system_locale (self);
++                    break;
++            }
++
++            default:
++                break;
++        }
+ }
+ 
+ static void
+@@ -786,9 +882,18 @@ login_changed (CcRegionPanel *self)
+ {
+         gboolean can_acquire;
+ 
+-        self->login = gtk_toggle_button_get_active (self->login_button);
++        self->login = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->login_button));
+         gtk_widget_set_visible (GTK_WIDGET (self->login_label), self->login);
+ 
++        if (self->login) {
++                gtk_revealer_set_reveal_child (GTK_REVEALER (self->restart_revealer), FALSE);
++        } else {
++                g_autoptr(GFile) needs_restart_file = NULL;
++                needs_restart_file = get_needs_restart_file ();
++                if (g_file_query_exists (needs_restart_file, NULL))
++                        set_restart_notification_visible (self, NULL, TRUE);
++        }
++
+         can_acquire = self->permission &&
+                 (g_permission_get_allowed (self->permission) ||
+                  g_permission_get_can_acquire (self->permission));
+@@ -796,40 +901,34 @@ login_changed (CcRegionPanel *self)
+         gtk_widget_set_sensitive (GTK_WIDGET (self->language_section_frame), !self->login || can_acquire);
+ 
+         update_language_label (self);
+-}
+-
+-static void
+-set_login_button_visibility (CcRegionPanel *self)
+-{
+-        gboolean has_multiple_users;
+-        gboolean loaded;
+-
+-        g_object_get (self->user_manager, "is-loaded", &loaded, NULL);
+-        if (!loaded)
+-          return;
+-
+-        g_object_get (self->user_manager, "has-multiple-users", &has_multiple_users, NULL);
+-
+-        self->login_auto_apply = !has_multiple_users && g_permission_get_allowed (self->permission);
+-        gtk_widget_set_visible (GTK_WIDGET (self->login_button), !self->login_auto_apply);
+-
+-        g_signal_handlers_disconnect_by_func (self->user_manager, set_login_button_visibility, self);
++        update_region_label (self);
+ }
+ 
+ static void
+ setup_login_button (CcRegionPanel *self)
+ {
+         g_autoptr(GDBusConnection) bus = NULL;
+-        gboolean loaded;
+         g_autoptr(GError) error = NULL;
++        GFile *file;
++        GFileMonitor *monitor;
+ 
+-        self->permission = polkit_permission_new_sync ("org.freedesktop.locale1.set-locale", NULL, NULL, &error);
++        self->permission = polkit_permission_new_sync ("org.gnome.controlcenter.update-locale", NULL, NULL, &error);
+         if (self->permission == NULL) {
+-                g_warning ("Could not get 'org.freedesktop.locale1.set-locale' permission: %s",
++                g_warning ("Could not get 'org.gnome.controlcenter.update-locale' permission: %s",
+                            error->message);
+                 return;
+         }
+ 
++        file = g_file_new_for_path ("/etc/default/locale");
++
++        monitor = g_file_monitor_file (file, G_FILE_MONITOR_NONE, NULL, &error);
++        if (error) {
++            g_error_free (error);
++        } else {
++            g_signal_connect (monitor, "changed", G_CALLBACK (locale_file_changed_cb), self);
++        }
++        g_object_unref (file);
++
+         bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, NULL);
+         g_dbus_proxy_new (bus,
+                           G_DBUS_PROXY_FLAGS_GET_INVALIDATED_PROPERTIES,
+@@ -849,13 +948,6 @@ setup_login_button (CcRegionPanel *self)
+         gtk_widget_set_sensitive (GTK_WIDGET (self->login_button), FALSE);
+         g_signal_connect_object (self->login_button, "notify::active",
+                                  G_CALLBACK (login_changed), self, G_CONNECT_SWAPPED);
+-
+-        g_object_get (self->user_manager, "is-loaded", &loaded, NULL);
+-        if (loaded)
+-                set_login_button_visibility (self);
+-        else
+-                g_signal_connect_object (self->user_manager, "notify::is-loaded",
+-                                         G_CALLBACK (set_login_button_visibility), self, G_CONNECT_SWAPPED);
+ }
+ 
+ static void
+@@ -876,6 +968,8 @@ session_proxy_ready (GObject      *source,
+         }
+ 
+         self->session = proxy;
++
++        setup_language_section (self);
+ }
+ 
+ static void
+@@ -927,9 +1021,4 @@ cc_region_panel_init (CcRegionPanel *self)
+                                   self);
+ 
+         setup_login_button (self);
+-        setup_language_section (self);
+-
+-        needs_restart_file = get_needs_restart_file ();
+-        if (g_file_query_exists (needs_restart_file, NULL))
+-                set_restart_notification_visible (self, NULL, TRUE);
+ }
+diff --git a/panels/region/meson.build b/panels/region/meson.build
+index cc078c5..67be011 100644
+--- a/panels/region/meson.build
++++ b/panels/region/meson.build
+@@ -17,6 +17,26 @@ i18n.merge_file(
+   install_dir: control_center_desktopdir
+ )
+ 
++polkit_conf = configuration_data()
++polkit_conf.set('libexecdir', control_center_libexecdir)
++
++polkit = 'org.gnome.controlcenter.region.policy'
++
++polkit_in = configure_file(
++  input: polkit + '.in.in',
++  output: polkit + '.in',
++  configuration: polkit_conf
++)
++
++i18n.merge_file(
++  polkit,
++  input: polkit_in,
++  output: polkit,
++  po_dir: po_dir,
++  install: true,
++  install_dir: join_paths(control_center_datadir, 'polkit-1', 'actions')
++)
++
+ sources = files(
+   'cc-region-panel.c',
+   'cc-format-chooser.c',
+diff --git a/panels/region/org.gnome.controlcenter.region.policy.in.in b/panels/region/org.gnome.controlcenter.region.policy.in.in
+new file mode 100644
+index 0000000..5bea441
+--- /dev/null
++++ b/panels/region/org.gnome.controlcenter.region.policy.in.in
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE policyconfig PUBLIC
++ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
++ "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
++<policyconfig>
++
++  <vendor>The GNOME Project</vendor>
++  <action id="org.gnome.controlcenter.update-locale">
++    <defaults>
++      <allow_any>no</allow_any>
++      <allow_inactive>no</allow_inactive>
++      <allow_active>auth_admin_keep</allow_active>
++    </defaults>
++    <annotate key="org.freedesktop.policykit.exec.path">/usr/sbin/update-locale</annotate>
++  </action>
++
++</policyconfig>

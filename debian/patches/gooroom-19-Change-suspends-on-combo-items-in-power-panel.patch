@@ -1,0 +1,87 @@
+From: HaeRyong Jeong <jeong89@gooroom.kr>
+Date: Mon, 29 Jun 2020 17:34:14 +0900
+Subject: [PATCH] Change suspends on combo items in power panel
+
+---
+ panels/power/cc-power-panel.ui | 4 ++--
+ po/en.po                       | 6 ++++++
+ po/en_GB.po                    | 6 ++++++
+ po/ko.po                       | 8 ++++----
+ 4 files changed, 18 insertions(+), 6 deletions(-)
+
+diff --git a/panels/power/cc-power-panel.ui b/panels/power/cc-power-panel.ui
+index b2a5a3c..63a738e 100644
+--- a/panels/power/cc-power-panel.ui
++++ b/panels/power/cc-power-panel.ui
+@@ -30,7 +30,7 @@
+         <col id="1">2700</col>
+       </row>
+       <row>
+-        <col id="0" translatable="yes" context="automatic_suspend" comments="Translators: Option for &quot;Delay&quot; in &quot;Automatic suspend&quot; dialog.">1 hour</col>
++        <col id="0" translatable="yes" context="automatic_suspend" comments="Translators: Option for &quot;Delay&quot; in &quot;Automatic suspend&quot; dialog.">60 minutes</col>
+         <col id="1">3600</col>
+       </row>
+       <row>
+@@ -46,7 +46,7 @@
+         <col id="1">6000</col>
+       </row>
+       <row>
+-        <col id="0" translatable="yes" context="automatic_suspend" comments="Translators: Option for &quot;Delay&quot; in &quot;Automatic suspend&quot; dialog.">2 hours</col>
++        <col id="0" translatable="yes" context="automatic_suspend" comments="Translators: Option for &quot;Delay&quot; in &quot;Automatic suspend&quot; dialog.">120 minutes</col>
+         <col id="1">7200</col>
+       </row>
+     </data>
+diff --git a/po/en.po b/po/en.po
+index 40e77ae..4e92f13 100644
+--- a/po/en.po
++++ b/po/en.po
+@@ -3370,3 +3370,9 @@ msgstr ""
+ 
+ msgid "Not use"
+ msgstr ""
++
++msgid "60 minutes"
++msgstr ""
++
++msgid "120 minutes"
++msgstr ""
+diff --git a/po/en_GB.po b/po/en_GB.po
+index 951c58f..dc3d131 100644
+--- a/po/en_GB.po
++++ b/po/en_GB.po
+@@ -14573,3 +14573,9 @@ msgstr "Pick a Font"
+ 
+ msgid "Not use"
+ msgstr "Not use"
++
++msgid "60 minutes"
++msgstr "60 minutes"
++
++msgid "120 minutes"
++msgstr "120 minutes"
+diff --git a/po/ko.po b/po/ko.po
+index 068e08f..9fdece8 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -4639,8 +4639,8 @@ msgstr "45분"
+ #. Translators: Option for "Delay" in "Automatic suspend" dialog.
+ #: panels/power/cc-power-panel.ui:33
+ msgctxt "automatic_suspend"
+-msgid "1 hour"
+-msgstr "1시간"
++msgid "60 minutes"
++msgstr "60분"
+ 
+ #. Translators: Option for "Delay" in "Automatic suspend" dialog.
+ #: panels/power/cc-power-panel.ui:37
+@@ -4663,8 +4663,8 @@ msgstr "100분"
+ #. Translators: Option for "Delay" in "Automatic suspend" dialog.
+ #: panels/power/cc-power-panel.ui:49
+ msgctxt "automatic_suspend"
+-msgid "2 hours"
+-msgstr "2시간"
++msgid "120 minutes"
++msgstr "120분"
+ 
+ #: panels/power/cc-power-panel.ui:145
+ msgid "Automatic Suspend"

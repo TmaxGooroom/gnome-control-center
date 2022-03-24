@@ -1,0 +1,21 @@
+From: HaeRyong Jeong <jeong89@gooroom.kr>
+Date: Fri, 3 Jul 2020 18:55:50 +0900
+Subject: [PATCH] Change default background style to zoom
+
+---
+ panels/background/bg-colors-source.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/panels/background/bg-colors-source.c b/panels/background/bg-colors-source.c
+index fbf116a..3d0d53d 100644
+--- a/panels/background/bg-colors-source.c
++++ b/panels/background/bg-colors-source.c
+@@ -90,7 +90,7 @@ bg_colors_source_add_color (BgColorsSource               *self,
+                 "primary-color", color,
+                 "secondary-color", color,
+                 "shading", G_DESKTOP_BACKGROUND_SHADING_SOLID,
+-                "placement", G_DESKTOP_BACKGROUND_STYLE_WALLPAPER,
++                "placement", G_DESKTOP_BACKGROUND_STYLE_ZOOM,
+                 "flags", flags,
+                 NULL);
+   cc_background_item_load (item, NULL);

@@ -1,0 +1,35 @@
+From: HaeRyong Jeong <jeong89@gooroom.kr>
+Date: Thu, 25 Jun 2020 17:54:38 +0900
+Subject: [PATCH] Updated ko.po and email default mime on context menu
+
+---
+ panels/default-apps/cc-default-apps-panel.c | 2 +-
+ po/ko.po                                    | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/panels/default-apps/cc-default-apps-panel.c b/panels/default-apps/cc-default-apps-panel.c
+index 7e80818..6448e4e 100644
+--- a/panels/default-apps/cc-default-apps-panel.c
++++ b/panels/default-apps/cc-default-apps-panel.c
+@@ -154,7 +154,7 @@ info_panel_setup_default_app (CcDefaultAppsPanel *self,
+ 
+ static DefaultAppData preferred_app_infos[] = {
+   { "x-scheme-handler/http", OFFSET (web_label), "text/html;application/xhtml+xml;x-scheme-handler/https" },
+-  { "x-scheme-handler/mailto", OFFSET (mail_label), NULL },
++  { "x-scheme-handler/mailto", OFFSET (mail_label), "message/*" },
+   { "text/calendar", OFFSET (calendar_label), NULL },
+   { "audio/x-vorbis+ogg", OFFSET (music_label), "audio/*" },
+   { "video/x-ogm+ogg", OFFSET (video_label), "video/*" },
+diff --git a/po/ko.po b/po/ko.po
+index 0377bde..068e08f 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -224,7 +224,7 @@ msgstr "카메라"
+ #: panels/user-accounts/cc-user-panel.c:957
+ #: subprojects/gvc/gvc-mixer-control.c:1876
+ msgid "Disabled"
+-msgstr "사용 않음"
++msgstr "사용 안함"
+ 
+ #: panels/applications/cc-applications-panel.ui:133
+ #: panels/applications/cc-applications-panel.ui:139

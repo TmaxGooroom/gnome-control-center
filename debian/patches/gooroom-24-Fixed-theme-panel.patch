@@ -1,0 +1,301 @@
+From: HaeRyong Jeong <jeong89@gooroom.kr>
+Date: Tue, 7 Jul 2020 11:47:13 +0900
+Subject: [PATCH] Fixed theme panel
+
+Change-Id: I34b6b64fb7a9d269f61a719fff617558089e1831
+---
+ panels/themes/cc-themes-panel.c                    | 41 ++--------------------
+ panels/themes/data/meson.build                     | 27 +++++++++++---
+ panels/themes/data/themes/gooroom-themes.ini       | 21 -----------
+ panels/themes/data/themes/gooroom-themes.ini.in.in | 12 +++++++
+ panels/themes/data/themes/meson.build              | 22 ++++++++++++
+ po/en.po                                           | 18 ++++++++++
+ po/en_GB.po                                        | 18 ++++++++++
+ po/ko.po                                           | 16 +++++++++
+ 8 files changed, 112 insertions(+), 63 deletions(-)
+ delete mode 100644 panels/themes/data/themes/gooroom-themes.ini
+ create mode 100644 panels/themes/data/themes/gooroom-themes.ini.in.in
+ create mode 100644 panels/themes/data/themes/meson.build
+
+diff --git a/panels/themes/cc-themes-panel.c b/panels/themes/cc-themes-panel.c
+index 6a7975d..01d6882 100644
+--- a/panels/themes/cc-themes-panel.c
++++ b/panels/themes/cc-themes-panel.c
+@@ -105,41 +105,8 @@ create_store (void)
+   return store;
+ }
+ 
+-static const gchar*
+-get_language ()
+-{
+-  char *lo = NULL;
+-  const char *locale = NULL;
+-  const gchar *result = NULL;
+-  const g_autofree gchar *lang = NULL;
+-  const gchar **split = NULL;
+-
+-  locale = setlocale (LC_MESSAGES, NULL);
+-
+-  if (locale == NULL)
+-    return "ko";
+-
+-  split = g_strsplit (locale, ".", -1);
+-  lang = g_strdup_printf ("%s", split[0]);
+-
+-  if (g_strcmp0 (lang, "ko") == 0 ||
+-      g_strcmp0 (lang, "ko_KR") == 0) {
+-    result = g_strdup_printf ("ko");
+-  }
+-  else if (g_strcmp0 (lang, "en") == 0 ||
+-      g_strcmp0 (lang, "en_GB") == 0 ||
+-      g_strcmp0 (lang, "en_US") == 0) {
+-    result = g_strdup_printf ("en");
+-  }
+-
+-  g_strfreev (split);
+-  setlocale (LC_MESSAGES, locale);
+-
+-  return result;
+-}
+-
+ static void
+-set_theme_liststore (GtkListStore *store, GKeyFile *keyfile, gchar *group, const gchar *locale)
++set_theme_liststore (GtkListStore *store, GKeyFile *keyfile, gchar *group)
+ {
+   gchar *name;
+   gchar *background;
+@@ -149,7 +116,7 @@ set_theme_liststore (GtkListStore *store, GKeyFile *keyfile, gchar *group, const
+   GtkTreeIter iter;
+   
+ 
+-  name = g_key_file_get_locale_string (keyfile, group, "Name", locale, NULL);
++  name = g_key_file_get_locale_string (keyfile, group, "Name", NULL, NULL);
+   background = g_key_file_get_value (keyfile, group, "Background", NULL);
+   icon = g_key_file_get_value (keyfile, group, "Icon", &error);
+   if (icon == NULL) {
+@@ -176,7 +143,6 @@ load_themes_liststore (CcThemesPanel *panel)
+   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+   gchar **groups = NULL;
+   gsize group_length;
+-  const gchar *locale = NULL;
+ 
+   if (!g_key_file_load_from_file (keyfile, DEFAULT_THEMES_INI, G_KEY_FILE_KEEP_TRANSLATIONS, &error))
+   {
+@@ -184,13 +150,12 @@ load_themes_liststore (CcThemesPanel *panel)
+     return NULL;
+   }
+ 
+-  locale = get_language ();
+   store = create_store ();
+ 
+   groups = g_key_file_get_groups (keyfile, &group_length);
+   for (int i = 0; i < group_length; i++)
+   {
+-    set_theme_liststore (store, keyfile, groups[i], locale);
++    set_theme_liststore (store, keyfile, groups[i]);
+   }
+ 
+   return store;
+diff --git a/panels/themes/data/meson.build b/panels/themes/data/meson.build
+index 75b0780..232acf1 100644
+--- a/panels/themes/data/meson.build
++++ b/panels/themes/data/meson.build
+@@ -1,4 +1,23 @@
+-install_subdir(
+-  'themes',
+-  install_dir : join_paths(control_center_datadir, 'gnome-control-center')
+-)
++subdir ('themes')
++#install_subdir(
++#  'themes',
++#  install_dir : join_paths(control_center_datadir, 'gnome-control-center')
++#)
++
++#desktop = 'gooroom-themes.ini'
++#
++#desktop_in = configure_file(
++#  input: desktop + '.in.in',
++#  output: desktop + '.in',
++#  configuration: desktop_conf
++#)
++#
++#i18n.merge_file(
++#  desktop,
++#  type: 'desktop',
++#  input: desktop_in,
++#  output: desktop,
++#  po_dir: po_dir,
++#  install: true,
++#  install_dir: join_paths(control_center_datadir, 'gnome-control-center')
++#)
+diff --git a/panels/themes/data/themes/gooroom-themes.ini b/panels/themes/data/themes/gooroom-themes.ini
+deleted file mode 100644
+index 07957c4..0000000
+--- a/panels/themes/data/themes/gooroom-themes.ini
++++ /dev/null
+@@ -1,21 +0,0 @@
+-[Gooroom Theme 1]
+-Name=Gooroom Icon Theme 1
+-Name[ko]=구름 테마 1
+-Name[ko_KR]=구름 테마 1
+-Name[ko_KR.UTF-8]=구름 테마 1
+-Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_1.jpg
+-Icon=Gooroom-Arc
+-[Gooroom Theme 2]
+-Name=Gooroom Icon Theme 2
+-Name[ko]=구름 테마 2
+-Name[ko_KR]=구름 테마 2
+-Name[ko_KR.UTF-8]=구름 테마 2
+-Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_2.jpg
+-Icon=Gooroom-Faenza
+-[Gooroom Theme 3]
+-Name=Gooroom Icon Theme 3
+-Name[ko]=구름 테마 3
+-Name[ko_KR]=구름 테마 3
+-Name[ko_KR.UTF-8]=구름 테마 3
+-Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_3.jpg
+-Icon=Gooroom-Papirus
+diff --git a/panels/themes/data/themes/gooroom-themes.ini.in.in b/panels/themes/data/themes/gooroom-themes.ini.in.in
+new file mode 100644
+index 0000000..844397b
+--- /dev/null
++++ b/panels/themes/data/themes/gooroom-themes.ini.in.in
+@@ -0,0 +1,12 @@
++[Gooroom Theme 1]
++Name=Gooroom Icon Theme 1
++Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_1.jpg
++Icon=Gooroom-Arc
++[Gooroom Theme 2]
++Name=Gooroom Icon Theme 2
++Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_2.jpg
++Icon=Gooroom-Faenza
++[Gooroom Theme 3]
++Name=Gooroom Icon Theme 3
++Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_3.jpg
++Icon=Gooroom-Papirus
+diff --git a/panels/themes/data/themes/meson.build b/panels/themes/data/themes/meson.build
+new file mode 100644
+index 0000000..bd85e93
+--- /dev/null
++++ b/panels/themes/data/themes/meson.build
+@@ -0,0 +1,22 @@
++#install_subdir(
++#  'themes',
++#  install_dir : join_paths(control_center_datadir, 'gnome-control-center')
++#)
++
++desktop = 'gooroom-themes.ini'
++
++desktop_in = configure_file(
++  input: desktop + '.in.in',
++  output: desktop + '.in',
++  configuration: desktop_conf
++)
++
++i18n.merge_file(
++  desktop,
++  type: 'desktop',
++  input: desktop_in,
++  output: desktop,
++  po_dir: po_dir,
++  install: true,
++  install_dir: join_paths(control_center_datadir, 'gnome-control-center/themes')
++)
+diff --git a/po/en.po b/po/en.po
+index 4e92f13..e8e0e64 100644
+--- a/po/en.po
++++ b/po/en.po
+@@ -3368,11 +3368,29 @@ msgstr ""
+ msgid "Pick a Font"
+ msgstr ""
+ 
++#: ../panels/keyboard/keyboard-shortcuts.c:368:
++#: ../panels/keyboard/cc-keyboard-option.c:259:
++#: ../panels/keyboard/cc-keyboard-option.c:378:
++#: ../panels/keyboard/cc-keyboard-shortcut-editor.ui:85:
+ msgid "Not use"
+ msgstr ""
+ 
++#: ../panels/power/power.ui:33
+ msgid "60 minutes"
+ msgstr ""
+ 
++#: ../panels/power/power.ui:49
+ msgid "120 minutes"
+ msgstr ""
++
++#: ../panels/themes/data/themes/gooroom-themes.ini:2
++msgid "Gooroom Icon Theme 1"
++msgstr ""
++
++#: ../panels/themes/data/themes/gooroom-themes.ini:6
++msgid "Gooroom Icon Theme 2"
++msgstr ""
++
++#: ../panels/themes/data/themes/gooroom-themes.ini:10
++msgid "Gooroom Icon Theme 3"
++msgstr ""
+diff --git a/po/en_GB.po b/po/en_GB.po
+index dc3d131..ea45263 100644
+--- a/po/en_GB.po
++++ b/po/en_GB.po
+@@ -14571,11 +14571,29 @@ msgstr "No Fonts Found"
+ msgid "Pick a Font"
+ msgstr "Pick a Font"
+ 
++#: ../panels/keyboard/keyboard-shortcuts.c:368:
++#: ../panels/keyboard/cc-keyboard-option.c:259:
++#: ../panels/keyboard/cc-keyboard-option.c:378:
++#: ../panels/keyboard/cc-keyboard-shortcut-editor.ui:85:
+ msgid "Not use"
+ msgstr "Not use"
+ 
++#: ../panels/power/power.ui:33
+ msgid "60 minutes"
+ msgstr "60 minutes"
+ 
++#: ../panels/power/power.ui:49
+ msgid "120 minutes"
+ msgstr "120 minutes"
++
++#: ../panels/themes/data/themes/gooroom-themes.ini:2
++msgid "Gooroom Icon Theme 1"
++msgstr ""
++
++#: ../panels/themes/data/themes/gooroom-themes.ini:6
++msgid "Gooroom Icon Theme 2"
++msgstr ""
++
++#: ../panels/themes/data/themes/gooroom-themes.ini:10
++msgid "Gooroom Icon Theme 3"
++msgstr ""
+diff --git a/po/ko.po b/po/ko.po
+index 9fdece8..759a17e 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -8334,9 +8334,25 @@ msgstr "글꼴이 없습니다"
+ msgid "Pick a Font"
+ msgstr "글꼴 고르기"
+ 
++#: ../panels/keyboard/keyboard-shortcuts.c:368:
++#: ../panels/keyboard/cc-keyboard-option.c:259:
++#: ../panels/keyboard/cc-keyboard-option.c:378:
++#: ../panels/keyboard/cc-keyboard-shortcut-editor.ui:85:
+ msgid "Not use"
+ msgstr "미사용"
+ 
++#: ../panels/themes/data/themes/gooroom-themes.ini:2
++msgid "Gooroom Icon Theme 1"
++msgstr "구름 테마 1"
++
++#: ../panels/themes/data/themes/gooroom-themes.ini:6
++msgid "Gooroom Icon Theme 2"
++msgstr "구름 테마 2"
++
++#: ../panels/themes/data/themes/gooroom-themes.ini:10
++msgid "Gooroom Icon Theme 3"
++msgstr "구름 테마 3"
++
+ # 권한 이름
+ #~ msgid "Add user accounts and change passwords"
+ #~ msgstr "사용자 계정 추가 및 암호 바꾸기"

@@ -1,0 +1,22 @@
+From: os1_3 <os1_3@tmax.co.kr>
+Date: Tue, 15 Mar 2022 16:11:39 +0900
+Subject: gooroom-91-Set-default-event-sound-button-to-drip
+
+---
+ panels/sound/cc-alert-chooser.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/panels/sound/cc-alert-chooser.c b/panels/sound/cc-alert-chooser.c
+index 8e60659..9b2d44d 100644
+--- a/panels/sound/cc-alert-chooser.c
++++ b/panels/sound/cc-alert-chooser.c
+@@ -273,6 +273,8 @@ cc_alert_chooser_init (CcAlertChooser *self)
+     set_button (self, self->glass_button, TRUE);
+   else if (g_strcmp0 (alert_name, "sonar") == 0)
+     set_button (self, self->sonar_button, TRUE);
+-  else if (alert_name != NULL)
++  else if (alert_name != NULL) {
+     g_warning ("Current alert sound has unknown name %s", alert_name);
++    set_button (self, self->drip_button, TRUE);
++  }
+ }

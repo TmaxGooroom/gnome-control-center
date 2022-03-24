@@ -1,0 +1,23 @@
+From: jiyong_kim2 <jiyong_kim2@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:29:05 +0900
+Subject: Modify network code error
+
+---
+ panels/network/net-device-ethernet.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/panels/network/net-device-ethernet.c b/panels/network/net-device-ethernet.c
+index 5eeeb47..9ef3121 100644
+--- a/panels/network/net-device-ethernet.c
++++ b/panels/network/net-device-ethernet.c
+@@ -473,8 +473,9 @@ ethernet_disconnected (GObject *source_object,
+     GError **error;
+     gboolean success = FALSE;
+     GtkWidget *widget;
++    NMDevice *device = NM_DEVICE(source_object);
+ 
+-    success = nm_device_disconnect_finish (self->device, res, error);
++    success = nm_device_disconnect_finish (device, res, error);
+ 
+     widget = GTK_WIDGET (self->device_off_switch);
+     if (!success)

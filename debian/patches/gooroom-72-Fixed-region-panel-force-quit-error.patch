@@ -1,0 +1,58 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-72-Fixed-region-panel-force-quit-error
+
+---
+ panels/region/cc-region-panel.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/panels/region/cc-region-panel.c b/panels/region/cc-region-panel.c
+index 3317236..3248664 100644
+--- a/panels/region/cc-region-panel.c
++++ b/panels/region/cc-region-panel.c
+@@ -50,7 +50,7 @@
+ #define INPUT_SOURCE_TYPE_XKB "xkb"
+ #define INPUT_SOURCE_TYPE_IBUS "ibus"
+ 
+-#define DEFAULT_LOCALE "ko_KR.utf-8"
++#define DEFAULT_LOCALE "ko_KR.UTF-8"
+ #define XSESSIONRC ".xsessionrc"
+ 
+ static const gchar *xsessionrc_template = "export LANG=%s\n"
+@@ -99,6 +99,7 @@ struct _CcRegionPanel {
+ CC_PANEL_REGISTER (CcRegionPanel, cc_region_panel)
+ 
+ static void update_language_label (CcRegionPanel *self);
++static void update_language_from_user (CcRegionPanel *self);
+ 
+ typedef struct
+ {
+@@ -432,8 +433,8 @@ update_language (CcRegionPanel *self,
+                 if (g_strcmp0 (language, self->language) == 0)
+                         return;
+                 set_account_property ("SetLanguage", language);
++                update_language_from_user (self);
+                 update_xsessionrc (self, language, self->region);
+-                update_language_label (self);
+                 maybe_notify (self, LC_MESSAGES, language);
+         }
+ }
+@@ -640,7 +641,6 @@ update_region_from_setting (CcRegionPanel *self)
+ static void
+ update_language_label (CcRegionPanel *self)
+ {
+-        self->language = get_account_property ("Language");
+         const gchar *language = get_effective_language (self);
+         g_autofree gchar *name = NULL;
+ 
+@@ -672,8 +672,8 @@ static void
+ setup_language_section (CcRegionPanel *self)
+ {
+         self->user = act_user_manager_get_user_by_id (self->user_manager, getuid ());
+-        g_signal_connect_object (self->user, "notify::language",
+-                                 G_CALLBACK (update_language_from_user), self, G_CONNECT_SWAPPED);
++//        g_signal_connect_object (self->user, "notify::language",
++//                                 G_CALLBACK (update_language_from_user), self, G_CONNECT_SWAPPED);
+ 
+         self->locale_settings = g_settings_new (GNOME_SYSTEM_LOCALE_DIR);
+         g_signal_connect_object (self->locale_settings, "changed::" KEY_REGION,

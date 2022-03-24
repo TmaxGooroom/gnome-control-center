@@ -1,0 +1,384 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-69-Updated-year-ui-to-combobox
+
+---
+ panels/datetime/big.ui              |  18 ++++---
+ panels/datetime/cc-datetime-panel.c | 102 +++++++++++++++++++++++++++++-------
+ panels/datetime/little.ui           |  18 +++++--
+ panels/datetime/middle.ui           |  18 +++++--
+ panels/datetime/ydm.ui              |  18 +++++--
+ 5 files changed, 138 insertions(+), 36 deletions(-)
+
+diff --git a/panels/datetime/big.ui b/panels/datetime/big.ui
+index 48f77b5..869de37 100644
+--- a/panels/datetime/big.ui
++++ b/panels/datetime/big.ui
+@@ -46,7 +46,7 @@
+         <property name="visible">True</property>
+         <property name="can_focus">False</property>
+         <property name="label" translatable="yes">Year</property>
+-        <property name="mnemonic_widget">year_spinbutton</property>
++        <property name="mnemonic_widget">year_combobox</property>
+         <property name="xalign">1</property>
+         <style>
+           <class name="dim-label"/>
+@@ -88,13 +88,17 @@
+       </packing>
+     </child>
+     <child>
+-      <object class="GtkSpinButton" id="year_spinbutton">
++      <object class="GtkComboBox" id="year_combobox">
+         <property name="visible">True</property>
+-        <property name="can_focus">True</property>
+-        <property name="invisible_char">•</property>
+-        <property name="width_chars">5</property>
+-        <property name="numeric">True</property>
+-        <property name="wrap">True</property>
++        <property name="can_focus">False</property>
++        <child>
++          <object class="GtkCellRendererText" id="cellrenderertext1">
++            <property name="height">20</property>
++          </object>
++          <attributes>
++            <attribute name="text">0</attribute>
++          </attributes>
++        </child>
+       </object>
+       <packing>
+         <property name="left_attach">1</property>
+diff --git a/panels/datetime/cc-datetime-panel.c b/panels/datetime/cc-datetime-panel.c
+index 3610172..40cc495 100644
+--- a/panels/datetime/cc-datetime-panel.c
++++ b/panels/datetime/cc-datetime-panel.c
+@@ -56,6 +56,11 @@ enum {
+   CITY_NUM_COLS
+ };
+ 
++enum {
++  YEAR_INT_COLUMN,
++  N_COLUMNS
++};
++
+ #define DATETIME_PERMISSION "org.gnome.controlcenter.datetime.configure"
+ #define DATETIME_TZ_PERMISSION "org.freedesktop.timedate1.set-timezone"
+ #define LOCATION_SETTINGS "org.gnome.system.location"
+@@ -85,6 +90,7 @@ struct _CcDateTimePanel
+   GtkTreeModelFilter *city_filter;
+ 
+   GDateTime *date;
++  GDateTime *default_date;
+ 
+   GSettings *clock_settings;
+   GSettings *datetime_settings;
+@@ -116,7 +122,8 @@ struct _CcDateTimePanel
+   GtkWidget *timezone_dialog;
+   GtkWidget *timezone_label;
+   GtkWidget *timezone_searchentry;
+-  GtkWidget *year_spinbutton;
++  //GtkWidget *year_spinbutton;
++  GtkWidget *year_combobox;
+ 
+   GnomeWallClock *clock_tracker;
+ 
+@@ -129,6 +136,7 @@ struct _CcDateTimePanel
+ 
+   gchar *filter_text;
+   gchar *preedit_text;
++  int year_index;
+ };
+ 
+ CC_PANEL_REGISTER (CcDateTimePanel, cc_date_time_panel)
+@@ -284,16 +292,35 @@ update_time (CcDateTimePanel *self)
+       return;
+ 
+   guint y, m, d;
+-  gint year, month, day;
++  gint default_year, year, month, day;
++
++  default_year = g_date_time_get_year (self->default_date);
+ 
+   year = g_date_time_get_year (self->date);
+-  y = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->year_spinbutton));
++  y = default_year - self->year_index + gtk_combo_box_get_active (GTK_COMBO_BOX (self->year_combobox));
++
+   if (y != year)
+-    {
+-      g_signal_handlers_block_by_func (self->year_spinbutton, month_year_changed, self);
+-      gtk_spin_button_set_value (GTK_SPIN_BUTTON (self->year_spinbutton), year);
+-      g_signal_handlers_unblock_by_func (self->year_spinbutton, month_year_changed, self);
+-    }
++  {
++      int i;
++      GtkListStore *tmp_liststore;
++      g_signal_handlers_block_by_func (self->year_combobox, month_year_changed, self);
++      tmp_liststore = gtk_list_store_new (N_COLUMNS, G_TYPE_INT);
++      for (i = 0; i < 29; i++) {
++        gtk_list_store_insert_with_values (tmp_liststore, NULL, i, YEAR_INT_COLUMN, year - 14 + i, -1);
++      }
++      gtk_combo_box_set_model (GTK_COMBO_BOX (self->year_combobox), GTK_TREE_MODEL (tmp_liststore));
++      gtk_combo_box_set_active (GTK_COMBO_BOX (self->year_combobox), 14);
++      self->default_date = g_date_time_new_now_local ();
++      self->year_index = 14;
++      g_signal_handlers_unblock_by_func (self->year_combobox, month_year_changed, self);
++  }
++
++//  if (y != year)
++//  {
++//      g_signal_handlers_block_by_func (self->year_spinbutton, month_year_changed, self);
++//      gtk_spin_button_set_value (GTK_SPIN_BUTTON (self->year_spinbutton), year);
++//      g_signal_handlers_unblock_by_func (self->year_spinbutton, month_year_changed, self);
++//  }
+ 
+   month = g_date_time_get_month (self->date);
+   m = 1+ gtk_combo_box_get_active (GTK_COMBO_BOX (self->month_combobox));
+@@ -392,6 +419,11 @@ queue_set_ntp (CcDateTimePanel *self)
+   gboolean using_ntp;
+   /* for now just do it */
+   using_ntp = gtk_switch_get_active (GTK_SWITCH (self->network_time_switch));
++  if (using_ntp)
++  {
++    g_date_time_unref (self->date);
++    self->date = g_date_time_new_now_local ();
++  }
+ 
+   timedate1_call_set_ntp (self->dtm,
+                           using_ntp,
+@@ -423,7 +455,8 @@ change_date (CcDateTimePanel *self)
+   g_autoptr(GDateTime) old_date = NULL;
+ 
+   mon = 1 + gtk_combo_box_get_active (GTK_COMBO_BOX (self->month_combobox));
+-  y = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->year_spinbutton));
++  y = g_date_time_get_year (self->default_date) - self->year_index + gtk_combo_box_get_active (GTK_COMBO_BOX (self->year_combobox));
++  //y = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->year_spinbutton));
+   d = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->day_spinbutton));
+ 
+   num_days = g_date_get_days_in_month (g_date_time_get_month (self->date),
+@@ -685,7 +718,10 @@ month_year_changed (CcDateTimePanel *self)
+   GtkSpinButton *day_spin;
+ 
+   mon = 1 + gtk_combo_box_get_active (GTK_COMBO_BOX (self->month_combobox));
+-  y = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->year_spinbutton));
++  y = g_date_time_get_year (self->default_date) - self->year_index + gtk_combo_box_get_active (GTK_COMBO_BOX (self->year_combobox));
++  if (MIN_DATE > y || y > MAX_DATE - 1)
++    return;
++  //y = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->year_spinbutton));
+ 
+   /* Check the number of days in that month */
+   num_days = g_date_get_days_in_month (mon, y);
+@@ -1049,15 +1085,19 @@ setup_datetime_dialog (CcDateTimePanel *self)
+                            G_CALLBACK (day_changed), self, G_CONNECT_SWAPPED);
+ 
+   /* Year */
+-  guint local_year = g_date_time_get_year (self->date);
+-  adjustment = (GtkAdjustment*) gtk_adjustment_new (local_year,
+-                                                    MIN_DATE, MAX_DATE, 1,
+-                                                    10, 1);
+-
+-  gtk_spin_button_set_adjustment (GTK_SPIN_BUTTON (self->year_spinbutton),
+-                                  adjustment);
+-  g_signal_connect_object (G_OBJECT (self->year_spinbutton), "value-changed",
++  gtk_combo_box_set_active (GTK_COMBO_BOX (self->year_combobox),
++                            g_date_time_get_year (self->default_date) - g_date_time_get_year (self->date) + self->year_index);
++  g_signal_connect_object (G_OBJECT (self->year_combobox), "changed",
+                            G_CALLBACK (month_year_changed), self, G_CONNECT_SWAPPED);
++//  guint local_year = g_date_time_get_year (self->date);
++//  adjustment = (GtkAdjustment*) gtk_adjustment_new (local_year,
++//                                                    MIN_DATE, MAX_DATE, 1,
++//                                                    10, 1);
++//
++//  gtk_spin_button_set_adjustment (GTK_SPIN_BUTTON (self->year_spinbutton),
++//                                  adjustment);
++//  g_signal_connect_object (G_OBJECT (self->year_spinbutton), "value-changed",
++//                           G_CALLBACK (month_year_changed), self, G_CONNECT_SWAPPED);
+ }
+ 
+ static void
+@@ -1113,6 +1153,8 @@ cc_date_time_panel_init (CcDateTimePanel *self)
+   g_autoptr(GError) error = NULL;
+   const char *date_grid_name;
+   g_autofree gchar *tmp = NULL;
++  GtkListStore *year_liststore;
++  int year, i;
+ 
+   g_resources_register (cc_datetime_get_resource ());
+ 
+@@ -1120,8 +1162,11 @@ cc_date_time_panel_init (CcDateTimePanel *self)
+ 
+   self->filter_text = NULL;
+   self->preedit_text = NULL;
++  self->year_index = 0;
+   self->cancellable = g_cancellable_new ();
++  self->default_date = g_date_time_new_now_local ();
+   error = NULL;
++  year = 0;
+   self->dtm = timedate1_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+                                                 G_DBUS_PROXY_FLAGS_NONE,
+                                                 "org.freedesktop.timedate1",
+@@ -1150,6 +1195,20 @@ cc_date_time_panel_init (CcDateTimePanel *self)
+     g_assert_not_reached ();
+   }
+ 
++  year = g_date_time_get_year (self->default_date);
++  year_liststore = gtk_list_store_new (N_COLUMNS, G_TYPE_INT);
++
++  if (MIN_DATE > year - 14) {
++    self->year_index = year - MIN_DATE;
++  } else if (year + 14 > MAX_DATE - 1) {
++    self->year_index = 29 - (MAX_DATE - year);
++  } else {
++    self->year_index = 14;
++  }
++  for (i = 0; i < 29; i++) {
++      gtk_list_store_insert_with_values (year_liststore, NULL, i, YEAR_INT_COLUMN, year - self->year_index + i, -1);
++  }
++
+   self->builder = gtk_builder_new ();
+   tmp = g_strdup_printf ("/org/gnome/control-center/datetime/%s.ui", date_grid_name);
+   gtk_builder_add_from_resource (self->builder, tmp, NULL);
+@@ -1157,7 +1216,10 @@ cc_date_time_panel_init (CcDateTimePanel *self)
+   self->day_spinbutton = GTK_WIDGET (gtk_builder_get_object (self->builder, "day_spinbutton"));
+   self->month_combobox = GTK_WIDGET (gtk_builder_get_object (self->builder, "month_combobox"));
+   gtk_combo_box_set_model (GTK_COMBO_BOX (self->month_combobox), GTK_TREE_MODEL (self->month_liststore));
+-  self->year_spinbutton = GTK_WIDGET (gtk_builder_get_object (self->builder, "year_spinbutton"));
++  self->year_combobox = GTK_WIDGET (gtk_builder_get_object (self->builder, "year_combobox"));
++  gtk_combo_box_set_model (GTK_COMBO_BOX (self->year_combobox), GTK_TREE_MODEL (year_liststore));
++  gtk_combo_box_set_active (GTK_COMBO_BOX (self->year_combobox), self->year_index);
++  //self->year_spinbutton = GTK_WIDGET (gtk_builder_get_object (self->builder, "year_spinbutton"));
+ 
+   gtk_box_pack_end (GTK_BOX (self->time_box), self->date_grid, FALSE, TRUE, 0);
+ 
+@@ -1260,6 +1322,6 @@ cc_date_time_panel_init (CcDateTimePanel *self)
+   g_signal_connect (self->datetime_dialog, "hide",
+                          G_CALLBACK (on_datetime_dialog_hide), self);
+   /* set max length */
+-  gtk_entry_set_max_length (GTK_ENTRY (self->year_spinbutton), 4);
++  //gtk_entry_set_max_length (GTK_ENTRY (self->year_spinbutton), 4);
+   gtk_entry_set_max_length (GTK_ENTRY (self->day_spinbutton), 2);
+ }
+diff --git a/panels/datetime/little.ui b/panels/datetime/little.ui
+index 3a41157..b296166 100644
+--- a/panels/datetime/little.ui
++++ b/panels/datetime/little.ui
+@@ -46,7 +46,7 @@
+         <property name="visible">True</property>
+         <property name="can_focus">False</property>
+         <property name="label" translatable="yes">Year</property>
+-        <property name="mnemonic_widget">year_spinbutton</property>
++        <property name="mnemonic_widget">year_combobox</property>
+         <property name="xalign">1</property>
+         <style>
+           <class name="dim-label"/>
+@@ -88,14 +88,26 @@
+       </packing>
+     </child>
+     <child>
+-      <object class="GtkSpinButton" id="year_spinbutton">
++      <object class="GtkComboBox" id="year_combobox">
++        <property name="visible">True</property>
++        <property name="can_focus">False</property>
++        <child>
++          <object class="GtkCellRendererText" id="cellrenderertext1">
++            <property name="height">20</property>
++          </object>
++          <attributes>
++            <attribute name="text">0</attribute>
++          </attributes>
++        </child>
++      </object>
++      <!--object class="GtkSpinButton" id="year_spinbutton">
+         <property name="visible">True</property>
+         <property name="can_focus">True</property>
+         <property name="invisible_char">•</property>
+         <property name="width_chars">5</property>
+         <property name="numeric">True</property>
+         <property name="wrap">True</property>
+-      </object>
++      </object-->
+       <packing>
+         <property name="left_attach">1</property>
+         <property name="top_attach">2</property>
+diff --git a/panels/datetime/middle.ui b/panels/datetime/middle.ui
+index 621cfc4..4e52b34 100644
+--- a/panels/datetime/middle.ui
++++ b/panels/datetime/middle.ui
+@@ -46,7 +46,7 @@
+         <property name="visible">True</property>
+         <property name="can_focus">False</property>
+         <property name="label" translatable="yes">Year</property>
+-        <property name="mnemonic_widget">year_spinbutton</property>
++        <property name="mnemonic_widget">year_combobox</property>
+         <property name="xalign">1</property>
+         <style>
+           <class name="dim-label"/>
+@@ -88,14 +88,26 @@
+       </packing>
+     </child>
+     <child>
+-      <object class="GtkSpinButton" id="year_spinbutton">
++      <object class="GtkComboBox" id="year_combobox">
++        <property name="visible">True</property>
++        <property name="can_focus">False</property>
++        <child>
++          <object class="GtkCellRendererText" id="cellrenderertext1">
++            <property name="height">20</property>
++          </object>
++          <attributes>
++            <attribute name="text">0</attribute>
++          </attributes>
++        </child>
++      </object>
++      <!--object class="GtkSpinButton" id="year_spinbutton">
+         <property name="visible">True</property>
+         <property name="can_focus">True</property>
+         <property name="invisible_char">•</property>
+         <property name="width_chars">5</property>
+         <property name="numeric">True</property>
+         <property name="wrap">True</property>
+-      </object>
++      </object-->
+       <packing>
+         <property name="left_attach">1</property>
+         <property name="top_attach">2</property>
+diff --git a/panels/datetime/ydm.ui b/panels/datetime/ydm.ui
+index 85b8833..663844c 100644
+--- a/panels/datetime/ydm.ui
++++ b/panels/datetime/ydm.ui
+@@ -46,7 +46,7 @@
+         <property name="visible">True</property>
+         <property name="can_focus">False</property>
+         <property name="label" translatable="yes">Year</property>
+-        <property name="mnemonic_widget">year_spinbutton</property>
++        <property name="mnemonic_widget">year_combobox</property>
+         <property name="xalign">1</property>
+         <style>
+           <class name="dim-label"/>
+@@ -88,14 +88,26 @@
+       </packing>
+     </child>
+     <child>
+-      <object class="GtkSpinButton" id="year_spinbutton">
++      <object class="GtkComboBox" id="year_combobox">
++        <property name="visible">True</property>
++        <property name="can_focus">False</property>
++        <child>
++          <object class="GtkCellRendererText" id="cellrenderertext1">
++            <property name="height">20</property>
++          </object>
++          <attributes>
++            <attribute name="text">0</attribute>
++          </attributes>
++        </child>
++      </object>
++      <!--object class="GtkSpinButton" id="year_spinbutton">
+         <property name="visible">True</property>
+         <property name="can_focus">True</property>
+         <property name="invisible_char">•</property>
+         <property name="width_chars">5</property>
+         <property name="numeric">True</property>
+         <property name="wrap">True</property>
+-      </object>
++      </object-->
+       <packing>
+         <property name="left_attach">1</property>
+         <property name="top_attach">0</property>

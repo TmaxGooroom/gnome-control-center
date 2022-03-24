@@ -1,0 +1,45 @@
+From: jiyong_kim2 <jiyong_kim2@tmax.co.kr>
+Date: Thu, 24 Mar 2022 15:26:28 +0900
+Subject: Change background function that can't set the background and lock
+ screen differently
+
+---
+ panels/background/cc-background-panel.c  | 4 ++--
+ panels/background/cc-background-panel.ui | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/panels/background/cc-background-panel.c b/panels/background/cc-background-panel.c
+index 896c4d0..6f312fa 100644
+--- a/panels/background/cc-background-panel.c
++++ b/panels/background/cc-background-panel.c
+@@ -652,7 +652,7 @@ cc_background_panel_constructed (GObject *object)
+   g_signal_connect (panel->desktop_eventbox, "button-press-event", G_CALLBACK (on_desktop_press), panel);
+   g_signal_connect (panel->lock_eventbox, "button-press-event", G_CALLBACK (on_lock_press), panel);
+ 
+-  gtk_combo_box_set_active (GTK_COMBO_BOX (panel->type_select_combobox), MODE_EACH);
++  gtk_combo_box_set_active (GTK_COMBO_BOX (panel->type_select_combobox), MODE_ALL);
+ }
+ 
+ static void
+@@ -734,7 +734,7 @@ cc_background_panel_init (CcBackgroundPanel *panel)
+   gtk_css_provider_load_from_file (panel->provider, file, NULL);
+   g_object_unref (file);
+ 
+-  panel->background_mode = MODE_EACH;
++  panel->background_mode = MODE_ALL;
+   panel->applied_background = APPLY_DESKTOP;
+ 
+   panel->connection = g_application_get_dbus_connection (g_application_get_default ());
+diff --git a/panels/background/cc-background-panel.ui b/panels/background/cc-background-panel.ui
+index b94baee..5cc552d 100644
+--- a/panels/background/cc-background-panel.ui
++++ b/panels/background/cc-background-panel.ui
+@@ -55,7 +55,7 @@
+                         <property name="spacing">40</property>
+                         <child>
+                           <object class="GtkBox">
+-                            <property name="visible">True</property>
++                            <property name="visible">False</property>
+                             <property name="can_focus">False</property>
+                             <property name="orientation">vertical</property>
+                             <property name="spacing">10</property>

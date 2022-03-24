@@ -1,0 +1,103 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-45-Added-network-wifi-header-button-sensitive
+
+---
+ panels/network/net-device-wifi.c | 27 +++++++++++++++++++++++++++
+ panels/network/network-wifi.ui   |  3 ++-
+ 2 files changed, 29 insertions(+), 1 deletion(-)
+
+diff --git a/panels/network/net-device-wifi.c b/panels/network/net-device-wifi.c
+index 233ef96..c40970c 100644
+--- a/panels/network/net-device-wifi.c
++++ b/panels/network/net-device-wifi.c
+@@ -59,11 +59,13 @@ struct _NetDeviceWifi
+         GtkBox                  *center_box;
+         GtkSwitch               *device_off_switch;
+         GtkBox                  *header_box;
++        GtkMenuButton           *header_button;
+         GtkBox                  *hotspot_box;
+         CcListRow               *hotspot_name_row;
+         CcListRow               *hotspot_security_row;
+         CcListRow               *hotspot_password_row;
+         GtkBox                  *listbox_box;
++        GtkButton               *connect_hidden_button;
+         GtkButton               *start_hotspot_button;
+         GtkLabel                *status_label;
+         GtkLabel                *title_label;
+@@ -382,6 +384,27 @@ device_off_switch_changed_cb (NetDeviceWifi *self)
+                 disable_scan_timeout (self);
+ }
+ 
++static void
++button_sensitive (GtkWidget *widget, gboolean enabled, NetDeviceWifi *device_wifi)
++{
++        gtk_widget_set_sensitive (widget, enabled);
++}
++
++static void
++button_sensitive_set (NetDeviceWifi *self)
++{
++       GtkWidget *start_hotspot_widget;
++       GtkWidget *connect_hidden_widget;
++       gboolean enabled;
++
++       start_hotspot_widget = GTK_WIDGET (self->start_hotspot_button);
++       connect_hidden_widget = GTK_WIDGET (self->connect_hidden_button);
++       enabled = nm_client_wireless_get_enabled (self->client);
++
++       button_sensitive (start_hotspot_widget, enabled, self);
++       button_sensitive (connect_hidden_widget, enabled, self);
++}
++
+ static void
+ connect_hidden_button_clicked_cb (NetDeviceWifi *self)
+ {
+@@ -1151,15 +1174,18 @@ net_device_wifi_class_init (NetDeviceWifiClass *klass)
+         gtk_widget_class_bind_template_child (widget_class, NetDeviceWifi, center_box);
+         gtk_widget_class_bind_template_child (widget_class, NetDeviceWifi, device_off_switch);
+         gtk_widget_class_bind_template_child (widget_class, NetDeviceWifi, header_box);
++        gtk_widget_class_bind_template_child (widget_class, NetDeviceWifi, header_button);
+         gtk_widget_class_bind_template_child (widget_class, NetDeviceWifi, hotspot_box);
+         gtk_widget_class_bind_template_child (widget_class, NetDeviceWifi, hotspot_name_row);
+         gtk_widget_class_bind_template_child (widget_class, NetDeviceWifi, hotspot_security_row);
+         gtk_widget_class_bind_template_child (widget_class, NetDeviceWifi, hotspot_password_row);
+         gtk_widget_class_bind_template_child (widget_class, NetDeviceWifi, listbox_box);
++        gtk_widget_class_bind_template_child (widget_class, NetDeviceWifi, connect_hidden_button);
+         gtk_widget_class_bind_template_child (widget_class, NetDeviceWifi, start_hotspot_button);
+         gtk_widget_class_bind_template_child (widget_class, NetDeviceWifi, status_label);
+         gtk_widget_class_bind_template_child (widget_class, NetDeviceWifi, title_label);
+ 
++        gtk_widget_class_bind_template_callback (widget_class, button_sensitive_set);
+         gtk_widget_class_bind_template_callback (widget_class, connect_hidden_button_clicked_cb);
+         gtk_widget_class_bind_template_callback (widget_class, device_off_switch_changed_cb);
+         gtk_widget_class_bind_template_callback (widget_class, history_button_clicked_cb);
+@@ -1205,6 +1231,7 @@ net_device_wifi_new (CcPanel *panel, NMClient *client, NMDevice *device)
+ {
+         NetDeviceWifi *self;
+         GtkWidget *list;
++        GtkWidget *widget;
+ 
+         self = g_object_new (net_device_wifi_get_type (), NULL);
+         self->panel = panel;
+diff --git a/panels/network/network-wifi.ui b/panels/network/network-wifi.ui
+index b95adcb..8713fc9 100644
+--- a/panels/network/network-wifi.ui
++++ b/panels/network/network-wifi.ui
+@@ -91,6 +91,7 @@
+         <property name="visible">True</property>
+         <property name="can_focus">False</property>
+         <property name="popover">header_button_popover</property>
++        <signal name="clicked" handler="button_sensitive_set" object="NetDeviceWifi" swapped="yes"/>
+         <child>
+           <object class="GtkImage">
+             <property name="visible">True</property>
+@@ -112,7 +113,7 @@
+         <property name="spacing">6</property>
+         <property name="orientation">vertical</property>
+         <child>
+-          <object class="GtkModelButton">
++          <object class="GtkModelButton" id="connect_hidden_button">
+             <property name="label" translatable="yes">_Connect to Hidden Network…</property>
+             <property name="visible">True</property>
+             <property name="can_focus">True</property>

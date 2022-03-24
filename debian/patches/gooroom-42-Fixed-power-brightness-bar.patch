@@ -1,0 +1,21 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-42-Fixed-power-brightness-bar
+
+---
+ panels/power/cc-brightness-scale.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/panels/power/cc-brightness-scale.c b/panels/power/cc-brightness-scale.c
+index a34cb32..5171777 100644
+--- a/panels/power/cc-brightness-scale.c
++++ b/panels/power/cc-brightness-scale.c
+@@ -223,7 +223,7 @@ cc_brightness_scale_constructed (GObject *object)
+                                        got_proxy_cb,
+                                        self);
+ 
+-  gtk_range_set_range (GTK_RANGE (self), 1, 100);
++  gtk_range_set_range (GTK_RANGE (self), 0, 100);
+   gtk_range_set_increments (GTK_RANGE (self), 1, 10);
+   gtk_range_set_round_digits (GTK_RANGE (self), 0);
+   gtk_scale_set_draw_value (GTK_SCALE (self), FALSE);

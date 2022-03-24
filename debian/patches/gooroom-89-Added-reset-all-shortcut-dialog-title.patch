@@ -1,0 +1,20 @@
+From: os1_3 <os1_3@tmax.co.kr>
+Date: Tue, 15 Mar 2022 16:11:39 +0900
+Subject: gooroom-89-Added-reset-all-shortcut-dialog-title
+
+---
+ panels/keyboard/cc-keyboard-panel.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/panels/keyboard/cc-keyboard-panel.c b/panels/keyboard/cc-keyboard-panel.c
+index 57f52c9..426b80c 100644
+--- a/panels/keyboard/cc-keyboard-panel.c
++++ b/panels/keyboard/cc-keyboard-panel.c
+@@ -202,6 +202,7 @@ reset_all_clicked_cb (CcKeyboardPanel *self)
+                                    GTK_BUTTONS_NONE,
+                                    _("Reset All Shortcuts?"));
+ 
++  gtk_window_set_title (GTK_WINDOW (dialog), _("Reset All"));
+   gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog),
+                                             _("Resetting the shortcuts may affect your custom shortcuts. "
+                                               "This cannot be undone."));

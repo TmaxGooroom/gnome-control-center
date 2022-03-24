@@ -1,0 +1,36 @@
+From: donghun <donghun@gooroom.kr>
+Date: Wed, 10 Mar 2021 22:01:28 +0900
+Subject: [PATCH] Fixed GSlice memory error
+
+Change-Id: Ia634e0f398bda5a6562b59e616d9c69cee79abbc
+---
+ panels/printers/cc-printers-panel.c | 2 +-
+ panels/printers/pp-printer.c        | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/panels/printers/cc-printers-panel.c b/panels/printers/cc-printers-panel.c
+index 4ee28c9..5896c93 100644
+--- a/panels/printers/cc-printers-panel.c
++++ b/panels/printers/cc-printers-panel.c
+@@ -750,7 +750,7 @@ add_printer_entry (CcPrintersPanel *self,
+   GtkWidget              *content;
+   GSList                 *widgets, *l;
+ 
+-  printer_entry_tmp = PP_PRINTER_ENTRY (g_hash_table_lookup (self->printer_entries, printer.name));
++  printer_entry_tmp = g_hash_table_lookup (self->printer_entries, printer.name);
+   if (printer_entry_tmp && pp_printer_entry_is_activate_jobs_dialog (printer_entry_tmp))
+     return;
+ 
+diff --git a/panels/printers/pp-printer.c b/panels/printers/pp-printer.c
+index 451f9b9..7751ba6 100644
+--- a/panels/printers/pp-printer.c
++++ b/panels/printers/pp-printer.c
+@@ -607,7 +607,7 @@ pp_printer_print_file_async (PpPrinter           *self,
+   PrintFileData *print_file_data;
+   GTask *task;
+ 
+-  print_file_data = g_new (PrintFileData, 1);
++  print_file_data = g_slice_new (PrintFileData);
+   print_file_data->filename = g_strdup (filename);
+   print_file_data->job_name = g_strdup (job_name);
+ 

@@ -1,0 +1,86 @@
+From: HaeRyong Jeong <jeong89@gooroom.kr>
+Date: Mon, 11 May 2020 10:49:36 +0900
+Subject: [PATCH] Add disconnected text in title bar in wifi panel
+
+Change-Id: If42350a7f1f40541a0dfe098f2fa2850fc417ada
+---
+ panels/network/panel-common.c              | 3 ++-
+ panels/thunderbolt/cc-bolt-device-dialog.c | 2 +-
+ panels/thunderbolt/cc-bolt-device-entry.c  | 2 +-
+ po/en_GB.po                                | 2 +-
+ po/ko.po                                   | 2 +-
+ 5 files changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/panels/network/panel-common.c b/panels/network/panel-common.c
+index 5f3f751..963cb51 100644
+--- a/panels/network/panel-common.c
++++ b/panels/network/panel-common.c
+@@ -365,7 +365,6 @@ panel_device_status_to_localized_string (NMDevice *nm_device,
+                         g_string_append (string, " - ");
+                 g_string_append (string, speed);
+         } else if (state == NM_DEVICE_STATE_UNAVAILABLE ||
+-                   state == NM_DEVICE_STATE_DISCONNECTED ||
+                    state == NM_DEVICE_STATE_DEACTIVATING ||
+                    state == NM_DEVICE_STATE_FAILED) {
+                 reason_str = device_state_reason_to_localized_string (nm_device);
+@@ -374,6 +373,8 @@ panel_device_status_to_localized_string (NMDevice *nm_device,
+                                 g_string_append (string, " - ");
+                         g_string_append (string, reason_str);
+                 }
++        } else if (state == NM_DEVICE_STATE_DISCONNECTED) {
++                g_string_append (string, C_("Device Status", "Disconnected"));
+         }
+ 
+         return g_string_free (string, FALSE);
+diff --git a/panels/thunderbolt/cc-bolt-device-dialog.c b/panels/thunderbolt/cc-bolt-device-dialog.c
+index a1683c4..ed948c3 100644
+--- a/panels/thunderbolt/cc-bolt-device-dialog.c
++++ b/panels/thunderbolt/cc-bolt-device-dialog.c
+@@ -91,7 +91,7 @@ status_to_string_for_ui (BoltDevice *dev)
+   switch (status)
+     {
+     case BOLT_STATUS_DISCONNECTED:
+-      return C_("Thunderbolt Device Status", "Disconnected");
++      return C_("Device Status", "Disconnected");
+ 
+     case BOLT_STATUS_CONNECTING:
+       return C_("Thunderbolt Device Status", "Connecting");
+diff --git a/panels/thunderbolt/cc-bolt-device-entry.c b/panels/thunderbolt/cc-bolt-device-entry.c
+index cba7ac0..134af8f 100644
+--- a/panels/thunderbolt/cc-bolt-device-entry.c
++++ b/panels/thunderbolt/cc-bolt-device-entry.c
+@@ -122,7 +122,7 @@ device_status_to_brief_for_ui (BoltDevice *dev)
+   switch (status)
+     {
+     case BOLT_STATUS_DISCONNECTED:
+-      return C_("Thunderbolt Device Status", "Disconnected");
++      return C_("Device Status", "Disconnected");
+ 
+     case BOLT_STATUS_CONNECTING:
+       return C_("Thunderbolt Device Status", "Connecting");
+diff --git a/po/en_GB.po b/po/en_GB.po
+index 18f8bde..9cd2d98 100644
+--- a/po/en_GB.po
++++ b/po/en_GB.po
+@@ -6038,7 +6038,7 @@ msgstr ""
+ 
+ #: panels/thunderbolt/cc-bolt-device-dialog.c:94
+ #: panels/thunderbolt/cc-bolt-device-entry.c:125
+-msgctxt "Thunderbolt Device Status"
++msgctxt "Device Status"
+ msgid "Disconnected"
+ msgstr "Disconnected"
+ 
+diff --git a/po/ko.po b/po/ko.po
+index 9815c23..3317de4 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -6038,7 +6038,7 @@ msgstr ""
+ 
+ #: panels/thunderbolt/cc-bolt-device-dialog.c:94
+ #: panels/thunderbolt/cc-bolt-device-entry.c:125
+-msgctxt "Thunderbolt Device Status"
++msgctxt "Device Status"
+ msgid "Disconnected"
+ msgstr "연결 끊김"
+ 

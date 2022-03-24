@@ -1,0 +1,20 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-79-Updated-device-name-rename-button-sensitivity
+
+---
+ panels/info-overview/cc-info-overview-panel.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/panels/info-overview/cc-info-overview-panel.c b/panels/info-overview/cc-info-overview-panel.c
+index 334a0ec..8e4fe2b 100644
+--- a/panels/info-overview/cc-info-overview-panel.c
++++ b/panels/info-overview/cc-info-overview-panel.c
+@@ -881,6 +881,7 @@ cc_info_overview_panel_init (CcInfoOverviewPanel *self)
+ 
+   info_overview_panel_setup_overview (self);
+   info_overview_panel_setup_virt (self);
++  gtk_widget_set_sensitive (self->rename_button, gtk_widget_get_sensitive (GTK_WIDGET (self->device_name_entry)));
+ }
+ 
+ GtkWidget *

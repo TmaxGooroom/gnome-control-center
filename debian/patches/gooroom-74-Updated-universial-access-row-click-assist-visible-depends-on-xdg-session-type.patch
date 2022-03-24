@@ -1,0 +1,33 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: 
+ gooroom-74-Updated-universial-access-row-click-assist-visible-depends-on-xdg-session-type
+
+---
+ panels/universal-access/cc-ua-panel.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/panels/universal-access/cc-ua-panel.c b/panels/universal-access/cc-ua-panel.c
+index e382a91..d7aac25 100644
+--- a/panels/universal-access/cc-ua-panel.c
++++ b/panels/universal-access/cc-ua-panel.c
+@@ -24,6 +24,7 @@
+ 
+ #include <config.h>
+ 
++#include <stdlib.h>
+ #include <math.h>
+ #include <glib/gi18n-lib.h>
+ #include <gdesktop-enums.h>
+@@ -1004,6 +1005,11 @@ cc_ua_panel_init_mouse (CcUaPanel *self)
+   list = self->list_pointing;
+   add_section (list, self);
+ 
++  if (g_strcmp0 (getenv ("XDG_SESSION_TYPE"), "x11") == 0)
++  {
++    gtk_widget_set_visible (self->row_click_assist, FALSE);
++  }
++
+   add_separators (GTK_LIST_BOX (list));
+ 
+   g_signal_connect_object (list, "row-activated",

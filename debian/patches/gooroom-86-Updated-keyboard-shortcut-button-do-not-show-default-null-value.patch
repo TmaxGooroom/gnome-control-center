@@ -1,0 +1,23 @@
+From: os1_3 <os1_3@tmax.co.kr>
+Date: Tue, 15 Mar 2022 16:11:39 +0900
+Subject: 
+ gooroom-86-Updated-keyboard-shortcut-button-do-not-show-default-null-value
+
+---
+ panels/keyboard/cc-keyboard-item.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/panels/keyboard/cc-keyboard-item.c b/panels/keyboard/cc-keyboard-item.c
+index 853c598..e37d691 100644
+--- a/panels/keyboard/cc-keyboard-item.c
++++ b/panels/keyboard/cc-keyboard-item.c
+@@ -787,7 +787,8 @@ cc_keyboard_item_is_value_default (CcKeyboardItem *self)
+       default_binding = get_binding_from_variant (default_value);
+       user_binding = get_binding_from_variant (user_value);
+ 
+-      is_value_default = (g_strcmp0 (default_binding, user_binding) == 0);
++      is_value_default = ((g_strcmp0 (default_binding, user_binding) == 0) ||
++                          ((!user_binding) && g_strcmp0 (default_binding, """") == 0));
+ 
+       g_clear_pointer (&default_value, g_variant_unref);
+     }

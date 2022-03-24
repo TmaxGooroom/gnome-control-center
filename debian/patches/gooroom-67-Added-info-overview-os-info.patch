@@ -1,0 +1,105 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-67-Added-info-overview-os-info
+
+---
+ panels/info-overview/cc-info-overview-panel.c  | 28 +++++++++++++++++++++++++-
+ panels/info-overview/cc-info-overview-panel.ui |  9 +++++++++
+ po/ko.po                                       |  4 ++++
+ 3 files changed, 40 insertions(+), 1 deletion(-)
+
+diff --git a/panels/info-overview/cc-info-overview-panel.c b/panels/info-overview/cc-info-overview-panel.c
+index 01c72a5..334a0ec 100644
+--- a/panels/info-overview/cc-info-overview-panel.c
++++ b/panels/info-overview/cc-info-overview-panel.c
+@@ -71,6 +71,7 @@ struct _CcInfoOverviewPanel
+   GtkListBox      *os_box;
+ //  CcListRow       *os_name_row;
+   CcListRow       *os_type_row;
++  CcListRow       *os_info_row;
+   CcListRow       *processor_row;
+   CcListRow       *software_updates_row;
+   CcListRow       *virtualization_row;
+@@ -691,7 +692,8 @@ info_overview_panel_setup_overview (CcInfoOverviewPanel *self)
+   g_autofree char *memory_text = NULL;
+   g_autofree char *cpu_text = NULL;
+   g_autofree char *os_type_text = NULL;
+-  g_autofree char *os_name_text = NULL;
++  g_autofree char *os_info_text = NULL;
++  g_autofree char *contents = NULL;
+   g_autofree gchar *graphics_hardware_string = NULL;
+ 
+   if (load_gnome_version (&gnome_version, NULL, NULL))
+@@ -711,6 +713,29 @@ info_overview_panel_setup_overview (CcInfoOverviewPanel *self)
+   os_type_text = get_os_type ();
+   cc_list_row_set_secondary_label (self->os_type_row, os_type_text);
+ 
++  g_file_get_contents ("/etc/lsb-release", &contents, NULL, NULL);
++
++  if (contents) {
++    guint i = 0;
++    gchar **lines = g_strsplit (contents, "\n", -1);
++    for (i = 0; lines[i] != NULL; i++) {
++      if (g_str_has_prefix (lines[i], "DISTRIB_DESCRIPTION=")) {
++        gchar **tokens = g_strsplit (lines[i], "=", -1);
++        if (tokens[1]) {
++          os_info_text = g_strdelimit (g_strdup(tokens[1]), "\"",' ');
++          g_strstrip (os_info_text);
++        }
++        g_strfreev (tokens);
++        break;
++      }
++    }
++    g_strfreev (lines);
++  }
++
++  if (os_info_text) {
++    cc_list_row_set_secondary_label (self->os_info_row, os_info_text);
++  }
++
+ //  os_name_text = get_os_name ();
+ //  cc_list_row_set_secondary_label (self->os_name_row, os_name_text);
+ 
+@@ -828,6 +853,7 @@ cc_info_overview_panel_class_init (CcInfoOverviewPanelClass *klass)
+   gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, os_box);
+ //  gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, os_name_row);
+   gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, os_type_row);
++  gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, os_info_row);
+   gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, processor_row);
+   gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, rename_button);
+   gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, software_updates_row);
+diff --git a/panels/info-overview/cc-info-overview-panel.ui b/panels/info-overview/cc-info-overview-panel.ui
+index b3153ad..b95e4be 100644
+--- a/panels/info-overview/cc-info-overview-panel.ui
++++ b/panels/info-overview/cc-info-overview-panel.ui
+@@ -135,6 +135,15 @@
+                       </object>
+                     </child>
+ 
++                    <!-- OS Info -->
++                    <child>
++                      <object class="CcListRow" id="os_info_row">
++                        <property name="visible">True</property>
++                        <property name="activatable">False</property>
++                        <property name="title" translatable="yes">OS Info</property>
++                      </object>
++                    </child>
++
+                     <!-- GNOME Version -->
+                     <child>
+                       <object class="CcListRow" id="gnome_version_row">
+diff --git a/po/ko.po b/po/ko.po
+index eecd902..96c0690 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -1862,6 +1862,10 @@ msgstr "알 수 없음"
+ msgid "Device Name"
+ msgstr "장치 이름"
+ 
++#: panels/info-overview/cc-info-overview-panel.ui:52
++msgid "OS Info"
++msgstr "운영 체제 정보"
++
+ #: panels/info-overview/cc-info-overview-panel.ui:74
+ msgid "Memory"
+ msgstr "메모리"

@@ -1,0 +1,129 @@
+From: donghun <donghun@gooroom.kr>
+Date: Mon, 30 Nov 2020 12:44:28 +0900
+Subject: [PATCH] Fixed date time setting error
+
+Change-Id: I88c5d229a39f0bd36721c59b3507815b61dcca44
+---
+ panels/datetime/cc-datetime-panel.c | 75 ++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 73 insertions(+), 2 deletions(-)
+
+diff --git a/panels/datetime/cc-datetime-panel.c b/panels/datetime/cc-datetime-panel.c
+index 65c6fcc..afb9765 100644
+--- a/panels/datetime/cc-datetime-panel.c
++++ b/panels/datetime/cc-datetime-panel.c
+@@ -46,6 +46,9 @@
+ #define DEFAULT_TZ "Europe/London"
+ #define GETTEXT_PACKAGE_TIMEZONES GETTEXT_PACKAGE "-timezones"
+ 
++#define MAX_DATE 2036
++#define MIN_DATE 1970
++
+ enum {
+   CITY_COL_CITY_HUMAN_READABLE,
+   CITY_COL_ZONE,
+@@ -128,6 +131,9 @@ CC_PANEL_REGISTER (CcDateTimePanel, cc_date_time_panel)
+ 
+ static void update_time (CcDateTimePanel *self);
+ 
++static void month_year_changed (CcDateTimePanel *self);
++static void day_changed (CcDateTimePanel *panel);
++
+ static void
+ cc_date_time_panel_dispose (GObject *object)
+ {
+@@ -264,6 +270,42 @@ update_time (CcDateTimePanel *self)
+     }
+ 
+   gtk_label_set_text (GTK_LABEL (self->datetime_label), label);
++
++  gboolean using_ntp;
++  using_ntp = gtk_switch_get_active (GTK_SWITCH (self->network_time_switch));
++
++  if (!using_ntp)
++      return;
++
++  guint y, m, d;
++  gint year, month, day;
++
++  year = g_date_time_get_year (self->date);
++  y = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->year_spinbutton));
++  if (y != year)
++    {
++      g_signal_handlers_block_by_func (self->year_spinbutton, month_year_changed, self);
++      gtk_spin_button_set_value (GTK_SPIN_BUTTON (self->year_spinbutton), year);
++      g_signal_handlers_unblock_by_func (self->year_spinbutton, month_year_changed, self);
++    }
++
++  month = g_date_time_get_month (self->date);
++  m = 1+ gtk_combo_box_get_active (GTK_COMBO_BOX (self->month_combobox));
++  if (m != month)
++    {
++      g_signal_handlers_block_by_func (self->month_combobox, month_year_changed, self);
++      gtk_combo_box_set_active (GTK_COMBO_BOX (self->month_combobox), month - 1);
++      g_signal_handlers_unblock_by_func (self->month_combobox, month_year_changed, self);
++    }
++
++  day = g_date_time_get_day_of_month (self->date);
++  d = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->day_spinbutton));
++  if (d != day)
++    {
++      g_signal_handlers_block_by_func (self->day_spinbutton, day_changed, self);
++      gtk_spin_button_set_value (GTK_SPIN_BUTTON (self->day_spinbutton), day);
++      g_signal_handlers_unblock_by_func (self->day_spinbutton, day_changed, self);
++    }
+ }
+ 
+ static void
+@@ -617,6 +659,27 @@ is_ntp_available (CcDateTimePanel *self)
+   return ntp_available;
+ }
+ 
++static void
++on_datetime_dialog_hide (GtkWidget *widget,
++                         gpointer data)
++{
++  const gchar *str;
++  gint day, num_days;
++  CcDateTimePanel *self = CC_DATE_TIME_PANEL (data);
++
++  str = gtk_entry_get_text (GTK_ENTRY (self->day_spinbutton));
++  day = atoi (str);
++
++  num_days = g_date_get_days_in_month (g_date_time_get_month (self->date),
++                                       g_date_time_get_year (self->date));
++  if (num_days < day)
++    {
++      const gchar *tmp;
++      tmp = g_strdup_printf ("%d", num_days);
++      gtk_entry_set_text (GTK_ENTRY (self->day_spinbutton),tmp);
++    }
++}
++
+ static void
+ on_permission_changed (CcDateTimePanel *self)
+ {
+@@ -902,9 +965,11 @@ setup_datetime_dialog (CcDateTimePanel *self)
+                            G_CALLBACK (day_changed), self, G_CONNECT_SWAPPED);
+ 
+   /* Year */
+-  adjustment = (GtkAdjustment*) gtk_adjustment_new (g_date_time_get_year (self->date),
+-                                                    1, G_MAXDOUBLE, 1,
++  guint local_year = g_date_time_get_year (self->date);
++  adjustment = (GtkAdjustment*) gtk_adjustment_new (local_year,
++                                                    MIN_DATE, MAX_DATE, 1,
+                                                     10, 1);
++
+   gtk_spin_button_set_adjustment (GTK_SPIN_BUTTON (self->year_spinbutton),
+                                   adjustment);
+   g_signal_connect_object (G_OBJECT (self->year_spinbutton), "value-changed",
+@@ -1105,4 +1170,10 @@ cc_date_time_panel_init (CcDateTimePanel *self)
+   /* We ignore UTC <--> LocalRTC changes at the moment */
+ 
+   self->filechooser_settings = g_settings_new (FILECHOOSER_SCHEMA);
++
++  g_signal_connect (self->datetime_dialog, "hide",
++                         G_CALLBACK (on_datetime_dialog_hide), self);
++  /* set max length */
++  gtk_entry_set_max_length (GTK_ENTRY (self->year_spinbutton), 4);
++  gtk_entry_set_max_length (GTK_ENTRY (self->day_spinbutton), 2);
+ }

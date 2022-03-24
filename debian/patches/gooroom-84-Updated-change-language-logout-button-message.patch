@@ -1,0 +1,37 @@
+From: os1_3 <os1_3@tmax.co.kr>
+Date: Tue, 15 Mar 2022 16:11:39 +0900
+Subject: gooroom-84-Updated-change-language-logout-button-message
+
+---
+ panels/region/cc-region-panel.ui | 2 +-
+ po/ko.po                         | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/panels/region/cc-region-panel.ui b/panels/region/cc-region-panel.ui
+index e021071..27b6273 100644
+--- a/panels/region/cc-region-panel.ui
++++ b/panels/region/cc-region-panel.ui
+@@ -109,7 +109,7 @@
+                                             <property name="margin_bottom">8</property>
+                                             <property name="margin_top">8</property>
+                                             <property name="valign">end</property>
+-                                            <property name="label" translatable="yes">Restart…</property>
++                                            <property name="label" translatable="yes">Logout…</property>
+                                             <style>
+                                               <class name="suggested-action"/>
+                                             </style>
+diff --git a/po/ko.po b/po/ko.po
+index 82bdedf..d2b39a9 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -5505,8 +5505,8 @@ msgid "Restart the session for changes to take effect"
+ msgstr "바뀐 사항을 적용하려면 세션을 다시 시작하십시오"
+ 
+ #: panels/region/cc-region-panel.ui:112
+-msgid "Restart…"
+-msgstr "다시 시작…"
++msgid "Logout…"
++msgstr "로그 아웃…"
+ 
+ #: panels/region/cc-region-panel.ui:145
+ msgid "_Formats"

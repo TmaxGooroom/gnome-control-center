@@ -1,0 +1,21 @@
+From: jiyong_kim2 <jiyong_kim2@tmax.co.kr>
+Date: Thu, 30 Dec 2021 22:07:26 +0900
+Subject: Remove theme panel from control center
+
+---
+ shell/cc-panel-loader.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/shell/cc-panel-loader.c b/shell/cc-panel-loader.c
+index f209a87..a42bc1a 100644
+--- a/shell/cc-panel-loader.c
++++ b/shell/cc-panel-loader.c
+@@ -99,7 +99,7 @@ static CcPanelLoaderVtable default_panels[] =
+   PANEL_TYPE("bluetooth",        cc_bluetooth_panel_get_type,            NULL),
+ #endif
+   PANEL_TYPE("font",             cc_font_panel_get_type,                 NULL),
+-  PANEL_TYPE("themes",           cc_themes_panel_get_type,               NULL),
++//  PANEL_TYPE("themes",           cc_themes_panel_get_type,               NULL),
+   PANEL_TYPE("camera",           cc_camera_panel_get_type,               NULL),
+   PANEL_TYPE("color",            cc_color_panel_get_type,                NULL),
+   PANEL_TYPE("datetime",         cc_date_time_panel_get_type,            NULL),

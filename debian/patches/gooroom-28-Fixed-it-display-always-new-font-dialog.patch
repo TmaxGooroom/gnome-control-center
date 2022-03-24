@@ -1,0 +1,26 @@
+From: HaeRyong Jeong <jeong89@gooroom.kr>
+Date: Tue, 21 Jul 2020 11:50:34 +0900
+Subject: [PATCH] Fixed it display always new font dialog
+
+Change-Id: I8b28e9c6dba3296cbc11d85341157a67795adeb1
+---
+ panels/font/cc-font-button.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/panels/font/cc-font-button.c b/panels/font/cc-font-button.c
+index 674197c..5cf9512 100644
+--- a/panels/font/cc-font-button.c
++++ b/panels/font/cc-font-button.c
+@@ -1162,7 +1162,11 @@ response_cb (GtkDialog *dialog,
+   gtk_widget_hide (font_button->priv->font_dialog);
+ 
+   if (response_id != GTK_RESPONSE_OK)
+-    return;
++    {
++      gtk_widget_destroy (font_button->priv->font_dialog);
++      font_button->priv->font_dialog = NULL;
++      return;
++    }
+ 
+   font_chooser = CC_FONT_CHOOSER (priv->font_dialog);
+   object = G_OBJECT (font_chooser);

@@ -1,0 +1,60 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-43-Chaned-day-spin-button-range-in-datetime-panel
+
+---
+ panels/datetime/cc-datetime-panel.c | 20 ++++++++++++++++----
+ 1 file changed, 16 insertions(+), 4 deletions(-)
+
+diff --git a/panels/datetime/cc-datetime-panel.c b/panels/datetime/cc-datetime-panel.c
+index afb9765..932c615 100644
+--- a/panels/datetime/cc-datetime-panel.c
++++ b/panels/datetime/cc-datetime-panel.c
+@@ -413,14 +413,26 @@ queue_set_timezone (CcDateTimePanel *self)
+ static void
+ change_date (CcDateTimePanel *self)
+ {
+-  guint mon, y, d;
++  guint mon, y, d, num_days;
+   g_autoptr(GDateTime) old_date = NULL;
+ 
+   mon = 1 + gtk_combo_box_get_active (GTK_COMBO_BOX (self->month_combobox));
+   y = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->year_spinbutton));
+   d = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->day_spinbutton));
+ 
++  num_days = g_date_get_days_in_month (g_date_time_get_month (self->date),
++                                       g_date_time_get_year (self->date));
++
+   old_date = self->date;
++
++  if(d==num_days+1){
++      d = 1;
++      gtk_spin_button_set_value(GTK_SPIN_BUTTON (self->day_spinbutton),1);
++  }else if(d==0){
++      d = num_days;
++      gtk_spin_button_set_value(GTK_SPIN_BUTTON (self->day_spinbutton),num_days);
++  }
++
+   self->date = g_date_time_new_local (y, mon, d,
+                                       g_date_time_get_hour (old_date),
+                                       g_date_time_get_minute (old_date),
+@@ -615,7 +627,7 @@ month_year_changed (CcDateTimePanel *self)
+ 
+   day_spin = GTK_SPIN_BUTTON (self->day_spinbutton);
+   adj = GTK_ADJUSTMENT (gtk_spin_button_get_adjustment (day_spin));
+-  gtk_adjustment_set_upper (adj, num_days + 1);
++  gtk_adjustment_set_upper (adj, num_days + 2);
+ 
+   if (gtk_spin_button_get_value_as_int (day_spin) > num_days)
+     gtk_spin_button_set_value (day_spin, num_days);
+@@ -957,8 +969,8 @@ setup_datetime_dialog (CcDateTimePanel *self)
+   /* Day */
+   num_days = g_date_get_days_in_month (g_date_time_get_month (self->date),
+                                        g_date_time_get_year (self->date));
+-  adjustment = (GtkAdjustment*) gtk_adjustment_new (g_date_time_get_day_of_month (self->date), 1,
+-                                                    num_days + 1, 1, 10, 1);
++  adjustment = (GtkAdjustment*) gtk_adjustment_new (g_date_time_get_day_of_month (self->date), 0,
++                                                    num_days + 2, 1, 10, 1);
+   gtk_spin_button_set_adjustment (GTK_SPIN_BUTTON (self->day_spinbutton),
+                                   adjustment);
+   g_signal_connect_object (G_OBJECT (self->day_spinbutton), "value-changed",

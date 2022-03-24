@@ -1,0 +1,480 @@
+From: os1_3 <os1_3@tmax.co.kr>
+Date: Tue, 15 Mar 2022 16:11:39 +0900
+Subject: gooroom-88-Group-devices-panel-and-details-panel
+
+---
+ panels/power/gnome-power-panel.desktop.in.in       |   4 +-
+ panels/region/gnome-region-panel.desktop.in.in     |   2 +-
+ panels/sound/gnome-sound-panel.desktop.in.in       |   2 +-
+ .../gnome-universal-access-panel.desktop.in.in     |   2 +-
+ shell/cc-panel-list.c                              |  87 ++++++++++++-
+ shell/cc-panel-list.h                              |   2 +
+ shell/cc-panel-list.ui                             | 138 +++++++++++++++++++++
+ shell/cc-window.c                                  |   8 ++
+ shell/org.gnome.ControlCenter.gschema.xml          |   2 +-
+ 9 files changed, 237 insertions(+), 10 deletions(-)
+
+diff --git a/panels/power/gnome-power-panel.desktop.in.in b/panels/power/gnome-power-panel.desktop.in.in
+index 554213e..bb67798 100644
+--- a/panels/power/gnome-power-panel.desktop.in.in
++++ b/panels/power/gnome-power-panel.desktop.in.in
+@@ -8,7 +8,7 @@ Terminal=false
+ Type=Application
+ NoDisplay=true
+ StartupNotify=true
+-Categories=GNOME;GTK;Settings;DesktopSettings;X-GNOME-Settings-Panel;X-GNOME-DevicesSettings;
++Categories=GNOME;GTK;Settings;DesktopSettings;X-GNOME-Settings-Panel;X-GNOME-PersonalizationSettings;X-GNOME-DevicesSettings;
+ OnlyShowIn=GNOME;Unity;
+ X-GNOME-Bugzilla-Bugzilla=GNOME
+ X-GNOME-Bugzilla-Product=gnome-control-center
+@@ -17,4 +17,4 @@ X-GNOME-Bugzilla-Version=@VERSION@
+ # Translators: Search terms to find the Power panel. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
+ Keywords=Power;Sleep;Suspend;Hibernate;Battery;Brightness;Dim;Blank;Monitor;DPMS;Idle;Energy;
+ # Notifications are emitted by gnome-settings-daemon
+-X-GNOME-UsesNotifications=true
+\ No newline at end of file
++X-GNOME-UsesNotifications=true
+diff --git a/panels/region/gnome-region-panel.desktop.in.in b/panels/region/gnome-region-panel.desktop.in.in
+index 34430b2..2665337 100644
+--- a/panels/region/gnome-region-panel.desktop.in.in
++++ b/panels/region/gnome-region-panel.desktop.in.in
+@@ -8,7 +8,7 @@ Terminal=false
+ Type=Application
+ NoDisplay=true
+ StartupNotify=true
+-Categories=GNOME;GTK;Settings;DesktopSettings;X-GNOME-Settings-Panel;X-GNOME-DetailsSettings;
++Categories=GNOME;GTK;Settings;DesktopSettings;X-GNOME-Settings-Panel;X-GNOME-PersonalizationSettings;X-GNOME-DetailsSettings;
+ OnlyShowIn=GNOME;Unity;
+ X-GNOME-Bugzilla-Bugzilla=GNOME
+ X-GNOME-Bugzilla-Product=gnome-control-center
+diff --git a/panels/sound/gnome-sound-panel.desktop.in.in b/panels/sound/gnome-sound-panel.desktop.in.in
+index 6869377..7dd63d4 100644
+--- a/panels/sound/gnome-sound-panel.desktop.in.in
++++ b/panels/sound/gnome-sound-panel.desktop.in.in
+@@ -8,7 +8,7 @@ Terminal=false
+ Type=Application
+ NoDisplay=true
+ StartupNotify=true
+-Categories=GNOME;GTK;Settings;X-GNOME-Settings-Panel;X-GNOME-DevicesSettings;
++Categories=GNOME;GTK;Settings;X-GNOME-Settings-Panel;X-GNOME-PersonalizationSettings;X-GNOME-DevicesSettings;
+ OnlyShowIn=GNOME;Unity;
+ X-GNOME-Bugzilla-Bugzilla=GNOME
+ X-GNOME-Bugzilla-Product=gnome-control-center
+diff --git a/panels/universal-access/gnome-universal-access-panel.desktop.in.in b/panels/universal-access/gnome-universal-access-panel.desktop.in.in
+index bfd99f1..1649161 100644
+--- a/panels/universal-access/gnome-universal-access-panel.desktop.in.in
++++ b/panels/universal-access/gnome-universal-access-panel.desktop.in.in
+@@ -8,7 +8,7 @@ Terminal=false
+ Type=Application
+ NoDisplay=true
+ StartupNotify=true
+-Categories=GNOME;GTK;Settings;X-GNOME-Settings-Panel;X-GNOME-DetailsSettings;
++Categories=GNOME;GTK;Settings;X-GNOME-Settings-Panel;X-GNOME-PersonalizationSettings;X-GNOME-DetailsSettings;
+ OnlyShowIn=GNOME;Unity;
+ X-GNOME-Bugzilla-Bugzilla=GNOME
+ X-GNOME-Bugzilla-Product=gnome-control-center
+diff --git a/shell/cc-panel-list.c b/shell/cc-panel-list.c
+index b599919..58817e6 100644
+--- a/shell/cc-panel-list.c
++++ b/shell/cc-panel-list.c
+@@ -44,6 +44,8 @@ struct _CcPanelList
+   GtkStack            parent;
+ 
+   GtkWidget          *privacy_listbox;
++  GtkWidget          *devices_listbox;
++  GtkWidget          *details_listbox;
+   GtkWidget          *main_listbox;
+   GtkWidget          *search_listbox;
+ 
+@@ -53,6 +55,8 @@ struct _CcPanelList
+   gboolean            autoselect_panel : 1;
+ 
+   GtkListBoxRow      *privacy_row;
++  GtkListBoxRow      *devices_row;
++  GtkListBoxRow      *details_row;
+ 
+   gchar              *current_panel_id;
+   gchar              *search_query;
+@@ -98,6 +102,12 @@ get_widget_from_view (CcPanelList     *self,
+     case CC_PANEL_LIST_PRIVACY:
+       return self->privacy_listbox;
+ 
++    case CC_PANEL_LIST_DEVICES:
++      return self->devices_listbox;
++
++    case CC_PANEL_LIST_DETAILS:
++      return self->details_listbox;
++
+     case CC_PANEL_LIST_SEARCH:
+       return self->search_listbox;
+ 
+@@ -120,6 +130,14 @@ get_listbox_from_category (CcPanelList     *self,
+       return self->privacy_listbox;
+       break;
+ 
++    case CC_CATEGORY_DEVICES:
++      return self->devices_listbox;
++      break;
++
++    case CC_CATEGORY_DETAILS:
++      return self->details_listbox;
++      break;
++
+     default:
+       return self->main_listbox;
+       break;
+@@ -158,6 +176,12 @@ get_view_from_listbox (CcPanelList *self,
+   if (listbox == self->privacy_listbox)
+     return CC_PANEL_LIST_PRIVACY;
+ 
++  if (listbox == self->devices_listbox)
++    return CC_PANEL_LIST_DEVICES;
++
++  if (listbox == self->details_listbox)
++    return CC_PANEL_LIST_DETAILS;
++
+   return CC_PANEL_LIST_SEARCH;
+ }
+ 
+@@ -242,6 +266,12 @@ get_panel_id_from_row (CcPanelList   *self,
+   if (row == self->privacy_row)
+     return "privacy";
+ 
++  if (row == self->devices_row)
++    return "devices";
++
++  if (row == self->details_row)
++    return "details";
++
+   row_data = g_object_get_data (G_OBJECT (row), "data");
+ 
+   g_assert (row_data != NULL);
+@@ -394,7 +424,13 @@ static const gchar * const panel_order[] = {
+   "font",
+   "themes",
+   "applications",
++  "sound",
++  "power",
++  "region",
++  "universal-access",
+   "privacy",
++  "devices",
++  "details",
+   /* Removed with low usability. */
+ //  "notifications",
+ //  "search",
+@@ -411,8 +447,6 @@ static const gchar * const panel_order[] = {
+   "diagnostics",
+ 
+   /* Devices page */
+-  "sound",
+-  "power",
+   "display",
+   "mouse",
+   "keyboard",
+@@ -422,8 +456,6 @@ static const gchar * const panel_order[] = {
+   "color",
+ 
+   /* Details page */
+-  "region",
+-  "universal-access",
+   "user-accounts",
+   "default-apps",
+   "reset-settings",
+@@ -520,6 +552,11 @@ header_func (GtkListBoxRow *row,
+   if (row == self->privacy_row || before == self->privacy_row)
+     return;
+ 
++  if (row == self->devices_row || before == self->devices_row)
++    return;
++
++  if (row == self->details_row || before == self->details_row)
++    return;
+   /*
+    * We can only retrieve the data after assuring that none
+    * of the rows are the Privacy row.
+@@ -580,6 +617,18 @@ row_activated_cb (GtkWidget     *listbox,
+       goto out;
+     }
+ 
++  if (row == self->devices_row)
++    {
++      switch_to_view (self, CC_PANEL_LIST_DEVICES);
++      goto out;
++    }
++
++  if (row == self->details_row)
++    {
++      switch_to_view (self, CC_PANEL_LIST_DETAILS);
++      goto out;
++    }
++
+   /*
+    * When a panel is selected, the previous one should be
+    * unselected, except when it's search.
+@@ -591,6 +640,12 @@ row_activated_cb (GtkWidget     *listbox,
+ 
+       if (listbox != self->privacy_listbox)
+         gtk_list_box_unselect_all (GTK_LIST_BOX (self->privacy_listbox));
++
++      if (listbox != self->devices_listbox)
++        gtk_list_box_unselect_all (GTK_LIST_BOX (self->devices_listbox));
++
++      if (listbox != self->details_listbox)
++        gtk_list_box_unselect_all (GTK_LIST_BOX (self->details_listbox));
+     }
+ 
+   // visible details & devices list row box
+@@ -642,6 +697,10 @@ search_row_activated_cb (GtkWidget     *listbox,
+ 
+   if (data->category == CC_CATEGORY_PRIVACY)
+     real_listbox = self->privacy_listbox;
++  else if (data->category == CC_CATEGORY_DEVICES)
++    real_listbox = self->devices_listbox;
++  else if (data->category == CC_CATEGORY_DETAILS)
++    real_listbox = self->details_listbox;
+   else
+     real_listbox = self->main_listbox;
+ 
+@@ -812,6 +871,10 @@ cc_panel_list_class_init (CcPanelListClass *klass)
+ 
+   gtk_widget_class_bind_template_child (widget_class, CcPanelList, privacy_listbox);
+   gtk_widget_class_bind_template_child (widget_class, CcPanelList, privacy_row);
++  gtk_widget_class_bind_template_child (widget_class, CcPanelList, devices_listbox);
++  gtk_widget_class_bind_template_child (widget_class, CcPanelList, devices_row);
++  gtk_widget_class_bind_template_child (widget_class, CcPanelList, details_listbox);
++  gtk_widget_class_bind_template_child (widget_class, CcPanelList, details_row);
+   gtk_widget_class_bind_template_child (widget_class, CcPanelList, main_listbox);
+   gtk_widget_class_bind_template_child (widget_class, CcPanelList, search_listbox);
+ 
+@@ -838,6 +901,16 @@ cc_panel_list_init (CcPanelList *self)
+                               self,
+                               NULL);
+ 
++  gtk_list_box_set_sort_func (GTK_LIST_BOX (self->devices_listbox),
++                              sort_function,
++                              self,
++                              NULL);
++
++  gtk_list_box_set_sort_func (GTK_LIST_BOX (self->details_listbox),
++                              sort_function,
++                              self,
++                              NULL);
++
+   gtk_list_box_set_header_func (GTK_LIST_BOX (self->main_listbox),
+                                 header_func,
+                                 self,
+@@ -1005,6 +1078,12 @@ cc_panel_list_add_panel (CcPanelList        *self,
+   /* Only show the Devices/Details rows when there's at least one panel */
+   if (category == CC_CATEGORY_PRIVACY)
+     gtk_widget_show (GTK_WIDGET (self->privacy_row));
++
++  if (category == CC_CATEGORY_DEVICES)
++    gtk_widget_show (GTK_WIDGET (self->devices_row));
++
++  if (category == CC_CATEGORY_DETAILS)
++    gtk_widget_show (GTK_WIDGET (self->details_row));
+ }
+ 
+ /**
+diff --git a/shell/cc-panel-list.h b/shell/cc-panel-list.h
+index 8d7324d..87a572f 100644
+--- a/shell/cc-panel-list.h
++++ b/shell/cc-panel-list.h
+@@ -31,6 +31,8 @@ typedef enum
+ {
+   CC_PANEL_LIST_MAIN,
+   CC_PANEL_LIST_PRIVACY,
++  CC_PANEL_LIST_DEVICES,
++  CC_PANEL_LIST_DETAILS,
+   CC_PANEL_LIST_WIDGET,
+   CC_PANEL_LIST_SEARCH
+ } CcPanelListView;
+diff --git a/shell/cc-panel-list.ui b/shell/cc-panel-list.ui
+index 06ef5a4..4cfd5ab 100644
+--- a/shell/cc-panel-list.ui
++++ b/shell/cc-panel-list.ui
+@@ -70,6 +70,122 @@
+             </child>
+           </object>
+         </child>
++        <child>
++          <object class="GtkListBoxRow" id="devices_row">
++            <property name="visible">False</property>
++            <property name="can_focus">True</property>
++            <child>
++              <object class="GtkBox">
++                <property name="visible">True</property>
++                <property name="can_focus">False</property>
++                <property name="border_width">12</property>
++                <property name="spacing">12</property>
++                <child>
++                  <object class="GtkImage">
++                    <property name="visible">True</property>
++                    <property name="can_focus">False</property>
++                    <property name="icon_name">preferences-system-devices-symbolic</property>
++                    <style>
++                      <class name="sidebar-icon" />
++                    </style>
++                  </object>
++                  <packing>
++                    <property name="expand">False</property>
++                    <property name="fill">True</property>
++                    <property name="position">0</property>
++                  </packing>
++                </child>
++                <child>
++                  <object class="GtkLabel">
++                    <property name="visible">True</property>
++                    <property name="can_focus">False</property>
++                    <property name="hexpand">True</property>
++                    <property name="label" translatable="yes">Devices</property>
++                    <property name="xalign">0</property>
++                  </object>
++                  <packing>
++                    <property name="expand">False</property>
++                    <property name="fill">True</property>
++                    <property name="position">1</property>
++                  </packing>
++                </child>
++                <child>
++                  <object class="GtkImage">
++                    <property name="visible">True</property>
++                    <property name="can_focus">False</property>
++                    <property name="icon_name">go-next-symbolic</property>
++                    <style>
++                      <class name="sidebar-icon" />
++                    </style>
++                  </object>
++                  <packing>
++                    <property name="expand">False</property>
++                    <property name="fill">True</property>
++                    <property name="position">2</property>
++                  </packing>
++                </child>
++              </object>
++            </child>
++          </object>
++        </child>
++        <child>
++          <object class="GtkListBoxRow" id="details_row">
++            <property name="visible">False</property>
++            <property name="can_focus">True</property>
++            <child>
++              <object class="GtkBox">
++                <property name="visible">True</property>
++                <property name="can_focus">False</property>
++                <property name="border_width">12</property>
++                <property name="spacing">12</property>
++                <child>
++                  <object class="GtkImage">
++                    <property name="visible">True</property>
++                    <property name="can_focus">False</property>
++                    <property name="icon_name">preferences-system-details-symbolic</property>
++                    <style>
++                      <class name="sidebar-icon" />
++                    </style>
++                  </object>
++                  <packing>
++                    <property name="expand">False</property>
++                    <property name="fill">True</property>
++                    <property name="position">0</property>
++                  </packing>
++                </child>
++                <child>
++                  <object class="GtkLabel">
++                    <property name="visible">True</property>
++                    <property name="can_focus">False</property>
++                    <property name="hexpand">True</property>
++                    <property name="label" translatable="yes">Details</property>
++                    <property name="xalign">0</property>
++                  </object>
++                  <packing>
++                    <property name="expand">False</property>
++                    <property name="fill">True</property>
++                    <property name="position">1</property>
++                  </packing>
++                </child>
++                <child>
++                  <object class="GtkImage">
++                    <property name="visible">True</property>
++                    <property name="can_focus">False</property>
++                    <property name="icon_name">go-next-symbolic</property>
++                    <style>
++                      <class name="sidebar-icon" />
++                    </style>
++                  </object>
++                  <packing>
++                    <property name="expand">False</property>
++                    <property name="fill">True</property>
++                    <property name="position">2</property>
++                  </packing>
++                </child>
++              </object>
++            </child>
++          </object>
++        </child>
+       </object>
+       <packing>
+         <property name="name">main</property>
+@@ -86,6 +202,28 @@
+         <property name="position">1</property>
+       </packing>
+     </child>
++    <child>
++      <object class="GtkListBox" id="devices_listbox">
++        <property name="visible">True</property>
++        <property name="can_focus">False</property>
++        <signal name="row-activated" handler="row_activated_cb" object="CcPanelList" swapped="no" />
++      </object>
++      <packing>
++        <property name="name">devices</property>
++        <property name="position">2</property>
++      </packing>
++    </child>
++    <child>
++      <object class="GtkListBox" id="details_listbox">
++        <property name="visible">True</property>
++        <property name="can_focus">False</property>
++        <signal name="row-activated" handler="row_activated_cb" object="CcPanelList" swapped="no" />
++      </object>
++      <packing>
++        <property name="name">details</property>
++        <property name="position">3</property>
++      </packing>
++    </child>
+     <child>
+       <object class="GtkListBox" id="search_listbox">
+         <property name="visible">True</property>
+diff --git a/shell/cc-window.c b/shell/cc-window.c
+index e5f1aed..5f5bd91 100644
+--- a/shell/cc-window.c
++++ b/shell/cc-window.c
+@@ -276,6 +276,14 @@ update_list_title (CcWindow *self)
+       title = g_strdup (_("Privacy"));
+       break;
+ 
++    case CC_PANEL_LIST_DEVICES:
++      title = g_strdup (_("Devices"));
++      break;
++
++    case CC_PANEL_LIST_DETAILS:
++      title = g_strdup (_("Details"));
++      break;
++
+     case CC_PANEL_LIST_MAIN:
+       title = g_strdup (_("Settings"));
+       break;
+diff --git a/shell/org.gnome.ControlCenter.gschema.xml b/shell/org.gnome.ControlCenter.gschema.xml
+index fe4854d..46d1b81 100644
+--- a/shell/org.gnome.ControlCenter.gschema.xml
++++ b/shell/org.gnome.ControlCenter.gschema.xml
+@@ -16,7 +16,7 @@
+       </description>
+     </key>
+     <key name="whitelist-panels" type="as">
+-      <default>['bluetooth', 'background', 'region', 'universal-access', 'font', 'privacy', 'location', 'camera', 'microphone', 'usage', 'lock', 'sound', 'power', 'network', 'wifi', 'wacom', 'display', 'keyboard', 'printers', 'mouse', 'removable-media', 'thunderbolt', 'color', 'info-overview', 'datetime', 'user-accounts', 'themes']</default>
++      <default>['bluetooth', 'background', 'region', 'universal-access', 'font', 'privacy', 'devices', 'details', 'location', 'camera', 'microphone', 'usage', 'lock', 'sound', 'power', 'network', 'wifi', 'wacom', 'display', 'keyboard', 'printers', 'mouse', 'removable-media', 'thunderbolt', 'color', 'info-overview', 'datetime', 'user-accounts', 'themes']</default>
+       <summary>Show settings list</summary>
+       <description>Show side panel list that matches the User settings values.</description>
+     </key>

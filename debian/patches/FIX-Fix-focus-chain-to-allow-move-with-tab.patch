@@ -1,0 +1,20 @@
+From: sangjun_lee2 <sangjun_lee2@tmax.co.kr>
+Date: Thu, 15 Jul 2021 13:52:35 +0900
+Subject: [FIX] Fix focus chain to allow move with tab
+
+---
+ panels/network/connection-editor/connection-editor.ui | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/panels/network/connection-editor/connection-editor.ui b/panels/network/connection-editor/connection-editor.ui
+index 17a096f..6c2434c 100644
+--- a/panels/network/connection-editor/connection-editor.ui
++++ b/panels/network/connection-editor/connection-editor.ui
+@@ -42,7 +42,6 @@
+         <child>
+           <object class="GtkStack" id="toplevel_stack">
+             <property name="visible">True</property>
+-            <property name="can_focus">True</property>
+             <child>
+               <object class="GtkNotebook" id="notebook">
+                 <property name="visible">True</property>

@@ -1,0 +1,115 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-49-Added-no-known-wifi-message
+
+---
+ panels/network/net-device-wifi.c | 51 +++++++++++++++++++++++++++++++++++++++-
+ po/ko.po                         |  4 ++++
+ 2 files changed, 54 insertions(+), 1 deletion(-)
+
+diff --git a/panels/network/net-device-wifi.c b/panels/network/net-device-wifi.c
+index c40970c..94a6855 100644
+--- a/panels/network/net-device-wifi.c
++++ b/panels/network/net-device-wifi.c
+@@ -977,6 +977,41 @@ show_details_for_row (NetDeviceWifi *self, CcWifiConnectionRow *row, CcWifiConne
+         net_connection_editor_run (editor);
+ }
+ 
++GtkWidget *
++create_label (void)
++{
++        GtkWidget *label;
++        const char *str = _("There are no known Wi-Fi Networks.");
++        const char *format = "<span font_desc=\"15.0\">\%s</span>";
++        g_autofree char *markup;
++        
++        label = gtk_label_new (NULL);
++        markup = g_markup_printf_escaped (format, str);
++        gtk_label_set_markup (GTK_LABEL (label), markup);
++        gtk_widget_set_margin_top (GTK_WIDGET (label), 10);
++        gtk_widget_set_margin_bottom (GTK_WIDGET (label), 10);
++        return label;
++}
++
++static void
++update_list (GtkContainer *list, NetDeviceWifi *self)
++{
++        GList *connections;
++        GtkWidget *label;
++        guint length;
++
++        if (self != NULL) {
++                connections = net_device_get_valid_connections (self->client, self->device);
++
++                length = g_list_length (connections);
++                if (length == 1) {
++                        label = create_label();
++                        gtk_widget_show (label);
++                        gtk_container_add (GTK_CONTAINER (list), label);
++                }
++        }
++}
++
+ static void
+ on_connection_list_row_added_cb (NetDeviceWifi        *self,
+                                  CcWifiConnectionRow  *row,
+@@ -1005,6 +1040,7 @@ on_connection_list_row_removed_cb (NetDeviceWifi        *self,
+ 
+         forget = g_object_get_data (G_OBJECT (list), "forget");
+         gtk_widget_set_sensitive (forget, rows != NULL);
++        update_list (GTK_CONTAINER (list), self);
+ }
+ 
+ static void
+@@ -1012,7 +1048,8 @@ on_connection_list_row_activated_cb (NetDeviceWifi        *self,
+                                      CcWifiConnectionRow  *row,
+                                      CcWifiConnectionList *list)
+ {
+-  cc_wifi_connection_row_set_checked (row, !cc_wifi_connection_row_get_checked (row));
++  if (CC_IS_WIFI_CONNECTION_ROW (row))
++    cc_wifi_connection_row_set_checked (row, !cc_wifi_connection_row_get_checked (row));
+ }
+ 
+ static void
+@@ -1026,7 +1063,10 @@ history_button_clicked_cb (NetDeviceWifi *self)
+         GtkWidget *content_area;
+         GtkWidget *separator;
+         GtkWidget *list;
++        GtkWidget *label;
++        GList *connections;
+         GList *list_rows;
++        guint length;
+ 
+         dialog = g_object_new (GTK_TYPE_DIALOG, "use-header-bar", 1, NULL);
+         window = gtk_widget_get_toplevel (GTK_WIDGET (self));
+@@ -1115,6 +1155,15 @@ history_button_clicked_cb (NetDeviceWifi *self)
+             list_rows = g_list_delete_link (list_rows, list_rows);
+           }
+ 
++        connections = net_device_get_valid_connections (self->client, self->device);
++
++        length = g_slist_length (connections);        
++        if (length == 1) {
++          label = create_label();
++          gtk_widget_show (label);
++          gtk_container_add (GTK_CONTAINER (list), label);
++        }
++
+         gtk_window_present (GTK_WINDOW (dialog));
+ }
+ 
+diff --git a/po/ko.po b/po/ko.po
+index 7e52f8d..c002750 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -3428,6 +3428,10 @@ msgstr ""
+ msgid "_Forget"
+ msgstr "저장 지우기(_F)"
+ 
++#: panels/network/net-device-wifi.c:1011
++msgid "There are no known Wi-Fi Networks."
++msgstr "알려진 와이파이 네트워크가 없습니다."
++
+ #: panels/network/net-device-wifi.c:1011 panels/network/net-device-wifi.c:1018
+ msgid "Known Wi-Fi Networks"
+ msgstr "알려진 와이파이 네트워크"

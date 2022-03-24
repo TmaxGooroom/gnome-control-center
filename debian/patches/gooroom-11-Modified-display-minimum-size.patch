@@ -1,0 +1,24 @@
+From: HaeRyongJeong <jeong89@gooroom.kr>
+Date: Thu, 11 Jun 2020 13:42:27 +0900
+Subject: [PATCH] Modified display minimum size
+
+Change-Id: Iad1fe9c5539f5f995472f09e172d2658feade3b8
+---
+ panels/display/cc-display-panel.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/panels/display/cc-display-panel.c b/panels/display/cc-display-panel.c
+index c9c32ff..f95b0b4 100644
+--- a/panels/display/cc-display-panel.c
++++ b/panels/display/cc-display-panel.c
+@@ -43,8 +43,8 @@
+  * Note that WIDTH is assumed to be the larger size and we accept portrait
+  * mode too effectively (in principle we should probably restrict the rotation
+  * setting in that case). */
+-#define MINIMUM_WIDTH 740
+-#define MINIMUM_HEIGHT 530
++#define MINIMUM_WIDTH 800
++#define MINIMUM_HEIGHT 600
+ 
+ #define PANEL_PADDING   32
+ #define SECTION_PADDING 32

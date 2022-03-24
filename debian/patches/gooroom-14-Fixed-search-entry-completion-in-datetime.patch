@@ -1,0 +1,21 @@
+From: HaeRyong Jeong <jeong89@gooroom.kr>
+Date: Wed, 24 Jun 2020 14:58:32 +0900
+Subject: [PATCH] Fixed search entry completion in datetime
+
+---
+ panels/datetime/cc-datetime-panel.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/panels/datetime/cc-datetime-panel.c b/panels/datetime/cc-datetime-panel.c
+index 91222df..65c6fcc 100644
+--- a/panels/datetime/cc-datetime-panel.c
++++ b/panels/datetime/cc-datetime-panel.c
+@@ -404,7 +404,7 @@ city_changed_cb (CcDateTimePanel    *self,
+   cc_timezone_map_set_timezone (CC_TIMEZONE_MAP (self->map), zone);
+ 
+   entry = gtk_entry_completion_get_entry (completion);
+-  gtk_entry_set_text (GTK_ENTRY (entry), "");
++  //gtk_entry_set_text (GTK_ENTRY (entry), "");
+ 
+   return TRUE;
+ }

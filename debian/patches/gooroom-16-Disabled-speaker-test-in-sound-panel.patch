@@ -1,0 +1,21 @@
+From: HaeRyong Jeong <jeong89@gooroom.kr>
+Date: Thu, 25 Jun 2020 19:13:13 +0900
+Subject: [PATCH] Disabled speaker test in sound panel
+
+---
+ panels/sound/cc-sound-panel.ui | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/panels/sound/cc-sound-panel.ui b/panels/sound/cc-sound-panel.ui
+index 140feaa..d3c2748 100644
+--- a/panels/sound/cc-sound-panel.ui
++++ b/panels/sound/cc-sound-panel.ui
+@@ -111,7 +111,7 @@
+                                         </child>
+                                         <child>
+                                           <object class="GtkButton">
+-                                            <property name="visible">True</property>
++                                            <property name="visible">False</property>
+                                             <property name="label" translatable="yes">Test</property>
+                                             <signal name="clicked" handler="test_output_configuration_button_clicked_cb" object="CcSoundPanel" swapped="yes"/>
+                                           </object>

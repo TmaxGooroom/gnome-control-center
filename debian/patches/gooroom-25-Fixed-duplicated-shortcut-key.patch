@@ -1,0 +1,30 @@
+From: Haeryong Jeong <jeong89@gooroom.kr>
+Date: Wed, 8 Jul 2020 16:51:25 +0900
+Subject: [PATCH] Fixed duplicated shortcut key
+
+Change-Id: I40a258b72668a8a52d385e9ec99da76995646546
+---
+ panels/keyboard/cc-keyboard-shortcut-editor.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/panels/keyboard/cc-keyboard-shortcut-editor.c b/panels/keyboard/cc-keyboard-shortcut-editor.c
+index 1b8d3bc..8b4c9f1 100644
+--- a/panels/keyboard/cc-keyboard-shortcut-editor.c
++++ b/panels/keyboard/cc-keyboard-shortcut-editor.c
+@@ -258,13 +258,13 @@ update_shortcut (CcKeyboardShortcutEditor *self)
+   if (!self->item)
+     return;
+ 
+-  /* Setup the binding */
+-  apply_custom_item_fields (self, self->item);
+-
+   /* Eventually disable the conflict shortcut */
+   if (self->collision_item)
+     cc_keyboard_manager_disable_shortcut (self->manager, self->collision_item);
+ 
++  /* Setup the binding */
++  apply_custom_item_fields (self, self->item);
++
+   /* Cleanup whatever was set before */
+   clear_custom_entries (self);
+ 

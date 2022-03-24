@@ -1,0 +1,33 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-44-Added-keyboard-shortcut-setting-close-button
+
+---
+ panels/keyboard/cc-keyboard-shortcut-editor.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/panels/keyboard/cc-keyboard-shortcut-editor.c b/panels/keyboard/cc-keyboard-shortcut-editor.c
+index 2cfcaa8..b08f2e1 100644
+--- a/panels/keyboard/cc-keyboard-shortcut-editor.c
++++ b/panels/keyboard/cc-keyboard-shortcut-editor.c
+@@ -284,7 +284,11 @@ static void
+ set_header_mode (CcKeyboardShortcutEditor *self,
+                  HeaderMode                mode)
+ {
+-  gtk_header_bar_set_show_close_button (self->headerbar, mode == HEADER_MODE_CUSTOM_EDIT);
++  gboolean is_custom;
++
++  is_custom = is_custom_shortcut (self);
++
++  gtk_header_bar_set_show_close_button (self->headerbar, mode == HEADER_MODE_CUSTOM_EDIT || (!is_custom && mode == HEADER_MODE_NONE));
+ 
+   gtk_widget_set_visible (GTK_WIDGET (self->cancel_button), mode != HEADER_MODE_NONE &&
+                                                mode != HEADER_MODE_CUSTOM_EDIT);
+@@ -611,6 +615,7 @@ setup_keyboard_item (CcKeyboardShortcutEditor *self,
+ 
+   set_header_mode (self, is_custom ? HEADER_MODE_CUSTOM_EDIT : HEADER_MODE_NONE);
+ 
++  gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (self->headerbar), TRUE);
+   gtk_widget_hide (GTK_WIDGET (self->add_button));
+   gtk_widget_hide (GTK_WIDGET (self->cancel_button));
+   gtk_widget_hide (GTK_WIDGET (self->replace_button));

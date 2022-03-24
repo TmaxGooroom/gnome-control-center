@@ -1,0 +1,129 @@
+From: Jeong HaeRyong <jeong89@gooroom.kr>
+Date: Fri, 29 May 2020 16:11:09 +0900
+Subject: [PATCH] Hidden search, sharing, online-accounts
+
+Change-Id: I934ed8504e566b0f8544f38f1a8b4ac73a6169c3
+---
+ panels/meson.build                        |  8 +++----
+ shell/cc-panel-list.c                     | 38 ++++++++++++++++---------------
+ shell/cc-panel-loader.c                   |  7 +++---
+ shell/org.gnome.ControlCenter.gschema.xml |  2 +-
+ 4 files changed, 29 insertions(+), 26 deletions(-)
+
+diff --git a/panels/meson.build b/panels/meson.build
+index bd38a93..fa11379 100644
+--- a/panels/meson.build
++++ b/panels/meson.build
+@@ -15,14 +15,14 @@ panels = [
+   'lock',
+   'microphone',
+   'mouse',
+-  'notifications',
+-  'online-accounts',
++#  'notifications',
++#  'online-accounts',
+   'power',
+   'printers',
+   'region',
+   'removable-media',
+-  'search',
+-  'sharing',
++#  'search',
++#  'sharing',
+   'sound',
+   'universal-access',
+   'usage',
+diff --git a/shell/cc-panel-list.c b/shell/cc-panel-list.c
+index fc7f264..b599919 100644
+--- a/shell/cc-panel-list.c
++++ b/shell/cc-panel-list.c
+@@ -393,12 +393,13 @@ static const gchar * const panel_order[] = {
+   "background",
+   "font",
+   "themes",
+-  "notifications",
+-  "search",
+   "applications",
+   "privacy",
+-  "online-accounts",
+-  "sharing",
++  /* Removed with low usability. */
++//  "notifications",
++//  "search",
++//  "online-accounts",
++//  "sharing",
+ 
+   /* Privacy page */
+   "location",
+@@ -526,20 +527,21 @@ header_func (GtkListBoxRow *row,
+   row_data = g_object_get_data (G_OBJECT (row), "data");
+   before_data = g_object_get_data (G_OBJECT (before), "data");
+ 
+-  if (row_data->category != before_data->category)
+-    {
+-      GtkWidget *separator;
+-
+-      separator = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
+-      gtk_widget_set_hexpand (separator, TRUE);
+-      gtk_widget_show (separator);
+-
+-      gtk_list_box_row_set_header (row, separator);
+-    }
+-  else
+-    {
+-      gtk_list_box_row_set_header (row, NULL);
+-    }
++  gtk_list_box_row_set_header (row, NULL);
++//  if (row_data->category != before_data->category)
++//    {
++//      GtkWidget *separator;
++//
++//      separator = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
++//      gtk_widget_set_hexpand (separator, TRUE);
++//      gtk_widget_show (separator);
++//
++//      gtk_list_box_row_set_header (row, separator);
++//    }
++//  else
++//    {
++//      gtk_list_box_row_set_header (row, NULL);
++//    }
+ }
+ 
+ // set visible details_row & devices_row
+diff --git a/shell/cc-panel-loader.c b/shell/cc-panel-loader.c
+index 5b977ba..3ab5aca 100644
+--- a/shell/cc-panel-loader.c
++++ b/shell/cc-panel-loader.c
+@@ -117,14 +117,15 @@ static CcPanelLoaderVtable default_panels[] =
+   //PANEL_TYPE("wifi",             cc_wifi_panel_get_type,                 cc_wifi_panel_static_init_func),
+   PANEL_TYPE("wifi",             cc_wifi_panel_get_type,                 NULL),
+ #endif
++  /* Removed with low usability */
+   //PANEL_TYPE("notifications",    cc_notifications_panel_get_type,        NULL),
+-  PANEL_TYPE("online-accounts",  cc_goa_panel_get_type,                  NULL),
++  //PANEL_TYPE("online-accounts",  cc_goa_panel_get_type,                  NULL),
++  //PANEL_TYPE("search",           cc_search_panel_get_type,               NULL),
++  //PANEL_TYPE("sharing",          cc_sharing_panel_get_type,              NULL),
+   PANEL_TYPE("power",            cc_power_panel_get_type,                NULL),
+   PANEL_TYPE("printers",         cc_printers_panel_get_type,             NULL),
+   PANEL_TYPE("region",           cc_region_panel_get_type,               NULL),
+   PANEL_TYPE("removable-media",  cc_removable_media_panel_get_type,      NULL),
+-  PANEL_TYPE("search",           cc_search_panel_get_type,               NULL),
+-  PANEL_TYPE("sharing",          cc_sharing_panel_get_type,              NULL),
+   PANEL_TYPE("sound",            cc_sound_panel_get_type,                NULL),
+ #ifdef BUILD_THUNDERBOLT
+   PANEL_TYPE("thunderbolt",      cc_bolt_panel_get_type,                 NULL),
+diff --git a/shell/org.gnome.ControlCenter.gschema.xml b/shell/org.gnome.ControlCenter.gschema.xml
+index 25e167e..d9178b6 100644
+--- a/shell/org.gnome.ControlCenter.gschema.xml
++++ b/shell/org.gnome.ControlCenter.gschema.xml
+@@ -16,7 +16,7 @@
+       </description>
+     </key>
+     <key name="whitelist-panels" type="as">
+-      <default>['bluetooth', 'background', 'search', 'region', 'universal-access', 'font', 'online-accounts', 'privacy', 'location', 'camera', 'microphone', 'usage', 'lock', 'sharing', 'sound', 'power', 'network', 'wifi', 'wacom', 'display', 'keyboard', 'printers', 'mouse', 'removable-media', 'thunderbolt', 'color', 'info-overview', 'datetime', 'user-accounts', 'default-apps', 'themes']</default>
++      <default>['bluetooth', 'background', 'region', 'universal-access', 'font', 'privacy', 'location', 'camera', 'microphone', 'usage', 'lock', 'sound', 'power', 'network', 'wifi', 'wacom', 'display', 'keyboard', 'printers', 'mouse', 'removable-media', 'thunderbolt', 'color', 'info-overview', 'datetime', 'user-accounts', 'default-apps', 'themes']</default>
+       <summary>Show settings list</summary>
+       <description>Show side panel list that matches the User settings values.</description>
+     </key>

@@ -1,0 +1,795 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-61-Fixed-hangul-searching-in-GtkSearchEntry
+
+---
+ panels/common/cc-language-chooser.c     | 33 ++++++++++---
+ panels/datetime/cc-datetime-panel.c     | 84 +++++++++++++++++++++++++++++++--
+ panels/font/cc-font-chooser-widget.c    | 32 +++++++++++--
+ panels/font/font-chooser-widget.ui      |  1 +
+ panels/keyboard/cc-keyboard-panel.c     | 33 ++++++++++++-
+ panels/keyboard/cc-keyboard-panel.ui    |  3 +-
+ panels/printers/cc-printers-panel.c     | 57 +++++++++++++++++-----
+ panels/printers/pp-new-printer-dialog.c | 21 +++++++++
+ panels/region/cc-format-chooser.c       | 36 ++++++++++++--
+ panels/region/cc-format-chooser.ui      |  1 +
+ panels/region/cc-input-chooser.c        | 29 +++++++++++-
+ panels/region/cc-input-chooser.ui       |  1 +
+ shell/cc-window.c                       | 17 +++++++
+ shell/cc-window.ui                      |  1 +
+ 14 files changed, 314 insertions(+), 35 deletions(-)
+
+diff --git a/panels/common/cc-language-chooser.c b/panels/common/cc-language-chooser.c
+index 919cb1c..0e7aabb 100644
+--- a/panels/common/cc-language-chooser.c
++++ b/panels/common/cc-language-chooser.c
+@@ -271,24 +271,43 @@ sort_languages (GtkListBoxRow *a,
+ }
+ 
+ static void
+-filter_changed (CcLanguageChooser *chooser)
++update_filter_changed (CcLanguageChooser *chooser, const gchar *filter_text)
+ {
+         g_autofree gchar *filter_contents = NULL;
+ 
+         g_clear_pointer (&chooser->filter_words, g_strfreev);
+ 
+-        filter_contents =
+-                cc_util_normalize_casefold_and_unaccent (gtk_entry_get_text (GTK_ENTRY (chooser->language_filter_entry)));
++        filter_contents = cc_util_normalize_casefold_and_unaccent (filter_text);
+         if (!filter_contents) {
+-                gtk_list_box_invalidate_filter (GTK_LIST_BOX (chooser->language_listbox));
+-                gtk_list_box_set_placeholder (GTK_LIST_BOX (chooser->language_listbox), NULL);
+-                return;
++          gtk_list_box_invalidate_filter (GTK_LIST_BOX (chooser->language_listbox));
++          gtk_list_box_set_placeholder (GTK_LIST_BOX (chooser->language_listbox), NULL);
++          return;
+         }
+         chooser->filter_words = g_strsplit_set (g_strstrip (filter_contents), " ", 0);
+         gtk_list_box_set_placeholder (GTK_LIST_BOX (chooser->language_listbox), chooser->no_results);
+         gtk_list_box_invalidate_filter (GTK_LIST_BOX (chooser->language_listbox));
+ }
+ 
++static void
++filter_entry_preedit_changed_cb (GtkEntry          *entry,
++                                 gchar             *preedit,
++                                 CcLanguageChooser *chooser)
++{
++        const gchar *text;
++        g_autofree gchar *filter_text = NULL;
++
++        text = gtk_entry_get_text (GTK_ENTRY (entry));
++        filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
++
++        update_filter_changed (chooser, filter_text);
++}
++
++static void
++filter_changed (CcLanguageChooser *chooser)
++{
++        update_filter_changed (chooser, gtk_entry_get_text (GTK_ENTRY (chooser->language_filter_entry)));
++}
++
+ static void
+ show_more (CcLanguageChooser *chooser, gboolean visible)
+ {
+@@ -409,6 +428,8 @@ cc_language_chooser_init (CcLanguageChooser *chooser)
+ 
+         g_signal_connect_object (chooser->language_filter_entry, "search-changed",
+                                  G_CALLBACK (filter_changed), chooser, G_CONNECT_SWAPPED);
++        g_signal_connect (chooser->language_filter_entry, "preedit-changed",
++                          G_CALLBACK (filter_entry_preedit_changed_cb), chooser);
+ 
+         g_signal_connect_object (chooser->language_listbox, "row-activated",
+                                  G_CALLBACK (row_activated), chooser, G_CONNECT_SWAPPED);
+diff --git a/panels/datetime/cc-datetime-panel.c b/panels/datetime/cc-datetime-panel.c
+index 932c615..3610172 100644
+--- a/panels/datetime/cc-datetime-panel.c
++++ b/panels/datetime/cc-datetime-panel.c
+@@ -26,6 +26,7 @@
+ 
+ #include <langinfo.h>
+ #include <sys/time.h>
++#include "cc-util.h"
+ #include "list-box-helper.h"
+ #include "cc-timezone-map.h"
+ #include "timedated.h"
+@@ -125,6 +126,9 @@ struct _CcDateTimePanel
+   GPermission *permission;
+   GPermission *tz_permission;
+   GSettings *location_settings;
++
++  gchar *filter_text;
++  gchar *preedit_text;
+ };
+ 
+ CC_PANEL_REGISTER (CcDateTimePanel, cc_date_time_panel)
+@@ -165,6 +169,8 @@ cc_date_time_panel_dispose (GObject *object)
+ 
+   g_clear_pointer (&panel->listboxes, g_list_free);
+   g_clear_pointer (&panel->listboxes_reverse, g_list_free);
++  g_clear_pointer (&panel->filter_text, g_free);
++  g_clear_pointer (&panel->preedit_text, g_free);
+ 
+   G_OBJECT_CLASS (cc_date_time_panel_parent_class)->dispose (object);
+ }
+@@ -450,19 +456,78 @@ city_changed_cb (CcDateTimePanel    *self,
+                  GtkTreeIter        *iter,
+                  GtkEntryCompletion *completion)
+ {
+-  GtkWidget *entry;
+   g_autofree gchar *zone = NULL;
+ 
+   gtk_tree_model_get (model, iter,
+                       CITY_COL_ZONE, &zone, -1);
+   cc_timezone_map_set_timezone (CC_TIMEZONE_MAP (self->map), zone);
+ 
+-  entry = gtk_entry_completion_get_entry (completion);
+-  //gtk_entry_set_text (GTK_ENTRY (entry), "");
+-
+   return TRUE;
+ }
+ 
++static void
++filter_changed (CcDateTimePanel *self)
++{
++  const gchar *text;
++  text = gtk_entry_get_text (GTK_ENTRY (self->timezone_searchentry));
++
++  g_clear_pointer (&self->filter_text, g_free);
++
++  if (self->preedit_text) {
++    self->filter_text = g_strdup_printf ("%s%s", text, self->preedit_text);
++    g_clear_pointer (&self->preedit_text, g_free);
++  } else {
++    self->filter_text = g_strdup (text);
++  }
++}
++
++static void
++filter_preedit_changed (GtkEntry        *entry,
++                        gchar           *preedit,
++                        CcDateTimePanel *self)
++{
++  g_clear_pointer (&self->preedit_text, g_free);
++  self->preedit_text = (preedit) ? g_strdup (preedit) : NULL;
++
++  g_signal_emit_by_name (G_OBJECT (entry), "changed", 0);
++}
++
++static gboolean
++match_func (GtkEntryCompletion *completion,
++            const gchar        *key,
++            GtkTreeIter        *iter,
++            gpointer            user_data)
++{
++  gchar *item = NULL;
++  gboolean ret = FALSE;
++  GtkTreeModel *model;
++  gchar *filter_text = NULL;
++
++  CcDateTimePanel *self = CC_DATE_TIME_PANEL (user_data);
++
++  if (!self->filter_text || strlen (self->filter_text) == 0)
++    return ret;
++
++  model = gtk_entry_completion_get_model (completion);
++
++  filter_text = cc_util_normalize_casefold_and_unaccent (self->filter_text);
++
++  gtk_tree_model_get (model, iter, CITY_COL_CITY_HUMAN_READABLE, &item, -1);
++  if (item != NULL) {
++    gchar *filter_contents = NULL;
++    filter_contents = cc_util_normalize_casefold_and_unaccent (item);
++    if (strstr (filter_contents, filter_text) != NULL)
++      ret = TRUE;
++
++    g_free (item);
++    g_free (filter_contents);
++  }
++
++  g_free (filter_text);
++
++  return ret;
++}
++
+ static char *
+ translated_city_name (TzLocation *loc)
+ {
+@@ -930,11 +995,18 @@ setup_timezone_dialog (CcDateTimePanel *self)
+ 
+   /* Create the completion object */
+   completion = gtk_entry_completion_new ();
+-  gtk_entry_set_completion (GTK_ENTRY (self->timezone_searchentry), completion);
+ 
++  gtk_entry_completion_set_minimum_key_length (completion, 0);
+   gtk_entry_completion_set_model (completion, GTK_TREE_MODEL (self->city_modelsort));
+ 
+   gtk_entry_completion_set_text_column (completion, CITY_COL_CITY_HUMAN_READABLE);
++  gtk_entry_completion_set_match_func (completion, match_func, self, NULL);
++  gtk_entry_set_completion (GTK_ENTRY (self->timezone_searchentry), completion);
++
++  g_signal_connect_swapped (self->timezone_searchentry, "changed",
++                            G_CALLBACK (filter_changed), self);
++  g_signal_connect (self->timezone_searchentry, "preedit-changed",
++                    G_CALLBACK (filter_preedit_changed), self);
+ }
+ 
+ static void
+@@ -1046,6 +1118,8 @@ cc_date_time_panel_init (CcDateTimePanel *self)
+ 
+   gtk_widget_init_template (GTK_WIDGET (self));
+ 
++  self->filter_text = NULL;
++  self->preedit_text = NULL;
+   self->cancellable = g_cancellable_new ();
+   error = NULL;
+   self->dtm = timedate1_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+diff --git a/panels/font/cc-font-chooser-widget.c b/panels/font/cc-font-chooser-widget.c
+index 09c334d..74832a2 100644
+--- a/panels/font/cc-font-chooser-widget.c
++++ b/panels/font/cc-font-chooser-widget.c
+@@ -72,6 +72,7 @@ struct _CcFontChooserWidgetPrivate
+ 
+   GList                *feature_items;
+   GAction              *tweak_action;
++  gchar                *filter_text;
+ };
+ 
+ /* This is the initial fixed height and the top padding of the preview entry */
+@@ -313,6 +314,27 @@ static void
+ text_changed_cb (GtkEntry             *entry,
+                  CcFontChooserWidget *fc)
+ {
++  CcFontChooserWidgetPrivate *priv = fc->priv;
++
++  g_free (priv->filter_text);
++  priv->filter_text = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->search_entry)));
++
++  cc_font_chooser_widget_refilter_font_list (fc);
++}
++
++static void
++preedit_changed_cb (GtkEntry            *entry,
++                    gchar               *preedit,
++                    CcFontChooserWidget *fc)
++{
++  const gchar *text;
++  CcFontChooserWidgetPrivate *priv = fc->priv;
++
++  text = gtk_entry_get_text (GTK_ENTRY (priv->search_entry));
++
++  g_free (priv->filter_text);
++  priv->filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
++
+   cc_font_chooser_widget_refilter_font_list (fc);
+ }
+ 
+@@ -660,6 +682,7 @@ cc_font_chooser_widget_class_init (CcFontChooserWidgetClass *klass)
+ 
+   gtk_widget_class_bind_template_callback (widget_class, text_changed_cb);
+   gtk_widget_class_bind_template_callback (widget_class, stop_search_cb);
++  gtk_widget_class_bind_template_callback (widget_class, preedit_changed_cb);
+   gtk_widget_class_bind_template_callback (widget_class, cursor_changed_cb);
+   gtk_widget_class_bind_template_callback (widget_class, row_activated_cb);
+   gtk_widget_class_bind_template_callback (widget_class, cc_font_chooser_widget_set_cell_size);
+@@ -761,6 +784,8 @@ cc_font_chooser_widget_init (CcFontChooserWidget *fontchooser)
+   priv->axes = g_hash_table_new_full (axis_hash, axis_equal, NULL, axis_free);
+ #endif
+ 
++  priv->filter_text = NULL;
++
+   /* Default preview string  */
+   priv->preview_text = g_strdup (pango_language_get_sample_string (NULL));
+   priv->show_preview_entry = TRUE;
+@@ -938,7 +963,6 @@ visible_func (GtkTreeModel *model,
+ {
+   CcFontChooserWidgetPrivate *priv = user_data;
+   gboolean result = TRUE;
+-  const gchar *search_text;
+   gchar **split_terms;
+   gchar *font_name, *font_name_casefold;
+   guint i;
+@@ -963,8 +987,7 @@ visible_func (GtkTreeModel *model,
+     }
+ 
+   /* If there's no filter string we show the item */
+-  search_text = gtk_entry_get_text (GTK_ENTRY (priv->search_entry));
+-  if (strlen (search_text) == 0)
++  if (!priv->filter_text || strlen (priv->filter_text) == 0)
+     return TRUE;
+ 
+   gtk_tree_model_get (model, iter,
+@@ -974,7 +997,7 @@ visible_func (GtkTreeModel *model,
+   if (font_name == NULL)
+     return FALSE;
+ 
+-  split_terms = g_strsplit (search_text, " ", 0);
++  split_terms = g_strsplit (priv->filter_text, " ", 0);
+   font_name_casefold = g_utf8_casefold (font_name, -1);
+ 
+   for (i = 0; split_terms[i] && result; i++)
+@@ -1103,6 +1126,7 @@ cc_font_chooser_widget_finalize (GObject *object)
+     priv->filter_data_destroy (priv->filter_data);
+ 
+   g_free (priv->preview_text);
++  g_free (priv->filter_text);
+ 
+   g_clear_object (&priv->font_map);
+ 
+diff --git a/panels/font/font-chooser-widget.ui b/panels/font/font-chooser-widget.ui
+index ac0affc..a52d4ee 100644
+--- a/panels/font/font-chooser-widget.ui
++++ b/panels/font/font-chooser-widget.ui
+@@ -53,6 +53,7 @@
+                 <property name="placeholder-text" translatable="yes">Search font name</property>
+                 <signal name="search-changed" handler="text_changed_cb" swapped="no"/>
+                 <signal name="stop-search" handler="stop_search_cb" swapped="no"/>
++                <signal name="preedit-search" handler="preedit_search_cb" swapped="no"/>
+               </object>
+               <packing>
+                 <property name="left-attach">0</property>
+diff --git a/panels/keyboard/cc-keyboard-panel.c b/panels/keyboard/cc-keyboard-panel.c
+index f47e34c..57f52c9 100644
+--- a/panels/keyboard/cc-keyboard-panel.c
++++ b/panels/keyboard/cc-keyboard-panel.c
+@@ -69,6 +69,8 @@ struct _CcKeyboardPanel
+ 
+   GRegex             *pictures_regex;
+ 
++  gchar              *filter_text;
++
+   CcKeyboardManager  *manager;
+ };
+ 
+@@ -239,6 +241,30 @@ reset_shortcut_cb (GtkWidget      *reset_button,
+   cc_keyboard_manager_reset_shortcut (self->manager, item);
+ }
+ 
++static void
++search_entry_text_changed_cb (CcKeyboardPanel *self)
++{
++  const gchar *text = gtk_entry_get_text (GTK_ENTRY (self->search_entry));
++
++  g_clear_pointer (&self->filter_text, g_free);
++  self->filter_text = (text == NULL) ? g_strdup ("") : g_strdup (text);
++
++  gtk_list_box_invalidate_filter (GTK_LIST_BOX (self->shortcuts_listbox));
++}
++
++static void
++search_entry_preedit_changed_cb (GtkEntry        *entry,
++                                 gchar           *preedit,
++                                 CcKeyboardPanel *self)
++{
++  const gchar *text = gtk_entry_get_text (GTK_ENTRY (self->search_entry));
++
++  g_clear_pointer (&self->filter_text, g_free);
++  self->filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
++
++  gtk_list_box_invalidate_filter (GTK_LIST_BOX (self->shortcuts_listbox));
++}
++
+ static void
+ add_item (CcKeyboardPanel *self,
+           CcKeyboardItem  *item,
+@@ -572,7 +598,7 @@ filter_function (GtkListBoxRow *row,
+   g_auto(GStrv) terms = NULL;
+   guint i;
+ 
+-  if (gtk_entry_get_text_length (GTK_ENTRY (self->search_entry)) == 0)
++  if (self->filter_text && g_str_equal (self->filter_text, ""))
+     return TRUE;
+ 
+   /* When searching, the '+' row is always hidden */
+@@ -582,7 +608,7 @@ filter_function (GtkListBoxRow *row,
+   data = g_object_get_data (G_OBJECT (row), "data");
+   item = data->item;
+   name = cc_util_normalize_casefold_and_unaccent (cc_keyboard_item_get_description (item));
+-  search = cc_util_normalize_casefold_and_unaccent (gtk_entry_get_text (GTK_ENTRY (self->search_entry)));
++  search = cc_util_normalize_casefold_and_unaccent (self->filter_text);
+   terms = g_strsplit (search, " ", -1);
+ 
+   for (i = 0; terms && terms[i]; i++)
+@@ -697,6 +723,7 @@ cc_keyboard_panel_finalize (GObject *object)
+   CcKeyboardPanel *self = CC_KEYBOARD_PANEL (object);
+   GtkWidget *window;
+ 
++  g_clear_pointer (&self->filter_text, g_free);
+   g_clear_pointer (&self->pictures_regex, g_regex_unref);
+   g_clear_object (&self->accelerator_sizegroup);
+   g_clear_object (&self->input_source_settings);
+@@ -765,6 +792,8 @@ cc_keyboard_panel_class_init (CcKeyboardPanelClass *klass)
+   gtk_widget_class_bind_template_callback (widget_class, reset_all_clicked_cb);
+   gtk_widget_class_bind_template_callback (widget_class, shortcut_row_activated);
+   gtk_widget_class_bind_template_callback (widget_class, alternate_chars_activated);
++  gtk_widget_class_bind_template_callback (widget_class, search_entry_text_changed_cb);
++  gtk_widget_class_bind_template_callback (widget_class, search_entry_preedit_changed_cb);
+ }
+ 
+ static void
+diff --git a/panels/keyboard/cc-keyboard-panel.ui b/panels/keyboard/cc-keyboard-panel.ui
+index 16e522c..4cfbf83 100644
+--- a/panels/keyboard/cc-keyboard-panel.ui
++++ b/panels/keyboard/cc-keyboard-panel.ui
+@@ -27,7 +27,8 @@
+               <object class="GtkSearchEntry" id="search_entry">
+                 <property name="visible">True</property>
+                 <property name="width_chars">30</property>
+-                <signal name="notify::text" handler="gtk_list_box_invalidate_filter" object="shortcuts_listbox" swapped="yes" />
++                <signal name="notify::text" handler="search_entry_text_changed_cb" object="CckeyboardPanel" swapped="yes" />
++                <signal name="preedit-changed" handler="search_entry_preedit_changed_cb" object="CckeyboardPanel" swapped="no" />
+               </object>
+             </child>
+           </object>
+diff --git a/panels/printers/cc-printers-panel.c b/panels/printers/cc-printers-panel.c
+index 04e2e39..331f177 100644
+--- a/panels/printers/cc-printers-panel.c
++++ b/panels/printers/cc-printers-panel.c
+@@ -100,6 +100,7 @@ struct _CcPrintersPanel
+   gchar    *renamed_printer_name;
+   gchar    *old_printer_name;
+   gchar    *deleted_printer_name;
++  gchar    *filter_text;
+   GList    *deleted_printers;
+   GObject  *reference;
+ 
+@@ -306,6 +307,7 @@ cc_printers_panel_dispose (GObject *object)
+   g_clear_pointer (&self->new_printer_name, g_free);
+   g_clear_pointer (&self->renamed_printer_name, g_free);
+   g_clear_pointer (&self->old_printer_name, g_free);
++  g_clear_pointer (&self->filter_text, g_free);
+   g_clear_object (&self->builder);
+   g_clear_object (&self->lockdown_settings);
+   g_clear_object (&self->permission);
+@@ -1221,10 +1223,7 @@ filter_function (GtkListBoxRow *row,
+                 "printer-location", &printer_location,
+                 NULL);
+ 
+-  search_entry = (GtkWidget*)
+-    gtk_builder_get_object (self->builder, "search-entry");
+-
+-  if (gtk_entry_get_text_length (GTK_ENTRY (search_entry)) == 0)
++  if (self->filter_text && g_str_equal (self->filter_text, ""))
+     {
+       retval = TRUE;
+     }
+@@ -1233,11 +1232,13 @@ filter_function (GtkListBoxRow *row,
+       name = cc_util_normalize_casefold_and_unaccent (printer_name);
+       location = cc_util_normalize_casefold_and_unaccent (printer_location);
+ 
+-      search = cc_util_normalize_casefold_and_unaccent (gtk_entry_get_text (GTK_ENTRY (search_entry)));
++      if (self->filter_text) {
++        search = cc_util_normalize_casefold_and_unaccent (self->filter_text);
+ 
+-      retval = strstr (name, search) != NULL;
+-      if (location != NULL)
+-          retval = retval || (strstr (location, search) != NULL);
++        retval = strstr (name, search) != NULL;
++        if (location != NULL)
++            retval = retval || (strstr (location, search) != NULL);
++      }
+     }
+ 
+   if (self->deleted_printer_name != NULL &&
+@@ -1261,6 +1262,31 @@ filter_function (GtkListBoxRow *row,
+   return retval;
+ }
+ 
++static void
++search_entry_text_changed_cb (GtkEntry *entry,
++                              CcPrintersPanel *self)
++{
++  const gchar *text = gtk_entry_get_text (entry);
++
++  g_clear_pointer (&self->filter_text, g_free);
++  self->filter_text = (text == NULL) ? g_strdup ("") : g_strdup (text);
++
++  gtk_list_box_invalidate_filter (GTK_LIST_BOX (gtk_builder_get_object (self->builder, "content")));
++}
++
++static void
++search_entry_preedit_changed_cb (GtkEntry        *entry,
++                                 gchar           *preedit,
++                                 CcPrintersPanel *self)
++{
++  const gchar *text = gtk_entry_get_text (entry);
++
++  g_clear_pointer (&self->filter_text, g_free);
++  self->filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
++
++  gtk_list_box_invalidate_filter (GTK_LIST_BOX (gtk_builder_get_object (self->builder, "content")));
++}
++
+ static gint
+ sort_function (GtkListBoxRow *row1,
+                GtkListBoxRow *row2,
+@@ -1366,10 +1392,17 @@ cc_printers_panel_init (CcPrintersPanel *self)
+                                 filter_function,
+                                 self,
+                                 NULL);
+-  g_signal_connect_swapped (gtk_builder_get_object (self->builder, "search-entry"),
+-                            "search-changed",
+-                            G_CALLBACK (gtk_list_box_invalidate_filter),
+-                            widget);
++
++  g_signal_connect (gtk_builder_get_object (self->builder, "search-entry"),
++                    "search-changed",
++                    G_CALLBACK (search_entry_text_changed_cb),
++                    self);
++
++  g_signal_connect (gtk_builder_get_object (self->builder, "search-entry"),
++                    "preedit-changed",
++                    G_CALLBACK (search_entry_preedit_changed_cb),
++                    self);
++
+   gtk_list_box_set_sort_func (GTK_LIST_BOX (widget),
+                               sort_function,
+                               NULL,
+diff --git a/panels/printers/pp-new-printer-dialog.c b/panels/printers/pp-new-printer-dialog.c
+index b734b5b..63490a1 100644
+--- a/panels/printers/pp-new-printer-dialog.c
++++ b/panels/printers/pp-new-printer-dialog.c
+@@ -67,6 +67,9 @@ static void     replace_device (PpNewPrinterDialog *self,
+ static void     populate_devices_list (PpNewPrinterDialog *self);
+ static void     search_entry_activated_cb (PpNewPrinterDialog *self);
+ static void     search_entry_changed_cb (PpNewPrinterDialog *self);
++static void     search_entry_preedit_changed_cb (GtkEntry *entry,
++                                                 gchar    *preedit,
++                                                 gpointer  user_data);
+ static void     new_printer_dialog_response_cb (PpNewPrinterDialog *self,
+                                                 gint                response_id);
+ static void     update_dialog_state (PpNewPrinterDialog *self);
+@@ -505,6 +508,7 @@ pp_new_printer_dialog_init (PpNewPrinterDialog *self)
+   widget = WID ("search-entry");
+   g_signal_connect_object (widget, "activate", G_CALLBACK (search_entry_activated_cb), self, G_CONNECT_SWAPPED);
+   g_signal_connect_object (widget, "search-changed", G_CALLBACK (search_entry_changed_cb), self, G_CONNECT_SWAPPED);
++  g_signal_connect (widget, "preedit-changed", G_CALLBACK (search_entry_preedit_changed_cb), self);
+ 
+   g_signal_connect_object (WID ("unlock-button"), "clicked", G_CALLBACK (authenticate_samba_server), self, G_CONNECT_SWAPPED);
+ 
+@@ -1598,6 +1602,23 @@ search_entry_changed_cb (PpNewPrinterDialog *self)
+                   TRUE);
+ }
+ 
++static void
++search_entry_preedit_changed_cb (GtkEntry *entry,
++                                 gchar    *preedit,
++                                 gpointer  user_data)
++{
++  gchar *filter_text = NULL;
++  const gchar *text = gtk_entry_get_text (GTK_ENTRY (entry));
++
++  filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
++
++  search_address (filter_text,
++                  PP_NEW_PRINTER_DIALOG (user_data),
++                  TRUE);
++
++  g_free (filter_text);
++}
++
+ static gchar *
+ get_local_scheme_description_from_uri (gchar *device_uri)
+ {
+diff --git a/panels/region/cc-format-chooser.c b/panels/region/cc-format-chooser.c
+index d88508c..2a684b3 100644
+--- a/panels/region/cc-format-chooser.c
++++ b/panels/region/cc-format-chooser.c
+@@ -477,16 +477,16 @@ region_visible (GtkListBoxRow *row,
+ }
+ 
+ static void
+-filter_changed (CcFormatChooser *chooser)
++update_filter_changed (CcFormatChooser *chooser, const gchar *filter_text)
+ {
+         g_autofree gchar *filter_contents = NULL;
+         gboolean visible;
+ 
+-        g_clear_pointer (&chooser->filter_words, g_strfreev);
++        if (!filter_text)
++                return;
+ 
+         filter_contents =
+-                cc_util_normalize_casefold_and_unaccent (gtk_entry_get_text (GTK_ENTRY (chooser->region_filter_entry)));
+-
++                cc_util_normalize_casefold_and_unaccent (filter_text);
+         /* The popular listbox is shown only if search is empty */
+         visible = filter_contents == NULL || *filter_contents == '\0';
+         gtk_widget_set_visible (chooser->common_region_listbox, visible);
+@@ -501,6 +501,8 @@ filter_changed (CcFormatChooser *chooser)
+                 gtk_list_box_set_placeholder (GTK_LIST_BOX (chooser->region_listbox), NULL);
+                 return;
+         }
++
++        g_clear_pointer (&chooser->filter_words, g_strfreev);
+         chooser->filter_words = g_strsplit_set (g_strstrip (filter_contents), " ", 0);
+         gtk_list_box_invalidate_filter (GTK_LIST_BOX (chooser->region_listbox));
+ 
+@@ -512,6 +514,31 @@ filter_changed (CcFormatChooser *chooser)
+                                        GTK_WIDGET (chooser->region_list));
+ }
+ 
++static void
++filter_changed (CcFormatChooser *chooser)
++{
++  const gchar *text;
++
++  text = gtk_entry_get_text (GTK_ENTRY (chooser->region_filter_entry));
++
++  update_filter_changed (chooser, text);
++}
++
++static void
++filter_preedit_changed (GtkEntry       *entry,
++                        gchar          *preedit,
++                        CcFormatChooser *chooser)
++{
++  const gchar *text;
++  g_autofree gchar *filter_text = NULL;
++
++  text = gtk_entry_get_text (GTK_ENTRY (entry));
++
++  filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
++
++  update_filter_changed (chooser, filter_text);
++}
++
+ static void
+ row_activated (CcFormatChooser *chooser,
+                GtkListBoxRow   *row)
+@@ -594,6 +621,7 @@ cc_format_chooser_class_init (CcFormatChooserClass *klass)
+         gtk_widget_class_bind_template_callback (widget_class, format_chooser_back_button_clicked_cb);
+         gtk_widget_class_bind_template_callback (widget_class, format_chooser_leaflet_fold_changed_cb);
+         gtk_widget_class_bind_template_callback (widget_class, filter_changed);
++        gtk_widget_class_bind_template_callback (widget_class, filter_preedit_changed);
+         gtk_widget_class_bind_template_callback (widget_class, row_activated);
+ }
+ 
+diff --git a/panels/region/cc-format-chooser.ui b/panels/region/cc-format-chooser.ui
+index 35cbd8a..c01741b 100644
+--- a/panels/region/cc-format-chooser.ui
++++ b/panels/region/cc-format-chooser.ui
+@@ -120,6 +120,7 @@
+                     <property name="margin-start">18</property>
+                     <property name="margin-end">18</property>
+                     <signal name="search-changed" handler="filter_changed" object="CcFormatChooser" swapped="yes" />
++                    <signal name="preedit-changed" handler="filter_preedit_changed" object="CcFormatChooser" swapped="no" />
+                   </object>
+                 </child>
+ 
+diff --git a/panels/region/cc-input-chooser.c b/panels/region/cc-input-chooser.c
+index 74c8e0c..212ef77 100644
+--- a/panels/region/cc-input-chooser.c
++++ b/panels/region/cc-input-chooser.c
+@@ -74,6 +74,7 @@ struct _CcInputChooser
+   gchar            **filter_words;
+ 
+   gboolean           is_login;
++  gchar             *filter_text;
+ };
+ 
+ G_DEFINE_TYPE (CcInputChooser, cc_input_chooser, GTK_TYPE_DIALOG)
+@@ -556,8 +557,11 @@ do_filter (CcInputChooser *self)
+ 
+   self->filter_timeout_id = 0;
+ 
++  if (!self->filter_text)
++    return G_SOURCE_REMOVE;
++
+   filter_contents =
+-    cc_util_normalize_casefold_and_unaccent (gtk_entry_get_text (GTK_ENTRY (self->filter_entry)));
++    cc_util_normalize_casefold_and_unaccent (self->filter_text);
+ 
+   previous_words = self->filter_words;
+   self->filter_words = g_strsplit_set (g_strstrip (filter_contents), " ", 0);
+@@ -579,6 +583,26 @@ do_filter (CcInputChooser *self)
+ static void
+ on_filter_entry_search_changed_cb (CcInputChooser *self)
+ {
++  g_free (self->filter_text);
++
++  self->filter_text = g_strdup (gtk_entry_get_text (GTK_ENTRY (self->filter_entry)));
++
++  if (self->filter_timeout_id == 0)
++    self->filter_timeout_id = g_timeout_add (FILTER_TIMEOUT, (GSourceFunc) do_fillter, self);
++}
++
++static void
++on_filter_entry_search_preedit_changed_cb (GtkEntry       *entry,
++                                           gchar          *preedit,
++                                           CcInputChooser *self)
++{
++  const gchar *text;
++
++  text = gtk_entry_get_text (GTK_ENTRY (entry));
++
++  g_free (self->filter_text);
++  self->filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
++
+   if (self->filter_timeout_id == 0)
+     self->filter_timeout_id = g_timeout_add (FILTER_TIMEOUT, (GSourceFunc) do_filter, self);
+ }
+@@ -987,6 +1011,7 @@ cc_input_chooser_dispose (GObject *object)
+   g_clear_pointer (&self->locales, g_hash_table_unref);
+   g_clear_pointer (&self->locales_by_language, g_hash_table_unref);
+   g_clear_pointer (&self->filter_words, g_strfreev);
++  g_clear_pointer (&self->filter_text, g_free);
+   g_clear_handle_id (&self->filter_timeout_id, g_source_remove);
+ 
+   G_OBJECT_CLASS (cc_input_chooser_parent_class)->dispose (object);
+@@ -1012,6 +1037,7 @@ cc_input_chooser_class_init (CcInputChooserClass *klass)
+   gtk_widget_class_bind_template_callback (widget_class, on_input_sources_listbox_selected_rows_changed_cb);
+   gtk_widget_class_bind_template_callback (widget_class, on_input_sources_listbox_button_release_event_cb);
+   gtk_widget_class_bind_template_callback (widget_class, on_filter_entry_search_changed_cb);
++  gtk_widget_class_bind_template_callback (widget_class, on_filter_entry_search_preedit_changed_cb);
+   gtk_widget_class_bind_template_callback (widget_class, on_filter_entry_key_release_event_cb);
+ }
+ 
+@@ -1033,6 +1059,7 @@ cc_input_chooser_new (gboolean      is_login,
+                        "use-header-bar", 1,
+                        NULL);
+ 
++  self->filter_text = NULL;
+   self->is_login = is_login;
+   self->xkb_info = g_object_ref (xkb_info);
+   if (ibus_engines)
+diff --git a/panels/region/cc-input-chooser.ui b/panels/region/cc-input-chooser.ui
+index 8d72357..5d1a69f 100644
+--- a/panels/region/cc-input-chooser.ui
++++ b/panels/region/cc-input-chooser.ui
+@@ -67,6 +67,7 @@
+             <property name="margin-top">6</property>
+             <property name="margin-bottom">6</property>
+             <signal name="search-changed" handler="on_filter_entry_search_changed_cb" object="CcInputChooser" swapped="yes" />
++            <signal name="preedit-changed" handler="on_filter_entry_search_preedit_changed_cb" object="CcInputChooser" swapped="no" />
+             <signal name="key-release-event" handler="on_filter_entry_key_release_event_cb" object="CcInputChooser" swapped="yes" />
+           </object>
+         </child>
+diff --git a/shell/cc-window.c b/shell/cc-window.c
+index 400c391..2082576 100644
+--- a/shell/cc-window.c
++++ b/shell/cc-window.c
+@@ -546,6 +546,22 @@ search_entry_activate_cb (CcWindow *self)
+   gtk_search_bar_set_search_mode (self->search_bar, !changed);
+ }
+ 
++static void
++search_entry_preedit_changed_cb (GtkEntry *entry,
++                                 gchar    *preedit,
++                                 CcWindow *self)
++{
++  gchar *filter_text = NULL;
++  const gchar *text = gtk_entry_get_text (GTK_ENTRY (self->search_entry));
++
++  filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
++
++  cc_panel_list_set_search_query (CC_PANEL_LIST (self->panel_list), filter_text);
++
++  g_free (filter_text);
++}
++
++
+ static void
+ back_button_clicked_cb (CcWindow *self)
+ {
+@@ -896,6 +912,7 @@ cc_window_class_init (CcWindowClass *klass)
+   gtk_widget_class_bind_template_callback (widget_class, on_development_warning_dialog_responded_cb);
+   gtk_widget_class_bind_template_callback (widget_class, previous_button_clicked_cb);
+   gtk_widget_class_bind_template_callback (widget_class, search_entry_activate_cb);
++  gtk_widget_class_bind_template_callback (widget_class, search_entry_preedit_changed_cb);
+   gtk_widget_class_bind_template_callback (widget_class, show_panel_cb);
+   gtk_widget_class_bind_template_callback (widget_class, update_list_title);
+   gtk_widget_class_bind_template_callback (widget_class, window_key_press_event_cb);
+diff --git a/shell/cc-window.ui b/shell/cc-window.ui
+index 24f37de..7b3426e 100644
+--- a/shell/cc-window.ui
++++ b/shell/cc-window.ui
+@@ -39,6 +39,7 @@
+                     <property name="primary_icon_sensitive">False</property>
+                     <signal name="activate" handler="search_entry_activate_cb" object="CcWindow" swapped="yes" />
+                     <signal name="notify::text" handler="update_list_title" object="CcWindow" swapped="yes" />
++                    <signal name="preedit-changed" handler="search_entry_preedit_changed_cb" object="CcWindow" swapped="no"/>
+                   </object>
+                 </child>
+               </object>

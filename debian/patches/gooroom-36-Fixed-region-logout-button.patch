@@ -1,0 +1,114 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-36-Fixed-region-logout-button
+
+---
+ panels/region/cc-region-panel.c | 79 ++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 71 insertions(+), 8 deletions(-)
+
+diff --git a/panels/region/cc-region-panel.c b/panels/region/cc-region-panel.c
+index c970351..777966c 100644
+--- a/panels/region/cc-region-panel.c
++++ b/panels/region/cc-region-panel.c
+@@ -256,12 +256,75 @@ maybe_notify_finish (GObject      *source,
+                                  NULL))
+                 return;
+ 
+-        if (!gnome_parse_locale (mnd->target_locale,
+-                                 &target_lang_code,
+-                                 &target_country_code,
+-                                 NULL,
+-                                 NULL))
+-                return;
++        if (!(self->login)){
++                if (mnd->category == LC_MESSAGES) {
++
++                        if (!gnome_parse_locale (self->region,
++                                                 NULL,
++                                                 &target_country_code,
++                                                 NULL,
++                                                 NULL))
++                                return;
++
++                        if (!gnome_parse_locale (mnd->target_locale,
++                                                 &target_lang_code,
++                                                 NULL,
++                                                 NULL,
++                                                 NULL))
++                                return;
++
++                } else {
++
++                        if (!gnome_parse_locale (self->language,
++                                                 &target_lang_code,
++                                                 NULL,
++                                                 NULL,
++                                                 NULL))
++                                return;
++
++                        if (!gnome_parse_locale (mnd->target_locale,
++                                                 NULL,
++                                                 &target_country_code,
++                                                 NULL,
++                                                 NULL))
++                                return;
++
++                }
++        } else {
++                if (mnd->category == LC_MESSAGES) {
++
++                        if (!gnome_parse_locale (self->system_region,
++                                                 NULL,
++                                                 &target_country_code,
++                                                 NULL,
++                                                 NULL))
++                                return;
++
++                        if (!gnome_parse_locale (mnd->target_locale,
++                                                 &target_lang_code,
++                                                 NULL,
++                                                 NULL,
++                                                 NULL))
++                                return;
++
++                } else {
++
++                        if (!gnome_parse_locale (self->system_language,
++                                                 &target_lang_code,
++                                                 NULL,
++                                                 NULL,
++                                                 NULL))
++                                return;
++
++                        if (!gnome_parse_locale (mnd->target_locale,
++                                                 NULL,
++                                                 &target_country_code,
++                                                 NULL,
++                                                 NULL))
++                                return;
++
++                }
++        }
+ 
+         if (g_str_equal (current_lang_code, target_lang_code) == FALSE ||
+             g_str_equal (current_country_code, target_country_code) == FALSE)
+@@ -338,8 +401,8 @@ update_language (CcRegionPanel *self,
+                 set_user_language (self, language);
+                 if (self->login_auto_apply)
+                         set_system_language (self, language);
+-                maybe_notify (self, LC_MESSAGES, language);
+         }
++        maybe_notify (self, LC_MESSAGES, language);
+ }
+ 
+ static void
+@@ -382,8 +445,8 @@ update_region (CcRegionPanel *self,
+                 g_settings_set_string (self->locale_settings, KEY_REGION, region);
+                 if (self->login_auto_apply)
+                         set_system_region (self, region);
+-                maybe_notify (self, LC_TIME, region);
+         }
++        maybe_notify (self, LC_TIME, region);
+ }
+ 
+ static void

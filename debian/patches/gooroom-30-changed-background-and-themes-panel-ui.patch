@@ -1,0 +1,3618 @@
+From: HaeRyong Jeong <jeong89@gooroom.kr>
+Date: Thu, 29 Oct 2020 16:24:18 +0900
+Subject: [PATCH] change background and themes panel ui
+
+Change-Id: Ic0836adf964bb0a5abed6c680c186a854a039bd3
+---
+ panels/background/background-chooser.ui    | 180 ++++++++++
+ panels/background/background.gresource.xml |   8 +-
+ panels/background/bg-colors-source.c       |   2 +
+ panels/background/bg-source.c              |  32 +-
+ panels/background/bg-source.h              |   4 +
+ panels/background/bg-wallpapers-source.c   |   3 +
+ panels/background/cc-background-chooser.c  | 502 ++++++++++++--------------
+ panels/background/cc-background-chooser.h  |  30 +-
+ panels/background/cc-background-panel.c    | 550 +++++++++++++++++++++++++----
+ panels/background/cc-background-panel.ui   | 384 ++++++++++++++++++--
+ panels/background/check-icon.svg           |   6 +
+ panels/background/color-check-icon.svg     |   6 +
+ panels/background/meson.build              |   9 +-
+ panels/background/style.css                |  24 ++
+ panels/themes/cc-themes-panel.c            | 410 +++++++--------------
+ panels/themes/cc-themes-theme.c            | 276 +++++++++++++++
+ panels/themes/cc-themes-theme.h            |  22 ++
+ panels/themes/check-icon.svg               |   6 +
+ panels/themes/meson.build                  |   6 +-
+ panels/themes/style.css                    |  28 ++
+ panels/themes/themes-theme.ui              |  77 ++++
+ panels/themes/themes.gresource.xml         |   3 +
+ panels/themes/themes.ui                    | 146 ++------
+ po/en.po                                   |  57 +++
+ po/en_GB.po                                |  44 ++-
+ po/ko.po                                   |  40 +++
+ 26 files changed, 2057 insertions(+), 798 deletions(-)
+ create mode 100644 panels/background/background-chooser.ui
+ create mode 100644 panels/background/check-icon.svg
+ create mode 100644 panels/background/color-check-icon.svg
+ create mode 100644 panels/background/style.css
+ create mode 100644 panels/themes/cc-themes-theme.c
+ create mode 100644 panels/themes/cc-themes-theme.h
+ create mode 100644 panels/themes/check-icon.svg
+ create mode 100644 panels/themes/style.css
+ create mode 100644 panels/themes/themes-theme.ui
+
+diff --git a/panels/background/background-chooser.ui b/panels/background/background-chooser.ui
+new file mode 100644
+index 0000000..4612a1a
+--- /dev/null
++++ b/panels/background/background-chooser.ui
+@@ -0,0 +1,180 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!-- Generated with glade 3.22.1 -->
++<interface>
++  <requires lib="gtk+" version="3.20"/>
++  <object class="GtkListStore" id="type-liststore">
++    <columns>
++      <!-- column-name column1 -->
++      <column type="gchararray"/>
++      <!-- column-name gint1 -->
++      <column type="gint"/>
++    </columns>
++    <data>
++      <row>
++        <col id="0" translatable="yes">Image</col>
++        <col id="1">0</col>
++      </row>
++      <row>
++        <col id="0" translatable="yes">Single Colors</col>
++        <col id="1">1</col>
++      </row>
++    </data>
++  </object>
++  <template class="CcBackgroundChooser" parent="GtkBox">
++    <property name="visible">True</property>
++    <property name="can_focus">False</property>
++    <property name="orientation">vertical</property>
++    <property name="spacing">20</property>
++    <child>
++      <object class="GtkBox">
++        <property name="visible">True</property>
++        <property name="can_focus">False</property>
++        <property name="orientation">vertical</property>
++        <property name="spacing">10</property>
++        <child>
++          <object class="GtkLabel" id="background_label">
++            <property name="visible">True</property>
++            <property name="can_focus">False</property>
++            <property name="halign">start</property>
++            <property name="label" translatable="yes">Select Background</property>
++          </object>
++          <packing>
++            <property name="expand">False</property>
++            <property name="fill">True</property>
++            <property name="position">0</property>
++          </packing>
++        </child>
++        <child>
++          <object class="GtkBox">
++            <property name="visible">True</property>
++            <property name="can_focus">False</property>
++            <property name="spacing">1</property>
++            <child>
++              <object class="GtkComboBoxText" id="background_select_combobox">
++                <property name="width_request">300</property>
++                <property name="height_request">34</property>
++                <property name="visible">True</property>
++                <property name="can_focus">False</property>
++                <property name="halign">start</property>
++                <property name="model">type-liststore</property>
++                <signal name="changed" handler="on_background_changed" object="CcBackgroundChooser" swapped="no"/>
++              </object>
++              <packing>
++                <property name="expand">False</property>
++                <property name="fill">True</property>
++                <property name="position">0</property>
++              </packing>
++            </child>
++            <child>
++              <object class="GtkButton" id="chooser_button">
++                <property name="label" translatable="yes">Add Image</property>
++                <property name="visible">True</property>
++                <property name="can_focus">True</property>
++                <property name="receives_default">True</property>
++                <signal name="clicked" handler="on_clicked_add_image" object="CcBackgroundChooser" swapped="no"/>
++                <style>
++                  <class name="chooser-button"/>
++                </style>
++              </object>
++              <packing>
++                <property name="expand">False</property>
++                <property name="fill">True</property>
++                <property name="position">1</property>
++              </packing>
++            </child>
++          </object>
++          <packing>
++            <property name="expand">False</property>
++            <property name="fill">True</property>
++            <property name="position">1</property>
++          </packing>
++        </child>
++      </object>
++      <packing>
++        <property name="expand">False</property>
++        <property name="fill">True</property>
++        <property name="position">0</property>
++      </packing>
++    </child>
++    <child>
++      <object class="GtkStack" id="background_stack">
++        <property name="visible">True</property>
++        <property name="can_focus">False</property>
++        <property name="hhomogeneous">False</property>
++        <property name="vhomogeneous">False</property>
++        <child>
++          <object class="GtkBox">
++            <property name="visible">True</property>
++            <property name="can_focus">False</property>
++            <property name="halign">start</property>
++            <property name="orientation">vertical</property>
++            <child>
++              <object class="GtkFlowBox" id="recent_flowbox">
++                <property name="visible">True</property>
++                <property name="can_focus">False</property>
++                <property name="halign">start</property>
++                <property name="min_children_per_line">3</property>
++                <property name="max_children_per_line">3</property>
++                <signal name="child-activated" handler="on_background_item_activated" object="CcBackgroundChooser" swapped="no"/>
++              </object>
++              <packing>
++                <property name="expand">False</property>
++                <property name="fill">True</property>
++                <property name="position">0</property>
++              </packing>
++            </child>
++            <child>
++              <object class="GtkFlowBox" id="wallpaper_flowbox">
++                <property name="visible">True</property>
++                <property name="can_focus">True</property>
++                <property name="min_children_per_line">3</property>
++                <property name="max_children_per_line">3</property>
++                <signal name="child-activated" handler="on_background_item_activated" object="CcBackgroundChooser" swapped="no"/>
++              </object>
++              <packing>
++                <property name="expand">False</property>
++                <property name="fill">True</property>
++                <property name="position">1</property>
++              </packing>
++            </child>
++          </object>
++          <packing>
++            <property name="name">wallpaper</property>
++            <property name="title" translatable="yes">page0</property>
++          </packing>
++        </child>
++        <child>
++          <object class="GtkBox">
++            <property name="visible">True</property>
++            <property name="can_focus">False</property>
++            <property name="halign">start</property>
++            <child>
++              <object class="GtkFlowBox" id="color_flowbox">
++                <property name="visible">True</property>
++                <property name="can_focus">True</property>
++                <property name="min_children_per_line">10</property>
++                <property name="max_children_per_line">10</property>
++                <signal name="child-activated" handler="on_background_item_activated" object="CcBackgroundChooser" swapped="no"/>
++              </object>
++              <packing>
++                <property name="expand">False</property>
++                <property name="fill">False</property>
++                <property name="position">0</property>
++              </packing>
++            </child>
++          </object>
++          <packing>
++            <property name="name">single-color</property>
++            <property name="title" translatable="yes">page1</property>
++            <property name="position">1</property>
++          </packing>
++        </child>
++      </object>
++      <packing>
++        <property name="expand">True</property>
++        <property name="fill">True</property>
++        <property name="position">1</property>
++      </packing>
++    </child>
++  </template>
++</interface>
+diff --git a/panels/background/background.gresource.xml b/panels/background/background.gresource.xml
+index c715aad..e10f625 100644
+--- a/panels/background/background.gresource.xml
++++ b/panels/background/background.gresource.xml
+@@ -3,7 +3,11 @@
+   <gresource prefix="/org/gnome/control-center/background">
+     <file preprocess="xml-stripblanks">cc-background-chooser.ui</file>
+     <file preprocess="xml-stripblanks">cc-background-panel.ui</file>
+-    <file preprocess="xml-stripblanks">cc-background-preview.ui</file>
+-    <file>preview.css</file>
++    <!--file preprocess="xml-stripblanks">cc-background-preview.ui</file-->
++    <file preprocess="xml-stripblanks">background-chooser.ui</file>
++    <file alias="color_check_icon">color-check-icon.svg</file>
++    <file alias="check_icon">check-icon.svg</file>
++    <file>style.css</file>
++    <!--file>preview.css</file-->
+   </gresource>
+ </gresources>
+diff --git a/panels/background/bg-colors-source.c b/panels/background/bg-colors-source.c
+index 3d0d53d..7e19995 100644
+--- a/panels/background/bg-colors-source.c
++++ b/panels/background/bg-colors-source.c
+@@ -201,6 +201,8 @@ bg_colors_source_add (BgColorsSource       *self,
+ static void
+ bg_colors_source_init (BgColorsSource *self)
+ {
++  bg_source_set_thumbnail_width (BG_SOURCE (self), 48);
++  bg_source_set_thumbnail_height (BG_SOURCE (self), 48);
+ }
+ 
+ static void
+diff --git a/panels/background/bg-source.c b/panels/background/bg-source.c
+index b199257..bcac455 100644
+--- a/panels/background/bg-source.c
++++ b/panels/background/bg-source.c
+@@ -23,8 +23,8 @@
+ 
+ #include <cairo-gobject.h>
+ 
+-#define THUMBNAIL_WIDTH 154
+-#define THUMBNAIL_HEIGHT (THUMBNAIL_WIDTH * 3 / 4)
++#define THUMBNAIL_WIDTH 200 
++#define THUMBNAIL_HEIGHT 125
+ 
+ typedef struct
+ {
+@@ -50,8 +50,10 @@ bg_source_calculate_thumbnail_dimensions (BgSource *source)
+   BgSourcePrivate *priv = bg_source_get_instance_private (source);
+   gint scale_factor;
+ 
+-  priv->thumbnail_height = THUMBNAIL_HEIGHT;
+-  priv->thumbnail_width = THUMBNAIL_WIDTH;
++  if (priv->thumbnail_height == 0)
++    priv->thumbnail_height = THUMBNAIL_HEIGHT;
++  if (priv->thumbnail_width == 0)
++    priv->thumbnail_width = THUMBNAIL_WIDTH;
+ 
+   if (priv->widget == NULL)
+     return;
+@@ -155,6 +157,8 @@ bg_source_init (BgSource *self)
+   BgSourcePrivate *priv = bg_source_get_instance_private (self);
+   priv->store = g_list_store_new (CC_TYPE_BACKGROUND_ITEM);
+   priv->thumbnail_factory = gnome_desktop_thumbnail_factory_new (GNOME_DESKTOP_THUMBNAIL_SIZE_LARGE);
++  priv->thumbnail_height = 0;
++  priv->thumbnail_width = 0;
+ }
+ 
+ GListStore*
+@@ -211,3 +215,23 @@ bg_source_get_thumbnail_factory (BgSource *source)
+   priv = bg_source_get_instance_private (source);
+   return priv->thumbnail_factory;
+ }
++
++void
++bg_source_set_thumbnail_height (BgSource *source, gint height)
++{
++  BgSourcePrivate *priv;
++  g_return_val_if_fail (BG_IS_SOURCE (source), 1);
++
++  priv = bg_source_get_instance_private (source);
++  priv->thumbnail_height = height;
++}
++
++void
++bg_source_set_thumbnail_width (BgSource *source, gint width)
++{
++  BgSourcePrivate *priv;
++  g_return_val_if_fail (BG_IS_SOURCE (source), 1);
++
++  priv = bg_source_get_instance_private (source);
++  priv->thumbnail_width = width; 
++}
+diff --git a/panels/background/bg-source.h b/panels/background/bg-source.h
+index ff86a85..5421d27 100644
+--- a/panels/background/bg-source.h
++++ b/panels/background/bg-source.h
+@@ -41,6 +41,10 @@ gint bg_source_get_thumbnail_height (BgSource *source);
+ 
+ gint bg_source_get_thumbnail_width (BgSource *source);
+ 
++void bg_source_set_thumbnail_height (BgSource *source, gint height);
++
++void bg_source_set_thumbnail_width (BgSource *source, gint width);
++
+ GnomeDesktopThumbnailFactory* bg_source_get_thumbnail_factory (BgSource *source);
+ 
+ G_END_DECLS
+diff --git a/panels/background/bg-wallpapers-source.c b/panels/background/bg-wallpapers-source.c
+index 7d3b644..d423e48 100644
+--- a/panels/background/bg-wallpapers-source.c
++++ b/panels/background/bg-wallpapers-source.c
+@@ -112,6 +112,9 @@ bg_wallpapers_source_dispose (GObject *object)
+ 
+   g_clear_object (&self->xml);
+ 
++  bg_source_set_thumbnail_height (BG_SOURCE (self), 125);
++  bg_source_set_thumbnail_width (BG_SOURCE (self), 200);
++
+   G_OBJECT_CLASS (bg_wallpapers_source_parent_class)->dispose (object);
+ }
+ 
+diff --git a/panels/background/cc-background-chooser.c b/panels/background/cc-background-chooser.c
+index b28a5ee..f2015f7 100644
+--- a/panels/background/cc-background-chooser.c
++++ b/panels/background/cc-background-chooser.c
+@@ -1,297 +1,300 @@
+-/* cc-background-chooser.c
+- *
+- * Copyright 2019 Georges Basile Stavracas Neto <georges.stavracas@gmail.com>
+- *
+- * This program is free software: you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License as published by
+- * the Free Software Foundation, either version 3 of the License, or
+- * (at your option) any later version.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- *
+- * SPDX-License-Identifier: GPL-3.0-or-later
+- */
+-
+-#undef G_LOG_DOMAIN
+-#define G_LOG_DOMAIN "cc-background-chooser"
+-
+-#include <glib/gi18n.h>
+-#include <libgnome-desktop/gnome-desktop-thumbnail.h>
++#include <config.h>
++
++#include <glib/gi18n-lib.h>
+ 
+-#include "bg-colors-source.h"
+-#include "bg-pictures-source.h"
+-#include "bg-recent-source.h"
+-#include "bg-wallpapers-source.h"
+ #include "cc-background-chooser.h"
++#include "cc-background-item.h"
++#include "bg-wallpapers-source.h"
++#include "bg-recent-source.h"
++#include "bg-colors-source.h"
++
++#define COLOR_CHECK_ICON "/org/gnome/control-center/background/color_check_icon"
++#define CHECK_ICON       "/org/gnome/control-center/background/check_icon"
++
++
++typedef enum {
++  IMAGE_WALLPAPER = 0,
++  IMAGE_SINGLECOLOR,
++}BackgroundImage;
+ 
+ struct _CcBackgroundChooser
+ {
+-  GtkBox              parent;
++  GtkBox        parent;
++
++  GtkWidget     *background_select_combobox;
++  GtkStack      *background_stack;
++  GtkWidget     *chooser_button;
++
++  GtkFlowBox    *wallpaper_flowbox;
++  GtkFlowBox    *recent_flowbox;
++  GtkFlowBox    *color_flowbox;
+ 
+-  GtkFlowBox         *flowbox;
+-  GtkWidget          *recent_box;
+-  GtkFlowBox         *recent_flowbox;
++  GtkWidget     *selected_icon;
+ 
+-  gboolean            recent_selected;
++  BackgroundImage      selected_background;
+ 
+-  BgWallpapersSource *wallpapers_source;
+-  BgRecentSource     *recent_source;
++  BgWallpapersSource  *wallpapers_source;
++  BgRecentSource      *recent_source;
++  BgColorsSource      *colors_source;
+ };
+ 
+ G_DEFINE_TYPE (CcBackgroundChooser, cc_background_chooser, GTK_TYPE_BOX)
+ 
+ enum
+ {
+-  BACKGROUND_CHOSEN,
++  SELECT_BACKGROUND,
+   N_SIGNALS,
+ };
+ 
+ static guint signals [N_SIGNALS];
+ 
+ static void
+-emit_background_chosen (CcBackgroundChooser *self)
++on_delete_background_clicked_cb (GtkButton *button,
++                                 BgRecentSource  *source)
++{
++  GtkWidget *parent;
++  CcBackgroundItem *item;
++
++  parent = gtk_widget_get_parent (gtk_widget_get_parent (GTK_WIDGET (button)));
++  g_assert (GTK_IS_FLOW_BOX_CHILD (parent));
++
++  item = g_object_get_data (G_OBJECT (parent), "item");
++
++  bg_recent_source_remove_item (source, item);
++}
++
++static void
++on_file_dialog_response_cb (GtkDialog           *dialog,
++                            gint                 response,
++                            CcBackgroundChooser *chooser)
++{
++  if (response == GTK_RESPONSE_ACCEPT) {
++    g_autofree gchar *filename = NULL;
++
++    filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
++    bg_recent_source_add_file (chooser->recent_source, filename);
++  }
++  
++  gtk_widget_destroy (GTK_WIDGET (dialog));
++}
++
++static void
++on_background_item_activated (GtkFlowBox          *flowbox,
++                   GtkFlowBoxChild     *child,
++                   CcBackgroundChooser *chooser)
+ {
+   g_autoptr(GList) list = NULL;
++  GtkFlowBox *current_flowbox;
++  GtkWidget *selected_icon;
+   CcBackgroundItem *item;
+-  GtkFlowBox *flowbox;
+ 
+-  flowbox = self->recent_selected ? self->recent_flowbox : self->flowbox;
+-  list = gtk_flow_box_get_selected_children (flowbox);
+-  g_assert (g_list_length (list) == 1);
++  if (flowbox == chooser->wallpaper_flowbox) {
++    current_flowbox = chooser->wallpaper_flowbox;
++
++    gtk_flow_box_unselect_all (chooser->recent_flowbox);
++    gtk_flow_box_unselect_all (chooser->color_flowbox);
++  }
++  else if (flowbox == chooser->recent_flowbox) {
++    current_flowbox = chooser->recent_flowbox;
++
++    gtk_flow_box_unselect_all (chooser->wallpaper_flowbox);
++    gtk_flow_box_unselect_all (chooser->color_flowbox);
++  }
++  else {
++    current_flowbox = chooser->color_flowbox;
++
++    gtk_flow_box_unselect_all (chooser->wallpaper_flowbox);
++    gtk_flow_box_unselect_all (chooser->recent_flowbox);
++  }
+ 
++  list = gtk_flow_box_get_selected_children (current_flowbox);
++  selected_icon = g_object_get_data (list->data, "selected-icon");
++
++  if (chooser->selected_icon)
++    gtk_widget_set_visible (chooser->selected_icon, FALSE);
++  gtk_widget_set_visible (selected_icon, TRUE);
++
++  chooser->selected_icon = selected_icon;
++
++  /* set item.. */
+   item = g_object_get_data (list->data, "item");
++  g_signal_emit (chooser, signals[SELECT_BACKGROUND], 0, item);
++}
+ 
+-  g_signal_emit (self, signals[BACKGROUND_CHOSEN], 0, item);
++static void
++on_background_changed (GtkComboBox         *combobox,
++                       CcBackgroundChooser *chooser)
++{
++  gint selected_background = gtk_combo_box_get_active (combobox);
++
++  if (selected_background == IMAGE_WALLPAPER) {
++    gtk_stack_set_visible_child_name (GTK_STACK (chooser->background_stack), "wallpaper");
++    gtk_widget_set_visible (chooser->chooser_button, TRUE);
++  }
++  else if (selected_background == IMAGE_SINGLECOLOR) {
++    gtk_stack_set_visible_child_name (GTK_STACK (chooser->background_stack), "single-color");
++    gtk_widget_set_visible (chooser->chooser_button, FALSE);
++  }
+ }
+ 
+ static void
+-on_delete_background_clicked_cb (GtkButton *button,
+-                                 BgRecentSource  *source)
++on_clicked_add_image (GtkButton           *button,
++                      CcBackgroundChooser *chooser)
+ {
+-  GtkWidget *parent;
+-  CcBackgroundItem *item;
++  GtkWidget *dlg;
++  GtkWidget *dialog;
++  GtkFileFilter *filter;
+ 
+-  parent = gtk_widget_get_parent (gtk_widget_get_parent (GTK_WIDGET (button)));
+-  g_assert (GTK_IS_FLOW_BOX_CHILD (parent));
++  dialog = gtk_file_chooser_dialog_new (_("Add Image"),
++                                        NULL,
++                                        GTK_FILE_CHOOSER_ACTION_OPEN,
++                                        _("Calcel"), GTK_RESPONSE_CANCEL,
++                                        _("Open"), GTK_RESPONSE_ACCEPT,
++                                        NULL);
+ 
+-  item = g_object_get_data (G_OBJECT (parent), "item");
++  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+ 
+-  bg_recent_source_remove_item (source, item);
++  filter = gtk_file_filter_new ();
++  gtk_file_filter_add_pixbuf_formats (filter);
++  gtk_file_chooser_set_filter (GTK_FILE_CHOOSER (dialog), filter);
++
++  gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog),
++                                      g_get_user_special_dir (G_USER_DIRECTORY_PICTURES));
++
++  g_signal_connect_object (dialog,
++                         "response",
++                         G_CALLBACK (on_file_dialog_response_cb),
++                         chooser,
++                         0);
++
++  gtk_window_present (GTK_WINDOW (dialog));
+ }
+ 
+ static GtkWidget*
+-create_widget_func (gpointer model_item,
+-                    gpointer user_data)
++create_flowbox_child (gpointer model_item,
++                      gpointer data)
+ {
+   g_autoptr(GdkPixbuf) pixbuf = NULL;
+   CcBackgroundItem *item;
+   GtkWidget *overlay;
+   GtkWidget *child;
+-  GtkWidget *image;
+-  GtkWidget *icon;
+-  GtkWidget *button_image;
++  GtkWidget *image, *selected_icon;
++  BgSource  *source;
++  GtkWidget *button_image = NULL;
+   GtkWidget *button = NULL;
+-  BgSource *source;
+ 
+-  source = BG_SOURCE (user_data);
++  source = BG_SOURCE (data);
+   item = CC_BACKGROUND_ITEM (model_item);
+   pixbuf = cc_background_item_get_thumbnail (item,
+                                              bg_source_get_thumbnail_factory (source),
+                                              bg_source_get_thumbnail_width (source),
+                                              bg_source_get_thumbnail_height (source),
+                                              bg_source_get_scale_factor (source));
++
+   image = gtk_image_new_from_pixbuf (pixbuf);
+   gtk_widget_show (image);
+ 
+-  icon = g_object_new (GTK_TYPE_IMAGE,
+-                       "icon-name", "slideshow-emblem",
+-                       "pixel-size", 16,
+-                       "margin", 8,
+-                       "halign", GTK_ALIGN_END,
+-                       "valign", GTK_ALIGN_END,
+-                       "visible", cc_background_item_changes_with_time (item),
+-                       NULL);
+-  gtk_style_context_add_class (gtk_widget_get_style_context (icon), "slideshow-emblem");
+-
+-
+-  if (BG_IS_RECENT_SOURCE (source))
+-    {
+-      button_image = gtk_image_new_from_icon_name ("window-close-symbolic", GTK_ICON_SIZE_BUTTON);
+-      button =  g_object_new (GTK_TYPE_BUTTON,
+-                              "image", button_image,
+-                              "halign", GTK_ALIGN_END,
+-                              "valign", GTK_ALIGN_START,
+-                              "margin", 6,
+-                              "visible", TRUE,
+-                              NULL);
+-
+-      gtk_style_context_add_class (gtk_widget_get_style_context (button), "osd");
+-      gtk_style_context_add_class (gtk_widget_get_style_context (button), "remove-button");
+-
+-      g_signal_connect (button,
+-                        "clicked",
+-                        G_CALLBACK (on_delete_background_clicked_cb),
+-                        source);
+-    }
++  /* setup single-color selected image */
++  if (BG_IS_COLORS_SOURCE (source)) {
++    selected_icon = g_object_new (GTK_TYPE_IMAGE,
++                                  "resource", COLOR_CHECK_ICON,
++                                  "pixel-size", 24,
++                                  "margin", 12,
++                                  "halign", GTK_ALIGN_CENTER,
++                                  "valign", GTK_ALIGN_CENTER,
++                                  "visible", FALSE, NULL);
++  }
++  /* wallpaper or recent source */
++  else {
++    selected_icon = g_object_new (GTK_TYPE_IMAGE,
++                                  "resource", CHECK_ICON,
++                                  "pixel-size", 32,
++                                  "halign", GTK_ALIGN_END,
++                                  "valign", GTK_ALIGN_START,
++                                  "visible", FALSE, NULL);
++
++    //if (BG_IS_RECENT_SOURCE (source)) {
++    //  button_image = gtk_image_new_from_icon_name ("window-close-symbolic", GTK_ICON_SIZE_BUTTON);
++    //  button = g_object_new (GTK_TYPE_BUTTON,
++    //                         "image", button_image,
++    //                         "halign", GTK_ALIGN_END,
++    //                         "valign", GTK_ALIGN_START,
++    //                         "margin", 6,
++    //                         "visible",TRUE, NULL);
++
++    //  //gtk_style_context_add_class (gtk_widget_get_style_context (button), "osd");
++    //  //gtk_style_context_add_class (gtk_widget_get_style_context (button), "remove-button");
++
++    //  g_signal_connect (button,
++    //                    "clicked",
++    //                    G_CALLBACK (on_delete_background_clicked_cb),
++    //                    source);
++    //}
++  }
++
++  child = g_object_new (GTK_TYPE_FLOW_BOX_CHILD,
++                        "halign", GTK_ALIGN_CENTER,
++                        "valign", GTK_ALIGN_CENTER, NULL);
+ 
+   overlay = gtk_overlay_new ();
+   gtk_container_add (GTK_CONTAINER (overlay), image);
+-  gtk_overlay_add_overlay (GTK_OVERLAY (overlay), icon);
++  gtk_overlay_add_overlay (GTK_OVERLAY(overlay), selected_icon);
+   if (button)
+-    gtk_overlay_add_overlay (GTK_OVERLAY (overlay), button);
++    gtk_overlay_add_overlay (GTK_OVERLAY(overlay), button);
+   gtk_widget_show (overlay);
+ 
+-  child = g_object_new (GTK_TYPE_FLOW_BOX_CHILD,
+-                        "halign", GTK_ALIGN_CENTER,
+-                        "valign", GTK_ALIGN_CENTER,
+-                        NULL);
+   gtk_container_add (GTK_CONTAINER (child), overlay);
+   gtk_widget_show (child);
+ 
+   g_object_set_data_full (G_OBJECT (child), "item", g_object_ref (item), g_object_unref);
++  g_object_set_data_full (G_OBJECT (child), "selected-icon", g_object_ref (selected_icon),
++                          g_object_unref);
+ 
+   return child;
+ }
+ 
+ static void
+-update_recent_visibility (CcBackgroundChooser *self)
+-{
+-  GListStore *store;
+-  gboolean has_items;
+-
+-  store = bg_source_get_liststore (BG_SOURCE (self->recent_source));
+-  has_items = g_list_model_get_n_items (G_LIST_MODEL (store)) != 0;
+-
+-  gtk_widget_set_visible (self->recent_box, has_items);
+-}
+-
+-static void
+-setup_flowbox (CcBackgroundChooser *self)
++setup_flowbox (CcBackgroundChooser *chooser)
+ {
+   GListStore *store;
+ 
+-  store = bg_source_get_liststore (BG_SOURCE (self->wallpapers_source));
+-
+-  gtk_flow_box_bind_model (self->flowbox,
++  store = bg_source_get_liststore (BG_SOURCE (chooser->colors_source));
++  gtk_flow_box_bind_model (chooser->color_flowbox,
+                            G_LIST_MODEL (store),
+-                           create_widget_func,
+-                           self->wallpapers_source,
+-                           NULL);
+-
+-  store = bg_source_get_liststore (BG_SOURCE (self->recent_source));
++                           create_flowbox_child,
++                           chooser->colors_source, NULL);
+ 
+-  gtk_flow_box_bind_model (self->recent_flowbox,
++  store = bg_source_get_liststore (BG_SOURCE (chooser->recent_source));
++  gtk_flow_box_bind_model (chooser->recent_flowbox,
+                            G_LIST_MODEL (store),
+-                           create_widget_func,
+-                           self->recent_source,
+-                           NULL);
+-
+-  update_recent_visibility (self);
+-  g_signal_connect_object (store,
+-                           "items-changed",
+-                           G_CALLBACK (update_recent_visibility),
+-                           self,
+-                           G_CONNECT_SWAPPED);
+-}
++                           create_flowbox_child,
++                           chooser->recent_source, NULL);
+ 
+-static void
+-on_item_activated_cb (GtkFlowBox          *flowbox,
+-                      GtkFlowBoxChild     *child,
+-                      CcBackgroundChooser *self)
+-{
+-  self->recent_selected = flowbox == self->recent_flowbox;
+-  if (self->recent_selected)
+-    gtk_flow_box_unselect_all (self->flowbox);
+-  else
+-    gtk_flow_box_unselect_all (self->recent_flowbox);
+-  emit_background_chosen (self);
++  store = bg_source_get_liststore (BG_SOURCE (chooser->wallpapers_source));
++  gtk_flow_box_bind_model (chooser->wallpaper_flowbox,
++                           G_LIST_MODEL (store),
++                           create_flowbox_child,
++                           chooser->wallpapers_source, NULL);
+ }
+ 
+ static void
+-on_file_chooser_response_cb (GtkDialog           *filechooser,
+-                             gint                 response,
+-                             CcBackgroundChooser *self)
++cc_background_chooser_constructed (GObject *object)
+ {
+-  if (response == GTK_RESPONSE_ACCEPT)
+-    {
+-      g_autoptr(GSList) filenames = NULL;
+-      GSList *l;
++  CcBackgroundChooser *chooser = CC_BACKGROUND_CHOOSER (object);
+ 
+-      filenames = gtk_file_chooser_get_filenames (GTK_FILE_CHOOSER (filechooser));
+-      for (l = filenames; l != NULL; l = l->next)
+-        {
+-          g_autofree gchar *filename = l->data;
++  G_OBJECT_CLASS (cc_background_chooser_parent_class)->constructed (object);
+ 
+-          bg_recent_source_add_file (self->recent_source, filename);
+-        }
+-    }
+-
+-  gtk_widget_destroy (GTK_WIDGET (filechooser));
+-}
+-
+-static void
+-on_file_chooser_selection_changed_cb (GtkFileChooser               *chooser,
+-                                      GnomeDesktopThumbnailFactory *thumbnail_factory)
+-{
+-  g_autofree gchar *uri = NULL;
+-
+-  uri = gtk_file_chooser_get_uri (chooser);
+-
+-  if (uri)
+-    {
+-      g_autoptr(GFileInfo) file_info = NULL;
+-      g_autoptr(GdkPixbuf) pixbuf = NULL;
+-      g_autofree gchar *mime_type = NULL;
+-      g_autoptr(GFile) file = NULL;
+-      GtkWidget *preview;
+-
+-      preview = gtk_file_chooser_get_preview_widget (chooser);
+-
+-      file = g_file_new_for_uri (uri);
+-      file_info = g_file_query_info (file,
+-                                     "standard::*",
+-                                     G_FILE_QUERY_INFO_NONE,
+-                                     NULL,
+-                                     NULL);
+-
+-      if (file_info && g_file_info_get_file_type (file_info) != G_FILE_TYPE_DIRECTORY)
+-        mime_type = g_strdup (g_file_info_get_content_type (file_info));
+-
+-      if (mime_type)
+-        {
+-          pixbuf = gnome_desktop_thumbnail_factory_generate_thumbnail (thumbnail_factory,
+-                                                                       uri,
+-                                                                       mime_type);
+-        }
+-
+-      gtk_dialog_set_response_sensitive (GTK_DIALOG (chooser),
+-                                         GTK_RESPONSE_ACCEPT,
+-                                         pixbuf != NULL);
+-
+-      if (pixbuf)
+-        gtk_image_set_from_pixbuf (GTK_IMAGE (preview), pixbuf);
+-      else
+-        gtk_image_set_from_icon_name (GTK_IMAGE (preview), "dialog-question", GTK_ICON_SIZE_DIALOG);
+-    }
+-
+-  gtk_file_chooser_set_preview_widget_active (chooser, TRUE);
++  gtk_combo_box_set_active (GTK_COMBO_BOX (chooser->background_select_combobox), IMAGE_WALLPAPER);
+ }
+ 
+-/* GObject overrides */
+-
+ static void
+ cc_background_chooser_finalize (GObject *object)
+ {
+-  CcBackgroundChooser *self = (CcBackgroundChooser *)object;
++  CcBackgroundChooser *chooser = CC_BACKGROUND_CHOOSER (object);
+ 
+-  g_clear_object (&self->recent_source);
+-  g_clear_object (&self->wallpapers_source);
++  g_clear_object (&chooser->wallpapers_source);
++  g_clear_object (&chooser->recent_source);
++  g_clear_object (&chooser->colors_source);
+ 
+   G_OBJECT_CLASS (cc_background_chooser_parent_class)->finalize (object);
+ }
+@@ -299,12 +302,13 @@ cc_background_chooser_finalize (GObject *object)
+ static void
+ cc_background_chooser_class_init (CcBackgroundChooserClass *klass)
+ {
+-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+-  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
++  GObjectClass   *object_class = G_OBJECT_CLASS (klass);
++  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);;
+ 
++  object_class->constructed = cc_background_chooser_constructed;
+   object_class->finalize = cc_background_chooser_finalize;
+ 
+-  signals[BACKGROUND_CHOSEN] = g_signal_new ("background-chosen",
++  signals[SELECT_BACKGROUND] = g_signal_new ("select-background",
+                                              CC_TYPE_BACKGROUND_CHOOSER,
+                                              G_SIGNAL_RUN_FIRST,
+                                              0, NULL, NULL, NULL,
+@@ -312,75 +316,29 @@ cc_background_chooser_class_init (CcBackgroundChooserClass *klass)
+                                              1,
+                                              CC_TYPE_BACKGROUND_ITEM);
+ 
+-  gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/control-center/background/cc-background-chooser.ui");
++  gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/control-center/background/background-chooser.ui");
+ 
+-  gtk_widget_class_bind_template_child (widget_class, CcBackgroundChooser, flowbox);
+-  gtk_widget_class_bind_template_child (widget_class, CcBackgroundChooser, recent_box);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundChooser, background_select_combobox);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundChooser, background_stack);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundChooser, wallpaper_flowbox);
+   gtk_widget_class_bind_template_child (widget_class, CcBackgroundChooser, recent_flowbox);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundChooser, color_flowbox);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundChooser, chooser_button);
+ 
+-  gtk_widget_class_bind_template_callback (widget_class, on_item_activated_cb);
++  gtk_widget_class_bind_template_callback (widget_class, on_background_item_activated);
++  gtk_widget_class_bind_template_callback (widget_class, on_background_changed);
++  gtk_widget_class_bind_template_callback (widget_class, on_clicked_add_image);
+ }
+ 
+ static void
+-cc_background_chooser_init (CcBackgroundChooser *self)
+-{
+-  gtk_widget_init_template (GTK_WIDGET (self));
+-
+-  self->recent_source = bg_recent_source_new (GTK_WIDGET (self));
+-  self->wallpapers_source = bg_wallpapers_source_new (GTK_WIDGET (self));
+-  setup_flowbox (self);
+-}
+-
+-void
+-cc_background_chooser_select_file (CcBackgroundChooser *self)
++cc_background_chooser_init (CcBackgroundChooser *chooser)
+ {
+-  g_autoptr(GnomeDesktopThumbnailFactory) factory = NULL;
+-  GtkFileFilter *filter;
+-  GtkWidget *filechooser;
+-  GtkWindow *toplevel;
+-  GtkWidget *preview;
+-
+-  g_return_if_fail (CC_IS_BACKGROUND_CHOOSER (self));
+-
+-  toplevel = (GtkWindow*) gtk_widget_get_toplevel (GTK_WIDGET (self));
+-  filechooser = gtk_file_chooser_dialog_new (_("Select a picture"),
+-                                             toplevel,
+-                                             GTK_FILE_CHOOSER_ACTION_OPEN,
+-                                             _("_Cancel"), GTK_RESPONSE_CANCEL,
+-                                             _("_Open"), GTK_RESPONSE_ACCEPT,
+-                                             NULL);
+-  gtk_window_set_modal (GTK_WINDOW (filechooser), TRUE);
+-
+-  preview = gtk_image_new ();
+-  gtk_widget_set_size_request (preview, 154, -1);
+-  gtk_file_chooser_set_preview_widget (GTK_FILE_CHOOSER (filechooser), preview);
+-  gtk_file_chooser_set_use_preview_label (GTK_FILE_CHOOSER (filechooser), FALSE);
+-  gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (filechooser), TRUE);
+-  gtk_widget_show (preview);
+-
+-  factory = gnome_desktop_thumbnail_factory_new (GNOME_DESKTOP_THUMBNAIL_SIZE_LARGE);
+-  g_signal_connect_after (filechooser,
+-                          "selection-changed",
+-                          G_CALLBACK (on_file_chooser_selection_changed_cb),
+-                          factory);
+-
+-  g_object_set_data_full (G_OBJECT (filechooser),
+-                          "factory",
+-                          g_object_ref (factory),
+-                          g_object_unref);
+-
+-  filter = gtk_file_filter_new ();
+-  gtk_file_filter_add_pixbuf_formats (filter);
+-  gtk_file_chooser_set_filter (GTK_FILE_CHOOSER (filechooser), filter);
+-
+-  gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (filechooser),
+-                                       g_get_user_special_dir (G_USER_DIRECTORY_PICTURES));
++  gtk_widget_init_template (GTK_WIDGET (chooser));
+ 
+-  g_signal_connect_object (filechooser,
+-                           "response",
+-                           G_CALLBACK (on_file_chooser_response_cb),
+-                           self,
+-                           0);
++  chooser->selected_icon = NULL;
++  chooser->wallpapers_source = bg_wallpapers_source_new (GTK_WIDGET (chooser));
++  chooser->recent_source = bg_recent_source_new (GTK_WIDGET (chooser));
++  chooser->colors_source = bg_colors_source_new (GTK_WIDGET (chooser));
+ 
+-  gtk_window_present (GTK_WINDOW (filechooser));
++  setup_flowbox (chooser);
+ }
+diff --git a/panels/background/cc-background-chooser.h b/panels/background/cc-background-chooser.h
+index 1751098..b8741d6 100644
+--- a/panels/background/cc-background-chooser.h
++++ b/panels/background/cc-background-chooser.h
+@@ -1,32 +1,12 @@
+-/* cc-background-chooser.h
+- *
+- * Copyright 2019 Georges Basile Stavracas Neto <georges.stavracas@gmail.com>
+- *
+- * This program is free software: you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License as published by
+- * the Free Software Foundation, either version 3 of the License, or
+- * (at your option) any later version.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- *
+- * SPDX-License-Identifier: GPL-3.0-or-later
+- */
+-
+-#pragma once
++#ifndef __CC_BACKGROUND_CHOOSER_H__
++#define __CC_BACKGROUND_CHOOSER_H__
+ 
+ #include <gtk/gtk.h>
+-
+ G_BEGIN_DECLS
+ 
+-#define CC_TYPE_BACKGROUND_CHOOSER (cc_background_chooser_get_type())
++#define CC_TYPE_BACKGROUND_CHOOSER (cc_background_chooser_get_type ())
+ G_DECLARE_FINAL_TYPE (CcBackgroundChooser, cc_background_chooser, CC, BACKGROUND_CHOOSER, GtkBox)
+ 
+-void cc_background_chooser_select_file (CcBackgroundChooser *self);
+-
+ G_END_DECLS
++
++#endif /* __CC_BACKGROUND_CHOOSER_H__ */
+diff --git a/panels/background/cc-background-panel.c b/panels/background/cc-background-panel.c
+index 29dedf1..8e529ca 100644
+--- a/panels/background/cc-background-panel.c
++++ b/panels/background/cc-background-panel.c
+@@ -21,6 +21,7 @@
+ #include <config.h>
+ 
+ #include <string.h>
++#include <gtk/gtk.h>
+ #include <glib.h>
+ #include <glib/gi18n-lib.h>
+ #include <glib/gstdio.h>
+@@ -31,11 +32,12 @@
+ 
+ #include "cc-background-chooser.h"
+ #include "cc-background-item.h"
+-#include "cc-background-preview.h"
++//#include "cc-background-preview.h"
+ #include "cc-background-resources.h"
+ #include "cc-background-xml.h"
+ 
+-#include "bg-pictures-source.h"
++#include "bg-colors-source.h"
++//#include "bg-pictures-source.h"
+ 
+ #define WP_PATH_ID "org.gnome.desktop.background"
+ #define WP_LOCK_PATH_ID "org.gnome.desktop.screensaver"
+@@ -45,6 +47,25 @@
+ #define WP_PCOLOR_KEY "primary-color"
+ #define WP_SCOLOR_KEY "secondary-color"
+ 
++#define CHECK_ICON    "/org/gnome/control-center/background/check_icon"
++
++enum {
++  COMBO_BOX_MODEL_TEXT,
++  COMBO_BOX_MODEL_VALUE,
++  N_COLUMNS
++};
++
++typedef enum {
++  MODE_EACH = 0,
++  MODE_ALL,
++}BackgroundMode;
++
++typedef enum {
++  APPLY_DESKTOP,
++  APPLY_LOCK,
++  APPLY_ALL,
++}BackgroundApply;
++
+ struct _CcBackgroundPanel
+ {
+   CcPanel parent_instance;
+@@ -57,53 +78,200 @@ struct _CcBackgroundPanel
+   GnomeDesktopThumbnailFactory *thumb_factory;
+ 
+   CcBackgroundItem *current_background;
++  CcBackgroundItem *current_lock_background;
++
++  GCancellable *copy_cancellable;
++
++  GtkWidget *spinner;
++  GtkWidget *chooser;
++
++//  CcBackgroundChooser *background_chooser;
++//  GtkButton *add_picture_button;
++//  CcBackgroundPreview *desktop_preview;
++
++  GtkCssProvider  *provider;
++  GtkCssProvider  *selected_prov;
++  GtkCssProvider  *default_prov;
+ 
+-  CcBackgroundChooser *background_chooser;
+-  GtkButton *add_picture_button;
+-  CcBackgroundPreview *desktop_preview;
++  /* from ui */
++  GtkWidget       *scrolled_view;
++  GtkWidget       *type_label;
++  GtkWidget       *type_select_combobox;
++
++  GtkWidget       *desktop_thumbnail_box;
++  GtkWidget       *desktop_eventbox;
++  GtkWidget       *desktop_overlay;
++  GtkWidget       *desktop_image;
++  GtkWidget       *desktop_label;
++
++  GtkWidget       *lock_box;            // need for vislble,disable
++  GtkWidget       *lock_thumbnail_box;
++  GtkWidget       *lock_eventbox;
++  GtkWidget       *lock_overlay;
++  GtkWidget       *lock_image;
++  GtkWidget       *lock_label;
++
++  BackgroundMode      background_mode;
++  BackgroundApply     applied_background;
+ };
+ 
+ CC_PANEL_REGISTER (CcBackgroundPanel, cc_background_panel)
+ 
+-static void
+-update_preview (CcBackgroundPanel *panel)
++//static void
++//update_preview (CcBackgroundPanel *panel)
++//{
++//  CcBackgroundItem *current_background;
++//
++//  current_background = panel->current_background;
++//  cc_background_preview_set_item (panel->desktop_preview, current_background);
++//}
++
++static const char *
++cc_background_panel_get_help_uri (CcPanel *panel)
+ {
+-  CcBackgroundItem *current_background;
++  return "help:gnome-help/look-background";
++}
+ 
+-  current_background = panel->current_background;
+-  cc_background_preview_set_item (panel->desktop_preview, current_background);
++static CcBackgroundItem *
++get_current_background (CcBackgroundPanel *panel, GSettings *settings)
++{
++  if (settings == panel->settings)
++    return panel->current_background;
++  else
++    return panel->current_lock_background;
+ }
+ 
+ static gchar *
+-get_save_path (void)
++get_save_path (CcBackgroundPanel *panel, GSettings *settings)
+ {
+   return g_build_filename (g_get_user_config_dir (),
+                            "gnome-control-center",
+                            "backgrounds",
+-                           "last-edited.xml",
++                           settings == panel->settings ? "last-edited.xml" : "last-edited-lock.xml",
+                            NULL);
+ }
+ 
++static GdkPixbuf*
++get_or_create_cached_pixbuf (CcBackgroundPanel *panel,
++                             GtkWidget         *widget,
++                             CcBackgroundItem  *background)
++{
++  GtkAllocation allocation;
++  const gint preview_width = 300;
++  const gint preview_height = 188;
++  gint scale_factor;
++  GdkPixbuf *pixbuf;
++
++  pixbuf = g_object_get_data (G_OBJECT (background), "pixbuf");
++  if (pixbuf == NULL)
++    {
++      gtk_widget_get_allocation (widget, &allocation);
++      scale_factor = gtk_widget_get_scale_factor (widget);
++      pixbuf = cc_background_item_get_frame_thumbnail (background,
++                                                       panel->thumb_factory,
++                                                       preview_width,
++                                                       preview_height,
++                                                       scale_factor,
++                                                       -2, TRUE);
++      g_object_set_data_full (G_OBJECT (background), "pixbuf", pixbuf, g_object_unref);
++    }
++
++  return pixbuf;
++}
++
++static void
++set_preview_image (CcBackgroundPanel *panel,
++                   GtkWidget         *widget,
++                   CcBackgroundItem  *item)
++{
++  GdkPixbuf *pixbuf;
++
++  pixbuf = get_or_create_cached_pixbuf (panel, widget, item);
++  gtk_image_set_from_pixbuf (GTK_IMAGE (widget), pixbuf);
++}
++
++static void
++update_preview (CcBackgroundPanel *panel,
++                GSettings         *settings,
++                CcBackgroundItem  *item)
++{
++  gboolean changes_with_time;
++  CcBackgroundItem *current_background;
++
++  current_background = get_current_background (panel, settings);
++
++  if (item && current_background)
++    {
++      g_object_unref (current_background);
++      current_background = cc_background_item_copy (item);
++      if (settings == panel->settings)
++        panel->current_background = current_background;
++      else
++        panel->current_lock_background = current_background;
++      cc_background_item_load (current_background, NULL);
++    }
++
++  changes_with_time = FALSE;
++
++  if (current_background)
++    {
++      changes_with_time = cc_background_item_changes_with_time (current_background);
++    }
++
++  if (settings == panel->settings)
++    {
++      set_preview_image (panel, panel->desktop_image,
++                         item == NULL ? panel->current_background : item);
++    }
++  else
++    {
++      set_preview_image (panel, panel->lock_image,
++                         item == NULL ? panel->current_lock_background : item);
++    }
++}
++
++static void
++update_display_preview (CcBackgroundPanel *panel,
++                        GtkWidget         *widget,
++                        CcBackgroundItem  *background)
++{
++  GdkPixbuf *pixbuf;
++  cairo_t *cr;
++  GdkRGBA color;
++  cairo_region_t *cairo_region;
++  GdkDrawingContext *drawing_context;
++  GdkWindow *window;
++
++  pixbuf = get_or_create_cached_pixbuf (panel, widget, background);
++
++  cr = gdk_cairo_create (gtk_widget_get_window (widget));
++  gdk_cairo_set_source_pixbuf (cr,
++                               pixbuf,
++                               0, 0);
++  cairo_paint (cr);
++  cairo_destroy (cr);
++}
++
+ static void
+-reload_current_bg (CcBackgroundPanel *panel)
++reload_current_bg (CcBackgroundPanel *panel,
++                   GSettings         *settings)
+ {
+   g_autoptr(CcBackgroundItem) saved = NULL;
+   CcBackgroundItem *configured;
+-  GSettings *settings = NULL;
+   g_autofree gchar *uri = NULL;
+   g_autofree gchar *pcolor = NULL;
+   g_autofree gchar *scolor = NULL;
+ 
+   /* Load the saved configuration */
+-  uri = get_save_path ();
++  uri = get_save_path (panel, settings);
+   saved = cc_background_xml_get_item (uri);
+ 
+   /* initalise the current background information from settings */
+-  settings = panel->settings;
+   uri = g_settings_get_string (settings, WP_URI_KEY);
+   if (uri && *uri == '\0')
+     g_clear_pointer (&uri, g_free);
+ 
++
+   configured = cc_background_item_new (uri);
+ 
+   pcolor = g_settings_get_string (settings, WP_PCOLOR_KEY);
+@@ -131,8 +299,16 @@ reload_current_bg (CcBackgroundPanel *panel)
+ 		    NULL);
+     }
+ 
+-  g_clear_object (&panel->current_background);
+-  panel->current_background = configured;
++  if (settings == panel->settings)
++    {
++      g_clear_object (&panel->current_background);
++      panel->current_background = configured;
++    }
++  else
++    {
++      g_clear_object (&panel->current_lock_background);
++      panel->current_lock_background = configured;
++    }
+   cc_background_item_load (configured, NULL);
+ }
+ 
+@@ -169,7 +345,15 @@ set_background (CcBackgroundPanel *panel,
+   uri = cc_background_item_get_uri (item);
+   flags = cc_background_item_get_flags (item);
+ 
+-  g_settings_set_string (settings, WP_URI_KEY, uri);
++  if ((flags & CC_BACKGROUND_ITEM_HAS_URI) && uri == NULL)
++    {
++      g_settings_set_enum (settings, WP_OPTIONS_KEY, G_DESKTOP_BACKGROUND_STYLE_NONE);
++      g_settings_set_string (settings, WP_URI_KEY, "");
++    }
++  else
++    {
++      g_settings_set_string (settings, WP_URI_KEY, uri);
++    }
+ 
+   /* Also set the placement if we have a URI and the previous value was none */
+   if (flags & CC_BACKGROUND_ITEM_HAS_PLACEMENT)
+@@ -193,55 +377,224 @@ set_background (CcBackgroundPanel *panel,
+   g_settings_apply (settings);
+ 
+   /* Save the source XML if there is one */
+-  filename = get_save_path ();
++  filename = get_save_path (panel, settings);
+   if (create_save_dir ())
+     cc_background_xml_save (panel->current_background, filename);
+ }
+ 
++static gboolean
++on_preview_draw (GtkWidget         *widget,
++                 cairo_t           *cr,
++                 CcBackgroundPanel *panel)
++{
++  update_display_preview (panel, widget, panel->current_background);
++
++  return TRUE;
++}
+ 
+-static void
+-on_chooser_background_chosen_cb (CcBackgroundPanel          *self,
+-                                 CcBackgroundItem           *item)
++static gboolean
++on_lock_preview_draw (GtkWidget         *widget,
++                      cairo_t           *cr,
++                      CcBackgroundPanel *panel)
+ {
+-  set_background (self, self->settings, item);
+-  set_background (self, self->lock_settings, item);
++  update_display_preview (panel, widget, panel->current_lock_background);
++  return TRUE;
+ }
+ 
+ static void
+-on_add_picture_button_clicked_cb (CcBackgroundPanel *self)
++on_select_background (CcBackgroundChooser     *chooser,
++                      CcBackgroundItem        *item,
++                      CcBackgroundPanel       *panel)
+ {
+-  cc_background_chooser_select_file (self->background_chooser);
++  switch (panel->applied_background) {
++    case APPLY_DESKTOP:
++      set_background (panel, panel->settings, item);
++    break;
++    case APPLY_LOCK:
++      set_background (panel, panel->lock_settings, item);
++    break;
++    default: // APPLY_ALL
++      set_background (panel, panel->settings, item);
++      set_background (panel, panel->lock_settings, item);
++  }
+ }
+ 
+-static const char *
+-cc_background_panel_get_help_uri (CcPanel *panel)
++static void
++set_visible_checked_icon (GtkWidget *thumbnail_box, GtkCssProvider *css, GtkWidget *overlay, gboolean visible)
+ {
+-  return "help:gnome-help/look-background";
++  GtkWidget *icon;
++
++  gtk_style_context_add_provider (gtk_widget_get_style_context (thumbnail_box),
++                                  GTK_STYLE_PROVIDER (css),
++                                  GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
++
++  icon = g_object_get_data (G_OBJECT (overlay), "selected-icon");
++  gtk_widget_set_visible (icon, visible);
+ }
+ 
+ static void
+-cc_background_panel_constructed (GObject *object)
++on_type_changed (GtkComboBox       *combo_box,
++                 CcBackgroundPanel *panel)
+ {
+-  CcBackgroundPanel *self;
+-  CcShell *shell;
++  GtkWidget *stack, *box;
++
++  panel->background_mode = gtk_combo_box_get_active (combo_box);
++
++  box = panel->lock_box;
++  if (panel->background_mode == MODE_EACH) {
++    gtk_widget_set_visible (box, TRUE);
++
++    set_visible_checked_icon (panel->desktop_thumbnail_box,
++                              panel->selected_prov,
++                              panel->desktop_overlay,
++                              TRUE);
++
++    set_visible_checked_icon (panel->lock_thumbnail_box,
++                              panel->default_prov,
++                              panel->lock_overlay,
++                              FALSE);
++
++    panel->background_mode = MODE_EACH;
++    panel->applied_background = APPLY_DESKTOP;
++  }
++  else if (panel->background_mode == MODE_ALL) {
++    set_visible_checked_icon (panel->desktop_thumbnail_box,
++                              panel->default_prov,
++                              panel->desktop_overlay,
++                              FALSE);
++    set_visible_checked_icon (panel->lock_thumbnail_box,
++                              panel->default_prov,
++                              panel->lock_overlay,
++                              FALSE);
++
++    gtk_widget_set_visible (box, FALSE);
++
++    panel->applied_background = APPLY_ALL;
++  }
++}
+ 
+-  self = CC_BACKGROUND_PANEL (object);
+-  shell = cc_panel_get_shell (CC_PANEL (self));
++static gboolean
++on_desktop_press (GtkWidget         *widget,
++                  GdkEvent          *event,
++                  CcBackgroundPanel *panel)
++{ 
++  if (panel->background_mode == MODE_EACH) {
++    set_visible_checked_icon (panel->desktop_thumbnail_box,
++                              panel->selected_prov,
++                              panel->desktop_overlay,
++                              TRUE);
++    set_visible_checked_icon (panel->lock_thumbnail_box,
++                              panel->default_prov,
++                              panel->lock_overlay,
++                              FALSE);
++    
++    panel->applied_background = APPLY_DESKTOP;
++  }
++  
++  return FALSE;
++}
+ 
+-  cc_shell_embed_widget_in_header (shell, GTK_WIDGET (self->add_picture_button), GTK_POS_RIGHT);
++static gboolean
++on_lock_press (GtkWidget         *widget,
++               GdkEvent          *event,
++               CcBackgroundPanel *panel)
++{
++  set_visible_checked_icon (panel->desktop_thumbnail_box,
++                            panel->default_prov,
++                            panel->desktop_overlay,
++                            FALSE);
++  set_visible_checked_icon (panel->lock_thumbnail_box,
++                            panel->selected_prov,
++                            panel->lock_overlay,
++                            TRUE);
++
++    gtk_style_context_add_provider (gtk_widget_get_style_context (panel->lock_thumbnail_box),
++                                    GTK_STYLE_PROVIDER (panel->selected_prov),
++                                    GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
++
++  panel->applied_background = APPLY_LOCK;
++
++  return FALSE;
++}
+ 
+-  G_OBJECT_CLASS (cc_background_panel_parent_class)->constructed (object);
++static void
++on_settings_changed (GSettings         *settings,
++                     gchar             *key,
++                     CcBackgroundPanel *panel)
++{
++  reload_current_bg (panel, settings);
++  update_preview (panel, settings, NULL);
++}
++
++static GtkWidget*
++create_selected_icon_in_overlay (GtkOverlay *overlay, const gchar *icon_name)
++{
++  GtkWidget* icon;
++  icon = g_object_new (GTK_TYPE_IMAGE,
++                       "resource", CHECK_ICON,
++                       "pixel-size", 32,
++                       "halign", GTK_ALIGN_END,
++                       "valign", GTK_ALIGN_START,
++                       "visible", FALSE, NULL);
++
++  gtk_overlay_add_overlay (overlay, icon);
++  g_object_set_data_full (G_OBJECT (overlay), "selected-icon", g_object_ref (icon), g_object_unref);
++
++  return icon;
+ }
+ 
++//static void
++//on_settings_changed (CcBackgroundPanel *panel)
++//{
++//  reload_current_bg (panel);
++//  update_preview (panel);
++//}
++
++//static void
++//on_chooser_background_chosen_cb (CcBackgroundPanel          *self,
++//                                 CcBackgroundItem           *item)
++//{
++//  set_background (self, self->settings, item);
++//  set_background (self, self->lock_settings, item);
++//}
++
++//static void
++//on_add_picture_button_clicked_cb (CcBackgroundPanel *self)
++//{
++//  cc_background_chooser_select_file (self->background_chooser);
++//}
++
+ static void
+ cc_background_panel_dispose (GObject *object)
+-{
++{ 
+   CcBackgroundPanel *panel = CC_BACKGROUND_PANEL (object);
+-
++  
++  /* destroying the builder object will also destroy the spinner */
++  panel->spinner = NULL;
++  
+   g_clear_object (&panel->settings);
+   g_clear_object (&panel->lock_settings);
++  
++  if (panel->copy_cancellable)
++    { 
++      /* cancel any copy operation */
++      g_cancellable_cancel (panel->copy_cancellable);
++
++      g_clear_object (&panel->copy_cancellable);
++    }
++
++  if (panel->chooser)
++    {
++      gtk_widget_destroy (panel->chooser);
++      panel->chooser = NULL;
++    }
++
+   g_clear_object (&panel->thumb_factory);
+ 
++  g_clear_object (&panel->provider);
++  g_clear_object (&panel->selected_prov);
++  g_clear_object (&panel->default_prov);
++
+   G_OBJECT_CLASS (cc_background_panel_parent_class)->dispose (object);
+ }
+ 
+@@ -251,10 +604,40 @@ cc_background_panel_finalize (GObject *object)
+   CcBackgroundPanel *panel = CC_BACKGROUND_PANEL (object);
+ 
+   g_clear_object (&panel->current_background);
++  g_clear_object (&panel->current_lock_background);
+ 
+   G_OBJECT_CLASS (cc_background_panel_parent_class)->finalize (object);
+ }
+ 
++static void
++cc_background_panel_constructed (GObject *object)
++{
++  CcBackgroundPanel *panel = CC_BACKGROUND_PANEL (object);
++  //shell = cc_panel_get_shell (CC_PANEL (self));
++
++  //cc_shell_embed_widget_in_header (shell, GTK_WIDGET (self->add_picture_button), GTK_POS_RIGHT);
++
++  G_OBJECT_CLASS (cc_background_panel_parent_class)->constructed (object);
++
++  /* Add check icon */
++  create_selected_icon_in_overlay (GTK_OVERLAY (panel->desktop_overlay),
++                                   "control-center-checked");
++
++  create_selected_icon_in_overlay (GTK_OVERLAY (panel->lock_overlay),
++                                   "control-center-checked");
++
++//  gtk_style_context_add_class (gtk_widget_get_style_context (panel->desktop_label), "mode-label");
++
++  /* Add press event to overlay */
++  gtk_widget_add_events (panel->desktop_eventbox, GDK_BUTTON_PRESS_MASK);
++  gtk_widget_add_events (panel->lock_eventbox, GDK_BUTTON_PRESS_MASK);
++
++  g_signal_connect (panel->desktop_eventbox, "button-press-event", G_CALLBACK (on_desktop_press), panel);
++  g_signal_connect (panel->lock_eventbox, "button-press-event", G_CALLBACK (on_lock_press), panel);
++
++  gtk_combo_box_set_active (GTK_COMBO_BOX (panel->type_select_combobox), MODE_EACH);
++}
++
+ static void
+ cc_background_panel_class_init (CcBackgroundPanelClass *klass)
+ {
+@@ -263,7 +646,7 @@ cc_background_panel_class_init (CcBackgroundPanelClass *klass)
+   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+ 
+   g_type_ensure (CC_TYPE_BACKGROUND_CHOOSER);
+-  g_type_ensure (CC_TYPE_BACKGROUND_PREVIEW);
++  //g_type_ensure (CC_TYPE_BACKGROUND_PREVIEW);
+ 
+   panel_class->get_help_uri = cc_background_panel_get_help_uri;
+ 
+@@ -273,42 +656,89 @@ cc_background_panel_class_init (CcBackgroundPanelClass *klass)
+ 
+   gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/control-center/background/cc-background-panel.ui");
+ 
+-  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, add_picture_button);
+-  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, background_chooser);
+-  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, desktop_preview);
+-
+-  gtk_widget_class_bind_template_callback (widget_class, on_chooser_background_chosen_cb);
+-  gtk_widget_class_bind_template_callback (widget_class, on_add_picture_button_clicked_cb);
+-}
+-
+-static void
+-on_settings_changed (CcBackgroundPanel *panel)
+-{
+-  reload_current_bg (panel);
+-  update_preview (panel);
++  //gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, add_picture_button);
++  //gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, background_chooser);
++  //gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, desktop_preview);
++
++  //gtk_widget_class_bind_template_callback (widget_class, on_chooser_background_chosen_cb);
++  //gtk_widget_class_bind_template_callback (widget_class, on_add_picture_button_clicked_cb);
++
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, scrolled_view);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, type_label);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, type_select_combobox);
++  
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, desktop_thumbnail_box);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, desktop_eventbox);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, desktop_overlay);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, desktop_image);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, desktop_label);
++  
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, lock_box);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, lock_thumbnail_box);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, lock_eventbox);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, lock_overlay);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, lock_image);
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, lock_label);
++  
++  gtk_widget_class_bind_template_child (widget_class, CcBackgroundPanel, chooser);
++  
++  gtk_widget_class_bind_template_callback (widget_class, on_type_changed);
++  gtk_widget_class_bind_template_callback (widget_class, on_select_background);
+ }
+ 
+ static void
+ cc_background_panel_init (CcBackgroundPanel *panel)
+ {
++  GFile *file = NULL;
++
+   g_resources_register (cc_background_get_resource ());
+ 
+   gtk_widget_init_template (GTK_WIDGET (panel));
+ 
+-  panel->connection = g_application_get_dbus_connection (g_application_get_default ());
++  /* set provider */
++  panel->provider = gtk_css_provider_new ();
++  gtk_style_context_add_provider_for_screen (gdk_screen_get_default (),
++                  GTK_STYLE_PROVIDER (panel->provider),
++                  GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+ 
+-  panel->thumb_factory = gnome_desktop_thumbnail_factory_new (GNOME_DESKTOP_THUMBNAIL_SIZE_LARGE);
++  panel->selected_prov = gtk_css_provider_new ();
++  gtk_css_provider_load_from_data (panel->selected_prov,
++".thumbnail-box {"
++"background-color: #3986e1;"
++"}", -1, NULL);
++
++  panel->default_prov = gtk_css_provider_new ();
++  gtk_css_provider_load_from_data (panel->default_prov,
++".thumbnail-box {"
++"background-color: rgba(201,201,201,0.0);"
++"}", -1, NULL);
++
++  file = g_file_new_for_uri ("resource:///org/gnome/control-center/background/style.css");
++  gtk_css_provider_load_from_file (panel->provider, file, NULL);
++  g_object_unref (file);
++
++  panel->background_mode = MODE_EACH;
++  panel->applied_background = APPLY_DESKTOP;
++
++  panel->connection = g_application_get_dbus_connection (g_application_get_default ());
++  g_resources_register (cc_background_get_resource());
+ 
+   panel->settings = g_settings_new (WP_PATH_ID);
+   g_settings_delay (panel->settings);
+- 
++
+   panel->lock_settings = g_settings_new (WP_LOCK_PATH_ID);
+   g_settings_delay (panel->lock_settings);
+ 
+-  /* Load the background */
+-  reload_current_bg (panel);
+-  update_preview (panel);
++  panel->copy_cancellable = g_cancellable_new ();
++  panel->thumb_factory = gnome_desktop_thumbnail_factory_new (GNOME_DESKTOP_THUMBNAIL_SIZE_LARGE);
+ 
+   /* Background settings */
+-  g_signal_connect_object (panel->settings, "changed", G_CALLBACK (on_settings_changed), panel, G_CONNECT_SWAPPED);
++  g_signal_connect (panel->settings, "changed", G_CALLBACK (on_settings_changed), panel);
++  g_signal_connect (panel->lock_settings, "changed", G_CALLBACK (on_settings_changed), panel);
++
++  /* Load the backgrounds */
++  reload_current_bg (panel, panel->settings);
++  update_preview (panel, panel->settings, NULL);
++  reload_current_bg (panel, panel->lock_settings);
++  update_preview (panel, panel->lock_settings, NULL);
+ }
+diff --git a/panels/background/cc-background-panel.ui b/panels/background/cc-background-panel.ui
+index 7b5c3d3..b94baee 100644
+--- a/panels/background/cc-background-panel.ui
++++ b/panels/background/cc-background-panel.ui
+@@ -1,58 +1,384 @@
+ <?xml version="1.0" encoding="UTF-8"?>
++<!-- Generated with glade 3.22.1 -->
+ <interface>
+-  <!-- interface-requires gtk+ 3.0 -->
++  <requires lib="gtk+" version="3.20"/>
+   <template class="CcBackgroundPanel" parent="CcPanel">
+     <property name="visible">True</property>
+     <property name="can_focus">False</property>
++    <child>
++      <placeholder/>
++    </child>
+     <child>
+       <object class="GtkBox">
+         <property name="visible">True</property>
+         <property name="can_focus">False</property>
++        <property name="margin_left">30</property>
+         <property name="orientation">vertical</property>
+-
++        <property name="spacing">40</property>
+         <child>
+-          <object class="HdyClamp">
+-            <property name="visible">1</property>
+-            <property name="maximum_size">300</property>
+-            <property name="tightening_threshold">200</property>
++          <object class="GtkLabel" id="background_label">
++            <property name="visible">True</property>
++            <property name="can_focus">False</property>
++            <property name="halign">start</property>
++            <property name="margin_top">20</property>
++            <property name="label" translatable="yes">Background</property>
++            <style>
++              <class name="main-label"/>
++            </style>
++          </object>
++          <packing>
++            <property name="expand">False</property>
++            <property name="fill">True</property>
++            <property name="position">0</property>
++          </packing>
++        </child>
++        <child>
++          <object class="GtkScrolledWindow" id="scrolled_view">
++            <property name="visible">True</property>
++            <property name="can_focus">True</property>
++            <property name="shadow_type">in</property>
+             <child>
+-              <object class="GtkBox">
++              <object class="GtkViewport">
+                 <property name="visible">True</property>
+                 <property name="can_focus">False</property>
+-                <property name="spacing">24</property>
+-                <property name="margin-start">12</property>
+-                <property name="margin-end">12</property>
+-                <property name="margin-top">18</property>
+-                <property name="margin-bottom">18</property>
+-                <property name="hexpand">True</property>
+                 <child>
+-                  <object class="CcBackgroundPreview" id="desktop_preview">
++                  <object class="GtkBox">
+                     <property name="visible">True</property>
+                     <property name="can_focus">False</property>
+-                    <property name="valign">center</property>
++                    <property name="orientation">vertical</property>
++                    <property name="spacing">40</property>
++                    <child>
++                      <object class="GtkBox">
++                        <property name="visible">True</property>
++                        <property name="can_focus">False</property>
++                        <property name="orientation">vertical</property>
++                        <property name="spacing">40</property>
++                        <child>
++                          <object class="GtkBox">
++                            <property name="visible">True</property>
++                            <property name="can_focus">False</property>
++                            <property name="orientation">vertical</property>
++                            <property name="spacing">10</property>
++                            <child>
++                              <object class="GtkLabel" id="type_label">
++                                <property name="visible">True</property>
++                                <property name="can_focus">False</property>
++                                <property name="halign">start</property>
++                                <property name="label" translatable="yes">Background Type</property>
++                              </object>
++                              <packing>
++                                <property name="expand">False</property>
++                                <property name="fill">True</property>
++                                <property name="position">0</property>
++                              </packing>
++                            </child>
++                            <child>
++                              <object class="GtkComboBoxText" id="type_select_combobox">
++                                <property name="width_request">300</property>
++                                <property name="height_request">34</property>
++                                <property name="visible">True</property>
++                                <property name="can_focus">False</property>
++                                <property name="halign">start</property>
++                                <property name="model">type-liststore</property>
++                                <signal name="changed" handler="on_type_changed" object="CcBackgroundPanel" swapped="no"/>
++                              </object>
++                              <packing>
++                                <property name="expand">False</property>
++                                <property name="fill">True</property>
++                                <property name="position">1</property>
++                              </packing>
++                            </child>
++                          </object>
++                          <packing>
++                            <property name="expand">False</property>
++                            <property name="fill">True</property>
++                            <property name="position">0</property>
++                          </packing>
++                        </child>
++                        <child>
++                          <object class="GtkBox">
++                            <property name="visible">True</property>
++                            <property name="can_focus">False</property>
++                            <property name="spacing">10</property>
++                            <child>
++                              <object class="GtkBox">
++                                <property name="visible">True</property>
++                                <property name="can_focus">False</property>
++                                <property name="orientation">vertical</property>
++                                <child>
++                                  <object class="GtkBox" id="desktop_thumbnail_box">
++                                    <property name="visible">True</property>
++                                    <property name="can_focus">False</property>
++                                    <property name="orientation">vertical</property>
++                                    <child>
++                                      <object class="GtkEventBox" id="desktop_eventbox">
++                                        <property name="visible">True</property>
++                                        <property name="can_focus">False</property>
++                                        <property name="margin_left">3</property>
++                                        <property name="margin_right">3</property>
++                                        <property name="margin_top">3</property>
++                                        <property name="margin_bottom">3</property>
++                                        <child>
++                                          <object class="GtkOverlay" id="desktop_overlay">
++                                            <property name="visible">True</property>
++                                            <property name="can_focus">False</property>
++                                            <child>
++                                              <object class="GtkImage" id="desktop_image">
++                                                <property name="width_request">300</property>
++                                                <property name="height_request">188</property>
++                                                <property name="visible">True</property>
++                                                <property name="can_focus">False</property>
++                                              </object>
++                                              <packing>
++                                                <property name="index">-1</property>
++                                              </packing>
++                                            </child>
++                                          </object>
++                                        </child>
++                                      </object>
++                                      <packing>
++                                        <property name="expand">False</property>
++                                        <property name="fill">True</property>
++                                        <property name="position">0</property>
++                                      </packing>
++                                    </child>
++                                    <style>
++                                      <class name="thumbnail-box"/>
++                                    </style>
++                                  </object>
++                                  <packing>
++                                    <property name="expand">False</property>
++                                    <property name="fill">True</property>
++                                    <property name="position">0</property>
++                                  </packing>
++                                </child>
++                                <child>
++                                  <object class="GtkLabel" id="desktop_label">
++                                    <property name="width_request">300</property>
++                                    <property name="height_request">36</property>
++                                    <property name="visible">True</property>
++                                    <property name="can_focus">True</property>
++                                    <property name="margin_left">3</property>
++                                    <property name="margin_right">3</property>
++                                    <property name="margin_top">3</property>
++                                    <property name="label" translatable="yes">Home Background</property>
++                                    <style>
++                                      <class name="mode-label"/>
++                                    </style>
++                                  </object>
++                                  <packing>
++                                    <property name="expand">False</property>
++                                    <property name="fill">True</property>
++                                    <property name="position">1</property>
++                                  </packing>
++                                </child>
++                              </object>
++                              <packing>
++                                <property name="expand">False</property>
++                                <property name="fill">True</property>
++                                <property name="position">0</property>
++                              </packing>
++                            </child>
++                            <child>
++                              <object class="GtkBox" id="lock_box">
++                                <property name="visible">True</property>
++                                <property name="can_focus">False</property>
++                                <property name="orientation">vertical</property>
++                                <child>
++                                  <object class="GtkBox" id="lock_thumbnail_box">
++                                    <property name="visible">True</property>
++                                    <property name="can_focus">False</property>
++                                    <property name="orientation">vertical</property>
++                                    <child>
++                                      <object class="GtkEventBox" id="lock_eventbox">
++                                        <property name="visible">True</property>
++                                        <property name="can_focus">False</property>
++                                        <property name="margin_left">3</property>
++                                        <property name="margin_right">3</property>
++                                        <property name="margin_top">3</property>
++                                        <property name="margin_bottom">3</property>
++                                        <child>
++                                          <object class="GtkOverlay" id="lock_overlay">
++                                            <property name="visible">True</property>
++                                            <property name="can_focus">False</property>
++                                            <child>
++                                              <object class="GtkImage" id="lock_image">
++                                                <property name="width_request">300</property>
++                                                <property name="height_request">188</property>
++                                                <property name="visible">True</property>
++                                                <property name="can_focus">False</property>
++                                              </object>
++                                              <packing>
++                                                <property name="index">-1</property>
++                                              </packing>
++                                            </child>
++                                          </object>
++                                        </child>
++                                      </object>
++                                      <packing>
++                                        <property name="expand">False</property>
++                                        <property name="fill">True</property>
++                                        <property name="position">0</property>
++                                      </packing>
++                                    </child>
++                                    <style>
++                                      <class name="thumbnail-box"/>
++                                    </style>
++                                  </object>
++                                  <packing>
++                                    <property name="expand">False</property>
++                                    <property name="fill">True</property>
++                                    <property name="position">0</property>
++                                  </packing>
++                                </child>
++                                <child>
++                                  <object class="GtkLabel" id="lock_label">
++                                    <property name="width_request">300</property>
++                                    <property name="height_request">36</property>
++                                    <property name="visible">True</property>
++                                    <property name="can_focus">True</property>
++                                    <property name="margin_left">3</property>
++                                    <property name="margin_right">3</property>
++                                    <property name="margin_top">3</property>
++                                    <property name="label" translatable="yes">Lock Background</property>
++                                    <style>
++                                      <class name="mode-label"/>
++                                    </style>
++                                  </object>
++                                  <packing>
++                                    <property name="expand">False</property>
++                                    <property name="fill">True</property>
++                                    <property name="position">1</property>
++                                  </packing>
++                                </child>
++                              </object>
++                              <packing>
++                                <property name="expand">False</property>
++                                <property name="fill">True</property>
++                                <property name="position">1</property>
++                              </packing>
++                            </child>
++                          </object>
++                          <packing>
++                            <property name="expand">False</property>
++                            <property name="fill">True</property>
++                            <property name="position">1</property>
++                          </packing>
++                        </child>
++                      </object>
++                      <packing>
++                        <property name="expand">False</property>
++                        <property name="fill">True</property>
++                        <property name="position">0</property>
++                      </packing>
++                    </child>
++                    <child>
++                      <object class="CcBackgroundChooser" id="chooser">
++                        <property name="visible">True</property>
++                        <property name="can_focus">False</property>
++                        <signal name="select-background" handler="on_select_background" object="CcBackgroundPanel" swapped="no"/>
++                      </object>
++                      <packing>
++                        <property name="expand">False</property>
++                        <property name="fill">True</property>
++                        <property name="position">2</property>
++                      </packing>
++                    </child>
+                   </object>
+                 </child>
+               </object>
+             </child>
+           </object>
+-        </child>
+-
+-        <child>
+-          <object class="CcBackgroundChooser" id="background_chooser">
+-            <property name="visible">True</property>
+-            <property name="can_focus">False</property>
++          <packing>
+             <property name="expand">True</property>
+-            <signal name="background-chosen" handler="on_chooser_background_chosen_cb" object="CcBackgroundPanel" swapped="yes" />
+-          </object>
++            <property name="fill">True</property>
++            <property name="position">1</property>
++          </packing>
+         </child>
+       </object>
+     </child>
+   </template>
+-
+-  <!-- Header button -->
+-  <object class="GtkButton" id="add_picture_button">
+-    <property name="visible">True</property>
+-    <property name="label" translatable="yes">Add Picture…</property>
+-    <signal name="clicked" handler="on_add_picture_button_clicked_cb" object="CcBackgroundPanel" swapped="yes" />
++  <object class="GtkListStore" id="image_liststore">
++    <columns>
++      <!-- column-name column1 -->
++      <column type="gchararray"/>
++      <!-- column-name gint1 -->
++      <column type="gint"/>
++    </columns>
++    <data>
++      <row>
++        <col id="0" translatable="yes">Image</col>
++        <col id="1">0</col>
++      </row>
++      <row>
++        <col id="0" translatable="yes">Color</col>
++        <col id="1">1</col>
++      </row>
++    </data>
++  </object>
++  <object class="GtkSizeGroup" id="sizegroup">
++    <property name="mode">vertical</property>
++  </object>
++  <object class="GtkListStore" id="sources-liststore">
++    <columns>
++      <!-- column-name source-name -->
++      <column type="gchararray"/>
++      <!-- column-name source-id -->
++      <column type="guint"/>
++      <!-- column-name source-pointer -->
++      <column type="gpointer"/>
++    </columns>
++  </object>
++  <object class="GtkListStore" id="style-liststore">
++    <columns>
++      <!-- column-name name -->
++      <column type="gchararray"/>
++      <!-- column-name value -->
++      <column type="gint"/>
++    </columns>
++    <data>
++      <row>
++        <col id="0" translatable="yes" context="background, style">Tile</col>
++        <col id="1">1</col>
++      </row>
++      <row>
++        <col id="0" translatable="yes" context="background, style">Zoom</col>
++        <col id="1">5</col>
++      </row>
++      <row>
++        <col id="0" translatable="yes" context="background, style">Center</col>
++        <col id="1">2</col>
++      </row>
++      <row>
++        <col id="0" translatable="yes" context="background, style">Scale</col>
++        <col id="1">3</col>
++      </row>
++      <row>
++        <col id="0" translatable="yes" context="background, style">Fill</col>
++        <col id="1">4</col>
++      </row>
++      <row>
++        <col id="0" translatable="yes" context="background, style">Span</col>
++        <col id="1">6</col>
++      </row>
++    </data>
++  </object>
++  <object class="GtkListStore" id="type-liststore">
++    <columns>
++      <!-- column-name column1 -->
++      <column type="gchararray"/>
++      <!-- column-name gint1 -->
++      <column type="gint"/>
++    </columns>
++    <data>
++      <row>
++        <col id="0" translatable="yes">Apply each of home and lock screen</col>
++        <col id="1">0</col>
++      </row>
++      <row>
++        <col id="0" translatable="yes">Apply same all screen</col>
++        <col id="1">1</col>
++      </row>
++    </data>
+   </object>
+ </interface>
+diff --git a/panels/background/check-icon.svg b/panels/background/check-icon.svg
+new file mode 100644
+index 0000000..7df3f10
+--- /dev/null
++++ b/panels/background/check-icon.svg
+@@ -0,0 +1,6 @@
++<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
++    <g fill="none" fill-rule="evenodd">
++        <path fill="#3986E1" d="M0 0H32V32H0z"/>
++        <path fill="#FFF" d="M24 9.333L25.172 10.505 12.586 23.104 6.667 17.172 7.839 16 12.586 20.734z"/>
++    </g>
++</svg>
+diff --git a/panels/background/color-check-icon.svg b/panels/background/color-check-icon.svg
+new file mode 100644
+index 0000000..c8e6c6c
+--- /dev/null
++++ b/panels/background/color-check-icon.svg
+@@ -0,0 +1,6 @@
++<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
++    <g fill="none" fill-rule="evenodd">
++        <path d="M0 0H24V24H0z"/>
++        <path fill="#FFF" d="M21 4.5L22.318 5.818 8.159 19.992 1.5 13.318 2.818 12 8.159 17.326z"/>
++    </g>
++</svg>
+diff --git a/panels/background/meson.build b/panels/background/meson.build
+index e9fa398..66eea1d 100644
+--- a/panels/background/meson.build
++++ b/panels/background/meson.build
+@@ -62,8 +62,11 @@ common_sources += gnome.mkenums(
+ resource_data = files(
+   'cc-background-chooser.ui',
+   'cc-background-panel.ui',
+-  'cc-background-preview.ui',
+-  'preview.css',
++  'color-check-icon.svg',
++  'check-icon.svg',
++  'style.css',
++  #'cc-background-preview.ui',
++  #'preview.css',
+ )
+ 
+ common_sources += gnome.compile_resources(
+@@ -84,7 +87,7 @@ sources = common_sources + files(
+   'cc-background-grilo-miner.c',
+   'cc-background-item.c',
+   'cc-background-panel.c',
+-  'cc-background-preview.c',
++  #'cc-background-preview.c',
+   'cc-background-xml.c',
+ )
+ 
+diff --git a/panels/background/style.css b/panels/background/style.css
+new file mode 100644
+index 0000000..4b6abd9
+--- /dev/null
++++ b/panels/background/style.css
+@@ -0,0 +1,24 @@
++.mode-label {
++  font-family: NotoSansCJKkr;
++  font-size: 13px;
++
++  background-color: #eaeaea;
++}
++
++.main-label {
++  font-family: NotoSansCJKkr;
++  font-size: 20px;
++  font-weight: bold;
++}
++
++scrolledwindow {
++  border-width: 0px;
++}
++
++.chooser-button {
++  border-width: 0px;
++  font-family: NotoSansCJKkr;
++  color: #1b6ed0;
++
++  background-color: rgba(0, 0, 0, 0);
++}
+diff --git a/panels/themes/cc-themes-panel.c b/panels/themes/cc-themes-panel.c
+index 01d6882..20b4844 100644
+--- a/panels/themes/cc-themes-panel.c
++++ b/panels/themes/cc-themes-panel.c
+@@ -18,24 +18,24 @@
+  *
+  */
+ 
+-#include "cc-themes-panel.h"
+-#include "cc-themes-resources.h"
+-
+-#include <locale.h>
+ #include <config.h>
+ #include <gtk/gtk.h>
+ 
++#include <locale.h>
+ #include <glib/gi18n.h>
+ #include <glib/gstdio.h>
+ 
++#include "cc-themes-resources.h"
++#include "cc-themes-panel.h"
++#include "cc-themes-theme.h"
++
+ #define DEFAULT_GTK_THEME   "Default"
+ #define DEFAULT_WM_THEME    "Default"
+ #define DEFAULT_ICON_THEME  "Rodent"
+ 
+-#define DEFAULT_THEME_DIR   "/usr/share/icons"
+-#define DEFAULT_THEMES_INI  "/usr/share/gnome-control-center/themes/gooroom-themes.ini"
+-
+-#define WID(y) (GtkWidget *) gtk_builder_get_object (panel->builder, y)
++#define DEFAULT_THEME_DIR    "/usr/share/icons"
++#define DEFAULT_THEMES_INI   "/usr/share/gnome-control-center/themes/gooroom-themes.ini"
++#define ROW_LENGTH            2
+ 
+ enum
+ {
+@@ -51,19 +51,13 @@ struct _CcThemesPanel
+ {
+   CcPanel           parent_instance;
+ 
+-  GtkBuilder        *builder;
++  GtkWidget         *themes_box;
++
++  CcThemesTheme     *current_theme;
+ 
+   GSettings         *interface_settings;
+   GSettings         *bg_settings;
+   GSettings         *screensaver_settings;
+-
+-  GtkIconView       *icon_view;
+-  GtkListStore      *themes_liststore;
+-  GtkWidget         *current_theme_label;
+-
+-  GdkPixbuf         *current_theme_thumbnail;
+-  gchar             *icon;
+-  gchar             *background;
+ };
+ 
+ CC_PANEL_REGISTER (CcThemesPanel, cc_themes_panel)
+@@ -75,213 +69,156 @@ cc_themes_panel_get_help_uri (CcPanel *panel)
+ }
+ 
+ static void
+-set_thumbnail (CcThemesPanel *panel, gchar *thumb_path)
++cc_themes_panel_selected_theme (CcThemesTheme *theme,
++                                GdkEvent *event,
++                                CcThemesPanel *panel)
+ {
+-  GdkPixbuf *old_pixbuf;
+-  old_pixbuf = panel->current_theme_thumbnail;
+-  gint width;
+-  gint height;
++  gchar *icon;
++  gchar *background;
+ 
+-  if (panel->current_theme_thumbnail != NULL)
+-  {
+-    g_clear_object (&panel->current_theme_thumbnail);
+-    panel->current_theme_thumbnail = NULL;
+-  }
++  if (panel->current_theme == theme)
++    return;
+ 
+-  panel->current_theme_thumbnail = gdk_pixbuf_new_from_file (thumb_path, NULL);
+-}
++  g_object_get (G_OBJECT (theme), "icon", &icon, NULL);
++  g_object_get (G_OBJECT (theme), "background", &background, NULL);
+ 
+-static GtkListStore*
+-create_store (void)
+-{
+-  GtkListStore *store;
+-
+-  store = gtk_list_store_new (NUM_COLS,
+-                              GDK_TYPE_PIXBUF,
+-                              G_TYPE_STRING,
+-                              G_TYPE_STRING,
+-                              G_TYPE_STRING,
+-                              G_TYPE_STRING);
+-  return store;
++  g_settings_set_string (panel->bg_settings, "picture-uri", background);
++  g_settings_set_string (panel->screensaver_settings, "picture-uri", background);
++  g_settings_set_string (panel->interface_settings, "icon-theme", icon);
++
++  if (panel->current_theme)
++    g_object_set (G_OBJECT (panel->current_theme), "active", FALSE, NULL);
++
++  g_object_set (G_OBJECT (theme), "active", TRUE, NULL);
++
++  panel->current_theme = theme;
+ }
+ 
+-static void
+-set_theme_liststore (GtkListStore *store, GKeyFile *keyfile, gchar *group)
++static CcThemesTheme*
++create_theme (CcThemesPanel *panel, GKeyFile *keyfile, gchar *group)
+ {
+   gchar *name;
+   gchar *background;
+   gchar *icon;
+-  gchar *thumb_path;
++  gchar *thumbnail;
+   g_autoptr(GError) error = NULL;
+   GtkTreeIter iter;
+-  
++  CcThemesTheme *theme;
+ 
+-  name = g_key_file_get_locale_string (keyfile, group, "Name", NULL, NULL);
+-  background = g_key_file_get_value (keyfile, group, "Background", NULL);
+-  icon = g_key_file_get_value (keyfile, group, "Icon", &error);
+-  if (icon == NULL) {
+-    g_warning ("Error icon:%s", error->message);
+-    return;
++  name = g_key_file_get_locale_string (keyfile, group, "Name", NULL, &error);
++  if (error) {
++    g_warning ("Empty Name in ini file: %s", error->message);
++    return NULL;
+   }
+ 
+-  thumb_path = g_strdup_printf ("%s/%s/thumbnail.png", DEFAULT_THEME_DIR, icon);
+-
+-  gtk_list_store_append (store, &iter);
+-  gtk_list_store_set (store, &iter,
+-                      COL_THUMBNAIL, gdk_pixbuf_new_from_file_at_size (thumb_path, 180, 110, NULL),
+-                      COL_NAME, name ? name : NULL,
+-                      COL_ICON, icon ? icon : NULL,
+-                      COL_BACKGROUND, background ? background : NULL,
+-                      COL_THUMB_PATH, thumb_path, -1);
+-}
+-
+-static GtkListStore *
+-load_themes_liststore (CcThemesPanel *panel)
+-{
+-  GtkListStore *store;
+-  g_autoptr(GError) error = NULL;
+-  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+-  gchar **groups = NULL;
+-  gsize group_length;
+-
+-  if (!g_key_file_load_from_file (keyfile, DEFAULT_THEMES_INI, G_KEY_FILE_KEEP_TRANSLATIONS, &error))
+-  {
+-    g_warning ("Error loading default-themes.ini: %s", error->message);
++  background = g_key_file_get_value (keyfile, group, "Background", &error);
++  if (error) {
++    g_warning ("Empty Background in ini file: %s", error->message);
+     return NULL;
+   }
+ 
+-  store = create_store ();
+-
+-  groups = g_key_file_get_groups (keyfile, &group_length);
+-  for (int i = 0; i < group_length; i++)
+-  {
+-    set_theme_liststore (store, keyfile, groups[i]);
++  icon = g_key_file_get_value (keyfile, group, "Icon", &error);
++  if (error) {
++    g_warning ("Empty Icon in ini file: %s", error->message);
++    return NULL;
+   }
+ 
+-  return store;
+-}
+-
+-static gboolean
+-cc_themes_panel_draw_theme (GtkWidget *widget, cairo_t *cr, gpointer data)
+-{
+-  GdkPixbuf *pixbuf;
+-  CcThemesPanel *panel = CC_THEMES_PANEL (data);
+-  cairo_t *_cr;
+-  GdkRGBA color;
+-
+-  color.red = 1.0;
+-  color.green = 1.0;
+-  color.blue = 1.0;
+-  color.alpha = 1.0;
+-
+-  _cr = gdk_cairo_create (gtk_widget_get_window (widget));
++  thumbnail = g_strdup_printf ("%s/%s/thumbnail.png", DEFAULT_THEME_DIR, icon);
+ 
+-  /* border color */
+-  gdk_cairo_set_source_rgba (_cr, &color);
++  theme = cc_themes_theme_new ();
++  g_object_set (G_OBJECT (theme),
++                "label-text", name,
++                "icon", icon,
++                "background", background,
++                "thumbnail", thumbnail, NULL);
+ 
+-  if (panel->current_theme_thumbnail)
+-  {
+-    pixbuf = gdk_pixbuf_scale_simple (panel->current_theme_thumbnail, 302, 181, GDK_INTERP_BILINEAR);
+-    gdk_cairo_set_source_pixbuf (_cr, pixbuf, 20, 22);
+-  }
++  g_signal_connect (theme, "button-press-event", G_CALLBACK (cc_themes_panel_selected_theme), panel);
+ 
+-  cairo_paint (_cr);
+-  cairo_destroy (_cr);
+-
+-  return FALSE;
++  return theme;
+ }
+ 
+-static void 
+-cc_themes_panel_selected_theme (GtkIconView *icon_view,
+-                                CcThemesPanel *panel)
++static GtkWidget *
++create_child_box ()
+ {
+-  GList *list;
+-  GtkTreeModel *model;
+-  GtkTreeIter iter;
+-  gchar *icon_name;
+-  gchar *background;
+-  gchar *thumb_path;
+-
+-  list = gtk_icon_view_get_selected_items (icon_view);
+-  if (list == NULL)
+-    return;
+-
+-  model = gtk_icon_view_get_model (icon_view);
+-
+-  if (gtk_tree_model_get_iter (model, &iter, (GtkTreePath*)list->data) == FALSE)
+-    goto bail;
+-
+-  gtk_tree_model_get (model, &iter,
+-                      COL_ICON, &icon_name,
+-                      COL_BACKGROUND, &background,
+-                      COL_THUMB_PATH, &thumb_path, -1);
+-
+-  set_thumbnail (panel, thumb_path);
++  GtkWidget *child_box;
+ 
+-  g_settings_set_string (panel->interface_settings, "icon-theme", icon_name);
+-  g_settings_set_string (panel->bg_settings, "picture-uri", background);
++  child_box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 10);
++  gtk_widget_set_halign (child_box, GTK_ALIGN_START);
+ 
+-bail:
+-  g_list_free_full (list, (GDestroyNotify) gtk_tree_path_free);
++  gtk_widget_show (child_box);
+ 
++  return child_box;
+ }
+ 
+-static gboolean
+-cc_themes_panel_apply_theme (GtkButton *button, CcThemesPanel *panel)
++static void
++load_themes (CcThemesPanel *panel)
+ {
+-  GList *list;
+-  GtkTreeModel *model;
+-  GtkTreeIter iter;
+-  gchar *icon;
+-  gchar *icon_name;
+-  gchar *background;
++  GtkWidget *child_box;
++  g_autofree gchar *icon;
++  gchar **groups = NULL;
++  gsize group_length;
++  gint row = ROW_LENGTH;
++  g_autoptr(GError) error = NULL;
++  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+ 
+-  list = gtk_icon_view_get_selected_items (panel->icon_view);
+-  if (list == NULL)
+-    return FALSE;
++  if (!g_key_file_load_from_file (keyfile, DEFAULT_THEMES_INI, G_KEY_FILE_KEEP_TRANSLATIONS, &error))
++  {
++    g_warning ("Error loading default-themes.ini: %s", error->message);
++    return;
++  }
+ 
+-  model = gtk_icon_view_get_model (panel->icon_view);
+-  if (gtk_tree_model_get_iter (GTK_TREE_MODEL (model), &iter, (GtkTreePath*)list->data) == FALSE)
+-    goto bail;
++  icon = g_settings_get_string (panel->interface_settings, "icon-theme");
+ 
+-  gtk_tree_model_get (GTK_TREE_MODEL (model), &iter,
+-                      COL_NAME, &icon_name,
+-                      COL_ICON, &icon,
+-                      COL_BACKGROUND, &background, -1);
++  child_box = create_child_box ();
++  groups = g_key_file_get_groups (keyfile, &group_length);
++  for (int i = 1; i <= group_length; i++)
++  {
++    CcThemesTheme *theme= create_theme (panel, keyfile, groups[i - 1]);
++    if (!theme)
++      continue;
+ 
+-  panel->icon = icon;
+-  panel->background = background;
++    gtk_box_pack_start (GTK_BOX (child_box), GTK_WIDGET (theme), TRUE, FALSE, 0);
++    if (i %  row == 0) {
++      gtk_box_pack_start (GTK_BOX (panel->themes_box), child_box, TRUE, FALSE, 0);
+ 
+-  g_settings_set_string (panel->screensaver_settings, "picture-uri", background);
++      child_box = create_child_box ();
++      gtk_widget_set_margin_top (child_box, 20);
++    }
+ 
+-  //gtk_label_set_text (WID ("current-theme-label"), icon_name);
+-  gtk_label_set_text (GTK_LABEL (panel->current_theme_label), icon_name);
++    if (g_strcmp0 (icon, cc_themes_theme_get_icon (theme)) == 0) {
++      g_object_set (G_OBJECT (theme), "active", TRUE, NULL);
++      panel->current_theme = theme;
++    }
++  }
+ 
+-bail:
+-  g_list_free_full (list, (GDestroyNotify) gtk_tree_path_free);
++  gtk_box_pack_start (GTK_BOX (panel->themes_box), child_box, TRUE, FALSE, 0);
+ 
+-return FALSE;
++  g_strfreev (groups);
+ }
+ 
+-static void
+-cc_themes_panel_constructed (GObject *object)
++static GtkWidget *
++theme_item_widget_new (CcThemesPanel *panel, gchar *name, gchar *path)
+ {
+-  CcThemesPanel *panel = CC_THEMES_PANEL (object);
+-  CcShell *shell;
+-  GtkWidget *button;
++  GtkWidget *box;
++  GtkWidget *image;
++  GtkWidget *label;
++  GdkPixbuf *pixbuf;
++  g_autoptr(GError)  error = NULL;
+ 
+-  G_OBJECT_CLASS (cc_themes_panel_parent_class)->constructed (object);
++  pixbuf = gdk_pixbuf_new_from_file_at_size (path, 300, 188, &error);
++  if (error) {
++    g_warning ("Error pixbuf new: %s", error->message);
++    return NULL;
++  }
+ 
+-  button = (GtkWidget *)gtk_button_new_with_mnemonic (_("_Apply"));
+-  gtk_widget_set_visible (button, TRUE);
++  image = gtk_image_new_from_pixbuf (pixbuf);
++  label = gtk_label_new (name);
++  box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 4);
+ 
+-  shell = cc_panel_get_shell (CC_PANEL (panel));
+-  cc_shell_embed_widget_in_header (shell, button, GTK_POS_RIGHT);
++  gtk_box_pack_start (GTK_BOX (box), image, TRUE, TRUE, 0);
++  gtk_box_pack_start (GTK_BOX (box), label, FALSE, TRUE, 0);
+ 
+-  g_signal_connect (button,
+-                    "clicked",
+-                    G_CALLBACK (cc_themes_panel_apply_theme),
+-                    panel);
++  return box;
+ }
+ 
+ static void
+@@ -289,129 +226,48 @@ cc_themes_panel_dispose (GObject *object)
+ {
+   CcThemesPanel *panel = CC_THEMES_PANEL (object);
+ 
+-  if (panel->interface_settings)
+-    g_settings_set_string (panel->interface_settings, "icon-theme", panel->icon);
+-  if (panel->bg_settings)
+-    g_settings_set_string (panel->bg_settings, "picture-uri", panel->background);
+-
+   g_clear_object (&panel->interface_settings);
+   g_clear_object (&panel->bg_settings);
+   g_clear_object (&panel->screensaver_settings);
+-  g_clear_object (&panel->builder);
+-
+-  g_clear_object (&panel->current_theme_thumbnail);
+ 
+   G_OBJECT_CLASS (cc_themes_panel_parent_class)->dispose (object);
+ }
+ 
++static void
++cc_themes_panel_constructed (GObject *object)
++{
++  CcThemesPanel *panel = CC_THEMES_PANEL (object);
++
++  load_themes (panel);
++}
++
+ static void
+ cc_themes_panel_class_init (CcThemesPanelClass *klass)
+ {
+-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+-  CcPanelClass *panel_class = CC_PANEL_CLASS (klass);
++  GObjectClass   *object_class = G_OBJECT_CLASS (klass);
++  CcPanelClass   *panel_class  = CC_PANEL_CLASS (klass);
++  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
++
++  panel_class->get_help_uri = cc_themes_panel_get_help_uri;
+ 
+-  object_class->constructed = cc_themes_panel_constructed;
+   object_class->dispose = cc_themes_panel_dispose;
++  object_class->constructed = cc_themes_panel_constructed;
+ 
+-  panel_class->get_help_uri = cc_themes_panel_get_help_uri;
++  gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/control-center/themes/themes.ui");
++
++  gtk_widget_class_bind_template_child (widget_class, CcThemesPanel, themes_box);
+ }
+ 
+ static void
+ cc_themes_panel_init (CcThemesPanel *panel)
+ {
+-  gchar *objects[] = {"themes-main-scrolled-window", NULL};
+-  g_autoptr(GError) err = NULL;
+-  GtkWidget *w;
+-  gint button_val;
+-  gdouble i_val;
+-  GtkWidget *themes_list_sw;
+-  GtkTreeIter iter;
+-  gchar *icon;
+-  gchar *icon_name;
+-  gchar *thumb_path;
+-  gboolean ret = FALSE;
+-
+-  panel->current_theme_thumbnail = NULL;
+-
+   g_resources_register (cc_themes_get_resource ());
+ 
+-  panel->builder = gtk_builder_new ();
+-  gtk_builder_add_objects_from_resource (panel->builder,
+-                                         "/org/gnome/control-center/themes/themes.ui",
+-                                         objects, &err);
+-
+-  panel->current_theme_label = WID ("current-theme-label");
+-
+-  if (err)
+-  {
+-    g_warning ("Could not load ui: %s", err->message);
+-    return;
+-  }
++  gtk_widget_init_template (GTK_WIDGET (panel));
+ 
+   panel->interface_settings = g_settings_new ("org.gnome.desktop.interface");
+   panel->bg_settings = g_settings_new ("org.gnome.desktop.background");
+   panel->screensaver_settings = g_settings_new ("org.gnome.desktop.screensaver");
+ 
+-  panel->icon = g_settings_get_string (panel->interface_settings, "icon-theme");
+-  panel->background = g_settings_get_string (panel->bg_settings, "picture-uri");
+-
+-  panel->themes_liststore = load_themes_liststore (panel);
+-
+-  /* init current thumbnail and current label */
+-  ret = gtk_tree_model_get_iter_first (GTK_TREE_MODEL (panel->themes_liststore), &iter);
+-  do
+-  {
+-    gtk_tree_model_get (GTK_TREE_MODEL (panel->themes_liststore), &iter,
+-                        COL_NAME, &icon_name,
+-                        COL_ICON, &icon,
+-                        COL_THUMB_PATH, &thumb_path, -1);
+-  
+-    if (g_strcmp0 (panel->icon, icon) == 0)
+-    {
+-      set_thumbnail (panel, thumb_path); // /usr/.../.png
+-      //gtk_label_set_text (WID ("current-theme-label"), icon_name);
+-      gtk_label_set_text (GTK_LABEL (panel->current_theme_label), icon_name);
+-
+-      break;
+-    }
+-  
+-  }
+-  while (ret && gtk_tree_model_iter_next (GTK_TREE_MODEL (panel->themes_liststore), &iter));
+-
+-  /* create icon view from list store */
+-  panel->icon_view = GTK_ICON_VIEW (gtk_icon_view_new_with_model (GTK_TREE_MODEL (panel->themes_liststore)));
+-  gtk_icon_view_set_selection_mode (panel->icon_view,
+-                                    GTK_SELECTION_SINGLE);
+-
+-  gtk_icon_view_set_text_column (panel->icon_view, COL_NAME);
+-
+-  gtk_icon_view_set_pixbuf_column (panel->icon_view, COL_THUMBNAIL);
+-  gtk_icon_view_set_columns (panel->icon_view, 3);
+-  gtk_icon_view_set_item_width (panel->icon_view, 120);
+-  gtk_icon_view_set_column_spacing (panel->icon_view, 10);
+-  gtk_icon_view_set_margin (panel->icon_view, 10);
+-
+-  g_signal_connect (WID ("current-theme-drawingarea"),
+-                    "draw",
+-                    G_CALLBACK(cc_themes_panel_draw_theme),
+-                    panel);
+-  g_signal_connect (panel->icon_view,
+-                    "selection-changed",
+-                    G_CALLBACK (cc_themes_panel_selected_theme),
+-                    panel);
+-
+-  themes_list_sw = WID ("themes-list-sw");
+-
+-  gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (themes_list_sw), GTK_SHADOW_ETCHED_IN);
+-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (themes_list_sw),
+-                                  GTK_POLICY_AUTOMATIC,
+-                                  GTK_POLICY_AUTOMATIC);
+-
+-  gtk_container_add (GTK_CONTAINER (themes_list_sw), GTK_WIDGET (panel->icon_view));
+-  //gtk_widget_grab_focus (panel->icon_view);
+-
+-  w = WID ("themes-main-scrolled-window");
+-
+-  gtk_container_add (GTK_CONTAINER (panel), w);
+-  gtk_widget_show_all (GTK_WIDGET (panel));
++  panel->current_theme = NULL;
+ }
+diff --git a/panels/themes/cc-themes-theme.c b/panels/themes/cc-themes-theme.c
+new file mode 100644
+index 0000000..fe4c1c2
+--- /dev/null
++++ b/panels/themes/cc-themes-theme.c
+@@ -0,0 +1,276 @@
++#include <config.h>
++
++#include "cc-themes-resources.h"
++#include "cc-themes-theme.h"
++
++#define CHECK_ICON  "/org/gnome/control-center/themes/check_icon"
++#define THUMBNAIL_WIDTH 300
++#define THUMBNAIL_HEIGHT 188
++
++struct _CcThemesTheme
++{
++  GtkBox       parent;
++
++  GtkCssProvider *provider;
++  GtkCssProvider *selected_prov;
++  GtkCssProvider *default_prov;
++
++  GtkWidget   *overlay;
++  GtkWidget   *thumbnail_box;
++  GtkWidget   *thumbnail_image;
++  GtkWidget   *label;
++
++  gchar       *icon;
++  gchar       *background;
++  gchar       *thumbnail_path;
++};
++
++enum {
++  PROP_LABEL = 1,
++  PROP_ICON,
++  PROP_BACKGROUND,
++  PROP_THUMBNAIL,
++  PROP_ACTIVE,
++};
++
++G_DEFINE_TYPE (CcThemesTheme, cc_themes_theme, GTK_TYPE_BOX)
++
++gchar *
++cc_themes_theme_get_icon (CcThemesTheme *self)
++{
++  return self->icon;
++}
++
++static void
++set_active (CcThemesTheme *self, gboolean active)
++{
++  GtkWidget *icon;
++  icon = g_object_get_data (G_OBJECT (self->overlay), "selected-icon");
++
++  if (active) {
++    gtk_style_context_add_provider (gtk_widget_get_style_context (self->thumbnail_box),
++                                    GTK_STYLE_PROVIDER (self->selected_prov),
++                                    GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
++  }
++  else {
++    gtk_style_context_add_provider (gtk_widget_get_style_context (self->thumbnail_box),
++                                    GTK_STYLE_PROVIDER (self->default_prov),
++                                    GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
++  }
++
++  gtk_widget_set_visible (icon, active);
++}
++
++static void
++set_name (CcThemesTheme *self, const gchar *value)
++{
++  gtk_label_set_text (GTK_LABEL (self->label), value);
++}
++
++static void
++set_icon (CcThemesTheme *self, const gchar *value)
++{
++  self->icon = g_strdup (value);
++}
++
++static void
++set_background_path (CcThemesTheme *self, const gchar *value)
++{
++  self->background = g_strdup (value);
++}
++
++static void
++set_thumbnail (CcThemesTheme *self, const gchar *value)
++{
++  GdkPixbuf *pixbuf;
++  GtkWidget *icon;
++  g_autoptr(GError)  error = NULL;
++
++  pixbuf = gdk_pixbuf_new_from_file_at_size (value, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, &error);
++  if (error) {
++    g_warning ("Error pixbuf new: %s", error->message);
++    return;
++  }
++
++  gtk_image_set_from_pixbuf (GTK_IMAGE (self->thumbnail_image), pixbuf);
++  self->thumbnail_path = g_strdup (value);
++
++  /* selection icon */
++  icon = g_object_new (GTK_TYPE_IMAGE,
++                       "resource", CHECK_ICON,
++                       "pixel-size", 32,
++                       "halign", GTK_ALIGN_END,
++                       "valign", GTK_ALIGN_START,
++                       "visible", FALSE, NULL);
++
++  gtk_overlay_add_overlay (GTK_OVERLAY (self->overlay), icon);
++  g_object_set_data_full (G_OBJECT (self->overlay), "selected-icon", g_object_ref (icon), g_object_unref);
++}
++
++static void
++cc_themes_theme_set_property (GObject       *object,
++                            guint          prop_id,
++                            const GValue  *value,
++                            GParamSpec    *pspec)
++{
++  CcThemesTheme *self = CC_THEMES_THEME (object);
++
++  switch (prop_id) {
++    case PROP_LABEL:
++      set_name (self, g_value_get_string (value));
++    break;
++    case PROP_ICON:
++      set_icon (self, g_value_get_string (value));
++    break;
++    case PROP_BACKGROUND:
++      set_background_path (self, g_value_get_string (value));
++    break;
++    case PROP_THUMBNAIL:
++      set_thumbnail (self, g_value_get_string (value));
++    break;
++    case PROP_ACTIVE:
++      set_active (self, g_value_get_boolean (value));
++    break;
++  }
++}
++
++static void
++cc_themes_theme_get_property (GObject       *object,
++                              guint          prop_id,
++                              GValue  *value,
++                              GParamSpec    *pspec)
++{
++  CcThemesTheme *self = CC_THEMES_THEME (object);
++
++  switch (prop_id) {
++    case PROP_ICON:
++      g_value_set_string (value, self->icon);
++    break;
++    case PROP_BACKGROUND:
++      g_value_set_string (value, self->background);
++    break;
++    case PROP_THUMBNAIL:
++      g_value_set_string (value, self->thumbnail_path);
++    break;
++    default:
++      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
++    break;
++  }
++}
++
++static void
++cc_themes_theme_finalize (GObject *object)
++{
++  CcThemesTheme *self = CC_THEMES_THEME (object);
++
++  g_free (self->icon);
++  g_free (self->background);
++  g_free (self->thumbnail_path);
++
++  g_clear_object (&self->provider);
++  g_clear_object (&self->selected_prov);
++  g_clear_object (&self->default_prov);
++}
++
++static void
++cc_themes_theme_constructed (GObject *object)
++{
++  CcThemesTheme *self = CC_THEMES_THEME (object);
++}
++
++static void
++cc_themes_theme_class_init (CcThemesThemeClass *klass)
++{
++  GObjectClass   *object_class = G_OBJECT_CLASS (klass);
++  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
++
++  object_class->get_property = cc_themes_theme_get_property;
++  object_class->set_property = cc_themes_theme_set_property;
++  object_class->finalize = cc_themes_theme_finalize;
++  object_class->constructed = cc_themes_theme_constructed;
++
++  gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/control-center/themes/themes-theme.ui");
++
++  gtk_widget_class_bind_template_child (widget_class, CcThemesTheme, thumbnail_box);
++  gtk_widget_class_bind_template_child (widget_class, CcThemesTheme, overlay);
++  gtk_widget_class_bind_template_child (widget_class, CcThemesTheme, thumbnail_image);
++  gtk_widget_class_bind_template_child (widget_class, CcThemesTheme, label);
++
++  g_object_class_install_property (object_class,
++                                   PROP_LABEL,
++                                   g_param_spec_string ("label-text",
++                                                        "label-text",
++                                                        "label-text",
++                                                        NULL,
++                                                        G_PARAM_WRITABLE));
++
++  g_object_class_install_property (object_class,
++                                   PROP_ICON,
++                                   g_param_spec_string ("icon",
++                                                        "icon",
++                                                        "icon",
++                                                        NULL,
++                                                        G_PARAM_READWRITE));
++
++  g_object_class_install_property (object_class,
++                                   PROP_BACKGROUND,
++                                   g_param_spec_string ("background",
++                                                        "background",
++                                                        "background",
++                                                        NULL,
++                                                        G_PARAM_READWRITE));
++
++  g_object_class_install_property (object_class,
++                                   PROP_THUMBNAIL,
++                                   g_param_spec_string ("thumbnail",
++                                                        "thumbnail",
++                                                        "thumbnail",
++                                                        NULL,
++                                                        G_PARAM_READWRITE));
++
++  g_object_class_install_property (object_class,
++                                   PROP_ACTIVE,
++                                   g_param_spec_boolean ("active",
++                                                         "active",
++                                                         "active",
++                                                         FALSE,
++                                                         G_PARAM_WRITABLE));
++}
++
++static void
++cc_themes_theme_init (CcThemesTheme *self)
++{
++  GFile *file = NULL;
++  g_resources_register (cc_themes_get_resource ());
++
++  gtk_widget_init_template (GTK_WIDGET (self));
++
++  self->icon = NULL;
++  self->background = NULL;
++  self->provider = gtk_css_provider_new ();
++  gtk_style_context_add_provider_for_screen (gdk_screen_get_default (),
++                                             GTK_STYLE_PROVIDER (self->provider),
++                                             GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
++
++  self->selected_prov = gtk_css_provider_new ();
++  gtk_css_provider_load_from_data (self->selected_prov,
++".theme-box {"
++"background-color: #3986e1;"
++"}", -1, NULL);
++
++  self->default_prov = gtk_css_provider_new ();
++  gtk_css_provider_load_from_data (self->default_prov,
++".theme-box {"
++"background-color: rgba(201,201,201,0.0);"
++"}", -1, NULL);
++
++  file = g_file_new_for_uri ("resource://org/gnome/control-center/themes/style.css");
++  gtk_css_provider_load_from_file (self->provider, file, NULL);
++  g_object_unref (file);
++}
++
++CcThemesTheme *
++cc_themes_theme_new ()
++{
++  return CC_THEMES_THEME (g_object_new (CC_TYPE_THEMES_THEME, NULL));
++}
+diff --git a/panels/themes/cc-themes-theme.h b/panels/themes/cc-themes-theme.h
+new file mode 100644
+index 0000000..2ebc679
+--- /dev/null
++++ b/panels/themes/cc-themes-theme.h
+@@ -0,0 +1,22 @@
++#pragma once
++
++#include <gtk/gtk.h>
++
++G_BEGIN_DECLS
++
++#define  CC_TYPE_THEMES_THEME          (cc_themes_theme_get_type ())
++#define  CC_THEMES_THEME(obj)          (G_TYPE_CHECK_INSTANCE_CAST ((obj), CC_TYPE_THEMES_THEME, CcThemesTheme))
++#define  CC_IS_THEME_BOX(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), CC_TYPE_THEMES_THEME))
++
++//G_DECLARE_FINAL_TYPE (CcThemesTheme, cc_themes_theme, CC, THEME_BOX, GtkToggleButton)
++typedef struct _CcThemesTheme          CcThemesTheme;
++typedef struct _CcThemesThemeClass     CcThemesThemeClass;
++
++struct _CcThemesThemeClass {
++    GtkBoxClass  parent_class;
++};
++
++CcThemesTheme       *cc_themes_theme_new ();
++gchar               *cc_themes_theme_get_icon       (CcThemesTheme *self);
++
++G_END_DECLS
+diff --git a/panels/themes/check-icon.svg b/panels/themes/check-icon.svg
+new file mode 100644
+index 0000000..7df3f10
+--- /dev/null
++++ b/panels/themes/check-icon.svg
+@@ -0,0 +1,6 @@
++<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
++    <g fill="none" fill-rule="evenodd">
++        <path fill="#3986E1" d="M0 0H32V32H0z"/>
++        <path fill="#FFF" d="M24 9.333L25.172 10.505 12.586 23.104 6.667 17.172 7.839 16 12.586 20.734z"/>
++    </g>
++</svg>
+diff --git a/panels/themes/meson.build b/panels/themes/meson.build
+index bea1d6e..4285e33 100644
+--- a/panels/themes/meson.build
++++ b/panels/themes/meson.build
+@@ -18,11 +18,15 @@ i18n.merge_file(
+ )
+ 
+ sources = files(
++  'cc-themes-theme.c',
+   'cc-themes-panel.c',
+ )
+ 
+ resource_data = files(
+-  'themes.ui'
++  'themes.ui',
++  'themes-theme.ui',
++  'check-icon.svg',
++  'style.css',
+ )
+ 
+ sources += gnome.compile_resources(
+diff --git a/panels/themes/style.css b/panels/themes/style.css
+new file mode 100644
+index 0000000..0599ba1
+--- /dev/null
++++ b/panels/themes/style.css
+@@ -0,0 +1,28 @@
++.tile-label {
++  font-family: NotoSansCJKkr;
++  font-size: 13px;
++
++  background-color: #eaeaea;
++}
++
++.theme-overlay {
++  background-color: rgba(201,201,201,0.0);
++}
++
++.theme-box {
++  background-color: rgba(201,201,201,0.0);
++}
++
++.theme-box:active {
++  background-color: #3986e1;
++}
++
++.title-label {
++  font-family: NotoSansCJKkr;
++  font-size: 20px;
++  font-weight: bold;
++}
++
++scrolledwindow {
++  border-width: 0px;
++}
+diff --git a/panels/themes/themes-theme.ui b/panels/themes/themes-theme.ui
+new file mode 100644
+index 0000000..a49f58f
+--- /dev/null
++++ b/panels/themes/themes-theme.ui
+@@ -0,0 +1,77 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!-- Generated with glade 3.22.1 -->
++<interface>
++  <requires lib="gtk+" version="3.20"/>
++  <template class="CcThemesTheme" parent="GtkBox">
++    <property name="visible">True</property>
++    <property name="can_focus">False</property>
++    <property name="orientation">vertical</property>
++    <child>
++      <object class="GtkBox" id="thumbnail_box">
++        <property name="visible">True</property>
++        <property name="can_focus">False</property>
++        <property name="orientation">vertical</property>
++        <child>
++          <object class="GtkEventBox">
++            <property name="visible">True</property>
++            <property name="can_focus">False</property>
++            <property name="margin_left">3</property>
++            <property name="margin_right">3</property>
++            <property name="margin_top">3</property>
++            <property name="margin_bottom">3</property>
++            <child>
++              <object class="GtkOverlay" id="overlay">
++                <property name="visible">True</property>
++                <property name="can_focus">False</property>
++                <child>
++                  <object class="GtkImage" id="thumbnail_image">
++                    <property name="visible">True</property>
++                    <property name="can_focus">False</property>
++                    <property name="stock">gtk-missing-image</property>
++                  </object>
++                  <packing>
++                    <property name="index">-1</property>
++                  </packing>
++                </child>
++                <style>
++                  <class name="theme-overlay"/>
++                </style>
++              </object>
++            </child>
++          </object>
++          <packing>
++            <property name="expand">True</property>
++            <property name="fill">True</property>
++            <property name="position">0</property>
++          </packing>
++        </child>
++        <style>
++          <class name="theme-box"/>
++        </style>
++      </object>
++      <packing>
++        <property name="expand">True</property>
++        <property name="fill">True</property>
++        <property name="position">0</property>
++      </packing>
++    </child>
++    <child>
++      <object class="GtkLabel" id="label">
++        <property name="height_request">36</property>
++        <property name="visible">True</property>
++        <property name="can_focus">False</property>
++        <property name="margin_left">3</property>
++        <property name="margin_right">3</property>
++        <property name="margin_top">3</property>
++        <style>
++          <class name="tile-label"/>
++        </style>
++      </object>
++      <packing>
++        <property name="expand">False</property>
++        <property name="fill">True</property>
++        <property name="position">1</property>
++      </packing>
++    </child>
++  </template>
++</interface>
+diff --git a/panels/themes/themes.gresource.xml b/panels/themes/themes.gresource.xml
+index b3915eb..c0d119f 100644
+--- a/panels/themes/themes.gresource.xml
++++ b/panels/themes/themes.gresource.xml
+@@ -2,6 +2,9 @@
+ <gresources>
+   <gresource prefix="/org/gnome/control-center/themes">
+     <file preprocess="xml-stripblanks">themes.ui</file>
++    <file preprocess="xml-stripblanks">themes-theme.ui</file>
++    <file alias="check_icon">check-icon.svg</file>
++    <file>style.css</file>
+   </gresource>
+ </gresources>
+ 
+diff --git a/panels/themes/themes.ui b/panels/themes/themes.ui
+index 086d6f0..c8082bf 100644
+--- a/panels/themes/themes.ui
++++ b/panels/themes/themes.ui
+@@ -2,114 +2,24 @@
+ <!-- Generated with glade 3.22.1 -->
+ <interface>
+   <requires lib="gtk+" version="3.20"/>
+-  <object class="GtkSizeGroup" id="sizegroup1">
+-    <property name="mode">both</property>
+-  </object>
+-  <object class="GtkScrolledWindow" id="themes-main-scrolled-window">
++  <template class="CcThemesPanel" parent="CcPanel">
+     <property name="visible">True</property>
+-    <property name="can_focus">True</property>
+-    <property name="shadow_type">in</property>
+-    <property name="min_content_width">700</property>
+-    <property name="min_content_height">400</property>
++    <property name="can_focus">False</property>
+     <child>
+-      <object class="GtkViewport">
++      <object class="GtkScrolledWindow">
+         <property name="visible">True</property>
+-        <property name="can_focus">False</property>
++        <property name="can_focus">True</property>
++        <property name="shadow_type">in</property>
+         <child>
+-          <object class="GtkBox">
++          <object class="GtkViewport" id="viewport">
+             <property name="visible">True</property>
+             <property name="can_focus">False</property>
+-            <property name="hexpand">True</property>
+-            <property name="vexpand">True</property>
+-            <property name="orientation">vertical</property>
+-            <property name="spacing">1</property>
+-            <property name="baseline_position">top</property>
++            <property name="margin_left">30</property>
++            <property name="margin_right">30</property>
++            <property name="margin_top">20</property>
++            <property name="margin_bottom">20</property>
+             <child>
+-              <object class="GtkFixed">
+-                <property name="visible">True</property>
+-                <property name="can_focus">False</property>
+-                <child>
+-                  <object class="GtkBox">
+-                    <property name="visible">True</property>
+-                    <property name="can_focus">False</property>
+-                    <property name="halign">start</property>
+-                    <property name="valign">start</property>
+-                    <child>
+-                      <object class="GtkLabel">
+-                        <property name="visible">True</property>
+-                        <property name="can_focus">False</property>
+-                        <property name="halign">start</property>
+-                        <property name="valign">start</property>
+-                        <property name="label" translatable="yes">Current Theme : </property>
+-                        <attributes>
+-                          <attribute name="weight" value="bold"/>
+-                        </attributes>
+-                      </object>
+-                      <packing>
+-                        <property name="expand">False</property>
+-                        <property name="fill">True</property>
+-                        <property name="position">0</property>
+-                      </packing>
+-                    </child>
+-                    <child>
+-                      <object class="GtkLabel" id="current-theme-label">
+-                        <property name="visible">True</property>
+-                        <property name="can_focus">False</property>
+-                        <property name="halign">start</property>
+-                        <property name="valign">start</property>
+-                        <property name="label" translatable="yes">This theme is not listed.</property>
+-                        <attributes>
+-                          <attribute name="weight" value="bold"/>
+-                        </attributes>
+-                      </object>
+-                      <packing>
+-                        <property name="expand">False</property>
+-                        <property name="fill">True</property>
+-                        <property name="position">1</property>
+-                      </packing>
+-                    </child>
+-                  </object>
+-                  <packing>
+-                    <property name="x">10</property>
+-                    <property name="y">13</property>
+-                  </packing>
+-                </child>
+-                <child>
+-                  <object class="GtkBox">
+-                    <property name="visible">True</property>
+-                    <property name="can_focus">False</property>
+-                    <property name="margin_top">22</property>
+-                    <property name="orientation">vertical</property>
+-                    <child>
+-                      <object class="GtkDrawingArea" id="current-theme-drawingarea">
+-                        <property name="width_request">330</property>
+-                        <property name="height_request">234</property>
+-                        <property name="visible">True</property>
+-                        <property name="can_focus">False</property>
+-                        <property name="margin_top">15</property>
+-                        <property name="margin_bottom">10</property>
+-                      </object>
+-                      <packing>
+-                        <property name="expand">False</property>
+-                        <property name="fill">True</property>
+-                        <property name="position">1</property>
+-                      </packing>
+-                    </child>
+-                  </object>
+-                  <packing>
+-                    <property name="x">208</property>
+-                    <property name="y">10</property>
+-                  </packing>
+-                </child>
+-              </object>
+-              <packing>
+-                <property name="expand">False</property>
+-                <property name="fill">True</property>
+-                <property name="position">0</property>
+-              </packing>
+-            </child>
+-            <child>
+-              <object class="GtkBox" id="themes-list-box">
++              <object class="GtkBox">
+                 <property name="visible">True</property>
+                 <property name="can_focus">False</property>
+                 <property name="orientation">vertical</property>
+@@ -118,12 +28,10 @@
+                     <property name="visible">True</property>
+                     <property name="can_focus">False</property>
+                     <property name="halign">start</property>
+-                    <property name="valign">start</property>
+-                    <property name="margin_left">25</property>
+-                    <property name="label" translatable="yes">Theme List</property>
+-                    <attributes>
+-                      <attribute name="weight" value="bold"/>
+-                    </attributes>
++                    <property name="label" translatable="yes">Themes</property>
++                    <style>
++                      <class name="title-label"/>
++                    </style>
+                   </object>
+                   <packing>
+                     <property name="expand">False</property>
+@@ -132,34 +40,32 @@
+                   </packing>
+                 </child>
+                 <child>
+-                  <object class="GtkScrolledWindow" id="themes-list-sw">
++                  <object class="GtkBox" id="themes_box">
+                     <property name="visible">True</property>
+                     <property name="can_focus">False</property>
+-                    <property name="margin_left">25</property>
+-                    <property name="margin_right">25</property>
+-                    <property name="margin_top">10</property>
+-                    <property name="margin_bottom">10</property>
+-                    <property name="shadow_type">in</property>
++                    <property name="margin_top">40</property>
++                    <property name="orientation">vertical</property>
++                    <child>
++                      <placeholder/>
++                    </child>
++                    <child>
++                      <placeholder/>
++                    </child>
+                     <child>
+                       <placeholder/>
+                     </child>
+                   </object>
+                   <packing>
+-                    <property name="expand">True</property>
++                    <property name="expand">False</property>
+                     <property name="fill">True</property>
+                     <property name="position">1</property>
+                   </packing>
+                 </child>
+               </object>
+-              <packing>
+-                <property name="expand">True</property>
+-                <property name="fill">True</property>
+-                <property name="position">2</property>
+-              </packing>
+             </child>
+           </object>
+         </child>
+       </object>
+     </child>
+-  </object>
++  </template>
+ </interface>
+diff --git a/po/en.po b/po/en.po
+index e8e0e64..29a14d7 100644
+--- a/po/en.po
++++ b/po/en.po
+@@ -197,6 +197,7 @@ msgid "Solid Color"
+ msgstr ""
+ 
+ #: ../panels/background/cc-background-panel.c:747
++#: background-chooser.ui:14
+ msgid "Wallpapers"
+ msgstr ""
+ 
+@@ -3394,3 +3395,59 @@ msgstr ""
+ #: ../panels/themes/data/themes/gooroom-themes.ini:10
+ msgid "Gooroom Icon Theme 3"
+ msgstr ""
++
++#: background-chooser.ui:70
++msgid "Add Image"
++msgstr ""
++
++#: background.ui:379
++msgid "Apply same all screen"
++msgstr ""
++
++#: background.ui:375
++msgid "Apply each of home and lock screen"
++msgstr ""
++
++#: background.ui:67
++msgid "Background Type"
++msgstr ""
++
++#: background.ui:349
++msgctxt "background, style"
++msgid "Center"
++msgstr ""
++
++#: background.ui:164
++msgid "Home Background"
++msgstr ""
++
++#: background.ui:310
++msgid "Image"
++msgstr ""
++
++#: background.ui:243
++msgid "Lock Background"
++msgstr ""
++
++#: background-chooser.ui:39
++msgid "Select Background"
++msgstr ""
++
++#: background-chooser.ui:18
++msgid "Single Colors"
++msgstr ""
++
++#: background.ui:361
++msgctxt "background, style"
++msgid "Span"
++msgstr ""
++
++#: background.ui:341
++msgctxt "background, style"
++msgid "Tile"
++msgstr ""
++
++#: background.ui:345
++msgctxt "background, style"
++msgid "Zoom"
++msgstr ""
+diff --git a/po/en_GB.po b/po/en_GB.po
+index ea45263..e4d2ee2 100644
+--- a/po/en_GB.po
++++ b/po/en_GB.po
+@@ -417,6 +417,7 @@ msgid "Activities"
+ msgstr "Activities"
+ 
+ #: panels/background/gnome-background-panel.desktop.in.in:3
++#: panels/background/background.ui:24
+ msgid "Background"
+ msgstr "Background"
+ 
+@@ -1144,8 +1145,9 @@ msgid "This profile may no longer be accurate"
+ msgstr "This profile may no longer be accurate"
+ 
+ #: panels/color/gnome-color-panel.desktop.in.in:3
++#: panels/background/background.ui:314
+ msgid "Color"
+-msgstr "Colour"
++msgstr "Color"
+ 
+ #: panels/color/gnome-color-panel.desktop.in.in:4
+ msgid ""
+@@ -8747,8 +8749,8 @@ msgstr "System Sounds"
+ #~ msgid "Span"
+ #~ msgstr "Span"
+ 
+-#~ msgid "Wallpapers"
+-#~ msgstr "Wallpapers"
++msgid "Wallpapers"
++msgstr "Wallpapers"
+ 
+ #~ msgid "Colors"
+ #~ msgstr "Colours"
+@@ -12532,8 +12534,8 @@ msgstr "System Sounds"
+ #~ msgid "Slide Show"
+ #~ msgstr "Slide Show"
+ 
+-#~ msgid "Image"
+-#~ msgstr "Image"
++msgid "Image"
++msgstr "Image"
+ 
+ #~ msgid ""
+ #~ "<b>%s</b>\n"
+@@ -14597,3 +14599,35 @@ msgstr ""
+ #: ../panels/themes/data/themes/gooroom-themes.ini:10
+ msgid "Gooroom Icon Theme 3"
+ msgstr ""
++
++#: background-chooser.ui:39
++msgid "Select Background"
++msgstr "Select Background"
++
++#: panels/background/background-chooser.ui:70
++msgid "Add Image"
++msgstr "Add Image"
++
++#: panels/background/background.ui:379
++msgid "Apply same all screen"
++msgstr "Apply same all screen"
++
++#: panels/background/background.ui:375
++msgid "Apply each of home and lock screen"
++msgstr "Apply each of home and lock screen"
++
++#: panels/background/background.ui:67
++msgid "Background Type"
++msgstr "Background Type"
++
++#: background.ui:164
++msgid "Home Background"
++msgstr "Home Background"
++
++#: panels/background/background.ui:243
++msgid "Lock Background"
++msgstr "Lock Background"
++
++#: panels/background/background-chooser.ui:18
++msgid "Single Colors"
++msgstr "Single Colors"
+diff --git a/po/ko.po b/po/ko.po
+index 759a17e..27235b7 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -8353,6 +8353,46 @@ msgstr "구름 테마 2"
+ msgid "Gooroom Icon Theme 3"
+ msgstr "구름 테마 3"
+ 
++#: ../panels/themes/data/themes/gooroom-themes.ini:14
++msgid "Gooroom Icon Theme 4"
++msgstr "구름 테마 4"
++
++#: panels/background/background-chooser.ui:70
++msgid "Add Image"
++msgstr "이미지 추가하기"
++
++#: panels/background/cc-panel-background.ui:379
++msgid "Apply same all screen"
++msgstr "모든 화면 동일 적용"
++
++#: panels/background/cc-panel-background.ui:375
++msgid "Apply each of home and lock screen"
++msgstr "홈 화면과 잠금 화면 별도 적용"
++
++#: panels/background/cc-panel-background.ui:67
++msgid "Background Type"
++msgstr "배경화면 적용 타입"
++
++#: panels/background/cc-panel-background.ui:164
++msgid "Home Background"
++msgstr "배경화면"
++
++#: panels/background/cc-panel-background.ui:310
++msgid "Image"
++msgstr "이미지"
++
++#: panels/background/cc-panel-background.ui:243
++msgid "Lock Background"
++msgstr "잠금화면"
++
++#: panels/background/background-chooser.ui:18
++msgid "Single Colors"
++msgstr "단일 색상"
++
++#: panels/background/background-chooser.ui:39
++msgid "Select Background"
++msgstr "배경 선택"
++
+ # 권한 이름
+ #~ msgid "Add user accounts and change passwords"
+ #~ msgstr "사용자 계정 추가 및 암호 바꾸기"

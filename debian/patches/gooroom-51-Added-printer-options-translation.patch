@@ -1,0 +1,36 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-51-Added-printer-options-translation
+
+---
+ panels/printers/pp-options-dialog.c | 1 +
+ po/ko.po                            | 4 ++++
+ 2 files changed, 5 insertions(+)
+
+diff --git a/panels/printers/pp-options-dialog.c b/panels/printers/pp-options-dialog.c
+index 05f8e72..5580fca 100644
+--- a/panels/printers/pp-options-dialog.c
++++ b/panels/printers/pp-options-dialog.c
+@@ -90,6 +90,7 @@ static const struct {
+   { "OutputBin", NULL, N_("Output Tray") },
+   { "Resolution", "printing option", NC_("printing option", "Resolution") },
+   { "PreFilter", NULL, N_("GhostScript pre-filtering") },
++  { "PageSize", NULL, N_("Media Size") },
+ };
+ 
+ /* keep sorted when changing */
+diff --git a/po/ko.po b/po/ko.po
+index c002750..7fec86b 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -5084,6 +5084,10 @@ msgstr "해상도"
+ msgid "GhostScript pre-filtering"
+ msgstr "고스트스크립트 우선 필터링"
+ 
++#: panels/printers/pp-options-dialog.c:89
++msgid "Media Size"
++msgstr "용지 크기"
++
+ #. Translators: This option sets number of pages printed on one sheet
+ #: panels/printers/pp-options-dialog.c:530
+ msgid "Pages per side"

@@ -1,0 +1,30 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-66-Updated-mouse-test-click-section
+
+---
+ panels/mouse/cc-mouse-test.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/panels/mouse/cc-mouse-test.c b/panels/mouse/cc-mouse-test.c
+index 35f337d..31de136 100644
+--- a/panels/mouse/cc-mouse-test.c
++++ b/panels/mouse/cc-mouse-test.c
+@@ -186,10 +186,17 @@ static gboolean
+ button_drawing_area_button_press_event (CcMouseTest *self, GdkEventButton *event)
+ {
+ 	gint double_click_time;
++        gdouble center_x, center_y;
+ 
+ 	if (event->type != GDK_BUTTON_PRESS || event->button > 3)
+ 		return FALSE;
+ 
++        center_x = gtk_widget_get_allocated_width (self->button_drawing_area) / 2.0;
++        center_y = gtk_widget_get_allocated_height (self->button_drawing_area) / 2.0;
++
++        if (!((event->x >= center_x - 80) && (event->x <= center_x + 80) && (event->y >= center_y - 80) && (event->y <= center_y + 80)))
++                return FALSE;
++
+ 	double_click_time = g_settings_get_int (self->mouse_settings, "double-click");
+ 
+ 	if (self->button_drawing_area_timeout_id != 0) {

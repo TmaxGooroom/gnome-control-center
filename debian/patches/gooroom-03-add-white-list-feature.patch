@@ -1,0 +1,132 @@
+From: JeongHaeRyong <jeong89@gooroom.kr>
+Date: Wed, 1 Apr 2020 17:23:39 +0900
+Subject: [PATCH 3/4] gooroom add white list feature
+
+---
+ po/en.po                                  |  8 ++++++++
+ po/en_GB.po                               |  8 ++++++++
+ po/ko.po                                  |  8 ++++++++
+ shell/cc-panel-loader.c                   | 22 ++++++++++++++++++++++
+ shell/cc-shell-model.c                    |  2 +-
+ shell/org.gnome.ControlCenter.gschema.xml |  5 +++++
+ 6 files changed, 52 insertions(+), 1 deletion(-)
+
+diff --git a/po/en.po b/po/en.po
+index df0db45..4fee8b4 100644
+--- a/po/en.po
++++ b/po/en.po
+@@ -3291,3 +3291,11 @@ msgstr ""
+ #: ../panels/themes/themes.ui:60
+ msgid "This theme is not listed."
+ msgstr ""
++
++#: ../shell/org.gnome.ControlCenter.gschema.xml:20
++msgid "Show settings list"
++msgstr ""
++
++#: ../shell/org.gnome.ControlCenter.gschema.xml:21
++msgid "Show side panel list that matches the User settings values."
++msgstr ""
+diff --git a/po/en_GB.po b/po/en_GB.po
+index 4d1c708..1845e82 100644
+--- a/po/en_GB.po
++++ b/po/en_GB.po
+@@ -14500,3 +14500,11 @@ msgstr "Gooroom Theme %d"
+ #: ../panels/themes/themes.ui:60
+ msgid "This theme is not listed."
+ msgstr "This theme is not listed."
++
++#: ../shell/org.gnome.ControlCenter.gschema.xml:20
++msgid "Show settings list"
++msgstr "Show settings list"
++
++#: ../shell/org.gnome.ControlCenter.gschema.xml:21
++msgid "Show side panel list that matches the User settings values."
++msgstr "Show side panel list that matches the User settings values."
+diff --git a/po/ko.po b/po/ko.po
+index 31f0cd6..322bdfc 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -8241,6 +8241,14 @@ msgstr "구름 테마 %d"
+ msgid "This theme is not listed."
+ msgstr "목록에 없는 테마입니다."
+ 
++#: ../shell/org.gnome.ControlCenter.gschema.xml:20
++msgid "Show settings list"
++msgstr "패널 목록 보여줌"
++
++#: ../shell/org.gnome.ControlCenter.gschema.xml:21
++msgid "Show side panel list that matches the User settings values."
++msgstr "사용자 설정 값과 일치하는 사이드 목록을 보여줍니다."
++
+ # 권한 이름
+ #~ msgid "Add user accounts and change passwords"
+ #~ msgstr "사용자 계정 추가 및 암호 바꾸기"
+diff --git a/shell/cc-panel-loader.c b/shell/cc-panel-loader.c
+index 394e642..f4e15b8 100644
+--- a/shell/cc-panel-loader.c
++++ b/shell/cc-panel-loader.c
+@@ -182,6 +182,26 @@ parse_categories (GDesktopAppInfo *app)
+   return retval;
+ }
+ 
++void
++cc_panel_loader_visible_from_schema (CcShellModel *model)
++{
++  g_auto(GStrv) white_list;
++  GSettings *settings;
++  settings = g_settings_new ("org.gnome.ControlCenter");
++  white_list = g_settings_get_strv (settings, "whitelist-panels");
++
++  for (gint i = 0; i < G_N_ELEMENTS (default_panels); i++)
++  {
++    for (int j = 0; j < white_list[j] != NULL; j++)
++    {   
++      if (g_strcmp0(default_panels[i].name, white_list[j]) == 0)
++        cc_shell_model_set_panel_visibility (model, default_panels[i].name, CC_PANEL_VISIBLE);
++    }   
++  }
++
++  g_clear_object (&settings);
++}
++
+ #ifndef CC_PANEL_LOADER_NO_GTYPES
+ 
+ static GHashTable *panel_types;
+@@ -275,6 +295,8 @@ cc_panel_loader_fill_model (CcShellModel *model)
+         panels_vtable[i].static_init_func ();
+     }
+ #endif
++
++  cc_panel_loader_visible_from_schema (model);
+ }
+ 
+ /**
+diff --git a/shell/cc-shell-model.c b/shell/cc-shell-model.c
+index 19fc9c6..1077c6a 100644
+--- a/shell/cc-shell-model.c
++++ b/shell/cc-shell-model.c
+@@ -304,7 +304,7 @@ cc_shell_model_add_item (CcShellModel    *model,
+                                      COL_CASEFOLDED_DESCRIPTION, casefolded_description,
+                                      COL_GICON, icon,
+                                      COL_KEYWORDS, keywords,
+-                                     COL_VISIBILITY, CC_PANEL_VISIBLE,
++                                     COL_VISIBILITY, CC_PANEL_HIDDEN,
+                                      COL_HAS_SIDEBAR, has_sidebar,
+                                      -1);
+ }
+diff --git a/shell/org.gnome.ControlCenter.gschema.xml b/shell/org.gnome.ControlCenter.gschema.xml
+index 40350bc..8651b38 100644
+--- a/shell/org.gnome.ControlCenter.gschema.xml
++++ b/shell/org.gnome.ControlCenter.gschema.xml
+@@ -15,5 +15,10 @@
+         Whether Settings should show a warning when running a development build.
+       </description>
+     </key>
++    <key name="whitelist-panels" type="as">
++      <default>['bluetooth', 'background', 'search', 'region', 'universal-access', 'font', 'online-accounts', 'privacy', 'sharing', 'sound', 'power', 'network', 'wifi', 'wacom', 'display', 'keyboard', 'printers', 'mouse', 'removable-media', 'thunderbolt', 'color', 'info-overview', 'datetime', 'user-accounts', 'default-apps', 'themes']</default>
++      <summary>Show settings list</summary>
++      <description>Show side panel list that matches the User settings values.</description>
++    </key>
+   </schema>
+ </schemalist>

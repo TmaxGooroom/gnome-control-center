@@ -1,0 +1,21 @@
+From: HaeRyong Jeong <jeong89@gooroom.kr>
+Date: Mon, 29 Jun 2020 18:48:45 +0900
+Subject: [PATCH] Fixed preview text in font panel
+
+---
+ panels/font/cc-font-chooser-widget.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/panels/font/cc-font-chooser-widget.c b/panels/font/cc-font-chooser-widget.c
+index ea62f45..c9f770c 100644
+--- a/panels/font/cc-font-chooser-widget.c
++++ b/panels/font/cc-font-chooser-widget.c
+@@ -547,7 +547,7 @@ cc_font_chooser_widget_update_preview_attributes (CcFontChooserWidget *fontchoos
+   attrs = pango_attr_list_new ();
+ 
+   /* Prevent font fallback */
+-  pango_attr_list_insert (attrs, pango_attr_fallback_new (FALSE));
++  //pango_attr_list_insert (attrs, pango_attr_fallback_new (FALSE));
+ 
+   /* Force current font and features */
+   pango_attr_list_insert (attrs, pango_attr_font_desc_new (priv->font_desc));

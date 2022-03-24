@@ -1,0 +1,20 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-64-Updated-user-accounts-delete-button-sensitive
+
+---
+ panels/user-accounts/cc-user-panel.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/panels/user-accounts/cc-user-panel.c b/panels/user-accounts/cc-user-panel.c
+index 7db84c1..c8dddb3 100644
+--- a/panels/user-accounts/cc-user-panel.c
++++ b/panels/user-accounts/cc-user-panel.c
+@@ -428,6 +428,7 @@ delete_user_response (CcUserPanel *self,
+         }
+ 
+         user = get_selected_user (self);
++        gtk_widget_set_sensitive (self->remove_user_button, FALSE);
+ 
+         /* remove autologin */
+         if (act_user_get_automatic_login (user)) {

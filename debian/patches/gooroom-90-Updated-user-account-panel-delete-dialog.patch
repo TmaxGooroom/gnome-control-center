@@ -1,0 +1,90 @@
+From: os1_3 <os1_3@tmax.co.kr>
+Date: Tue, 15 Mar 2022 16:11:39 +0900
+Subject: gooroom-90-Updated-user-account-panel-delete-dialog
+
+---
+ panels/user-accounts/cc-user-panel.c | 15 +++++++++++++++
+ po/ko.po                             | 12 ++++++++++--
+ 2 files changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/panels/user-accounts/cc-user-panel.c b/panels/user-accounts/cc-user-panel.c
+index c8dddb3..ff2dfb6 100644
+--- a/panels/user-accounts/cc-user-panel.c
++++ b/panels/user-accounts/cc-user-panel.c
+@@ -94,6 +94,7 @@ struct _CcUserPanel {
+         GtkBox          *no_users_box;
+         GtkRevealer     *notification_revealer;
+         GtkLabel        *password_button_label;
++        GtkWidget       *user_delete_dialog;
+ #ifdef HAVE_MALCONTENT
+         GtkLabel        *parental_controls_button_label;
+         GtkImage        *parental_control_go_next;
+@@ -405,6 +406,8 @@ delete_user_done (ActUserManager *manager,
+ 
+                 g_error_free (error);
+         }
++
++        gtk_widget_destroy (GTK_WIDGET (self->user_delete_dialog));
+ }
+ 
+ static void
+@@ -427,6 +430,17 @@ delete_user_response (CcUserPanel *self,
+                 remove_files = FALSE;
+         }
+ 
++        self->user_delete_dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (self))),
++                                                           0,
++                                                           GTK_MESSAGE_INFO,
++                                                           GTK_BUTTONS_NONE,
++                                                           _("User %s is going on delete."),
++                                                           get_real_or_user_name (get_selected_user(self)));
++
++        gtk_window_set_title (GTK_WINDOW (self->user_delete_dialog), _("Delete User"));
++        gtk_window_set_modal (GTK_WINDOW (self->user_delete_dialog), TRUE);
++        gtk_window_present (GTK_WINDOW (self->user_delete_dialog));
++
+         user = get_selected_user (self);
+         gtk_widget_set_sensitive (self->remove_user_button, FALSE);
+ 
+@@ -673,6 +687,7 @@ delete_user (CcUserPanel *self)
+                                                 NULL);
+                 }
+ 
++                gtk_window_set_title (GTK_WINDOW (dialog), _("Delete User"));
+                 gtk_window_set_icon_name (GTK_WINDOW (dialog), "system-users");
+ 
+                 g_signal_connect_object (dialog, "response",
+diff --git a/po/ko.po b/po/ko.po
+index c6bb379..083bc25 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -7462,6 +7462,10 @@ msgstr "내 계정"
+ msgid "Failed to delete user"
+ msgstr "사용자 삭제에 실패했습니다"
+ 
++#: panels/user-accounts/cc-user-panel.c:437
++msgid "User %s is going on delete."
++msgstr "사용자 %s 를 삭제중입니다."
++
+ #: panels/user-accounts/cc-user-panel.c:459
+ #: panels/user-accounts/cc-user-panel.c:518
+ #: panels/user-accounts/cc-user-panel.c:570
+@@ -7504,12 +7508,16 @@ msgstr "파일 삭제(_D)"
+ msgid "_Keep Files"
+ msgstr "파일 유지(_K)"
+ 
+-#: panels/user-accounts/cc-user-panel.c:665
++#: panels/user-accounts/cc-user-panel.c:676
++msgid "Delete User"
++msgstr "사용자 삭제"
++
++#: panels/user-accounts/cc-user-panel.c:687
+ #, c-format
+ msgid "Are you sure you want to revoke remotely managed %s’s account?"
+ msgstr "정말로 원격에서 관리하는 %s의 계정을 철회하시겠습니까?"
+ 
+-#: panels/user-accounts/cc-user-panel.c:669
++#: panels/user-accounts/cc-user-panel.c:691
+ msgid "_Delete"
+ msgstr "삭제(_D)"
+ 

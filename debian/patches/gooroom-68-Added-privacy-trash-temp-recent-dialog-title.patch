@@ -1,0 +1,103 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-68-Added-privacy-trash-temp-recent-dialog-title
+
+---
+ panels/usage/cc-usage-panel.c | 11 +++++++----
+ po/ko.po                      | 12 ++++++++++++
+ 2 files changed, 19 insertions(+), 4 deletions(-)
+
+diff --git a/panels/usage/cc-usage-panel.c b/panels/usage/cc-usage-panel.c
+index 72f6b43..d4198b0 100644
+--- a/panels/usage/cc-usage-panel.c
++++ b/panels/usage/cc-usage-panel.c
+@@ -46,7 +46,7 @@ struct _CcUsagePanel
+ 
+ CC_PANEL_REGISTER (CcUsagePanel, cc_usage_panel)
+ 
+-static gboolean run_warning (CcUsagePanel *panel, const gchar *prompt, const gchar *text, const gchar *button_title);
++static gboolean run_warning (CcUsagePanel *panel, char *title, const gchar *prompt, const gchar *text, const gchar *button_title);
+ 
+ static void
+ purge_after_combo_changed_cb (CcUsagePanel *self)
+@@ -120,6 +120,7 @@ set_purge_after_value_for_combo (GtkComboBox  *combo_box,
+ 
+ static gboolean
+ run_warning (CcUsagePanel *self,
++             char         *title,
+              const gchar  *prompt,
+              const gchar  *text,
+              const gchar  *button_title)
+@@ -136,6 +137,7 @@ run_warning (CcUsagePanel *self,
+                                    GTK_MESSAGE_WARNING,
+                                    GTK_BUTTONS_NONE,
+                                    NULL);
++  gtk_window_set_title (GTK_WINDOW (dialog), title);
+   g_object_set (dialog,
+                 "text", prompt,
+                 "secondary-text", text,
+@@ -160,7 +162,7 @@ empty_trash (CcUsagePanel *self)
+   g_autoptr(GDBusConnection) bus = NULL;
+   gboolean result;
+ 
+-  result = run_warning (self,
++  result = run_warning (self, _("Empty Trash"),
+                         _("Empty all items from Trash?"),
+                         _("All items in the Trash will be permanently deleted."),
+                         _("_Empty Trash"));
+@@ -183,7 +185,7 @@ purge_temp (CcUsagePanel *self)
+   g_autoptr(GDBusConnection) bus = NULL;
+   gboolean result;
+ 
+-  result = run_warning (self,
++  result = run_warning (self, _("Purge Temporary Files"),
+                         _("Delete all the temporary files?"),
+                         _("All the temporary files will be permanently deleted."),
+                         _("_Purge Temporary Files"));
+@@ -328,7 +330,8 @@ clear_recent (CcUsagePanel *self)
+   GtkRecentManager *m;
+   gboolean result;
+ 
+-  result = run_warning (self, _("Clear all items in Recent?"),
++  result = run_warning (self, _("Clear Recent"),
++                        _("Clear all items in Recent?"),
+                         _("All items in the Recent will be cleared."),
+                         _("_Clear Recent"));
+ 
+diff --git a/po/ko.po b/po/ko.po
+index 96c0690..84d5a18 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -6796,6 +6796,10 @@ msgstr "색상 효과:"
+ msgid "Color Effects"
+ msgstr "색상 효과"
+ 
++#: panels/usage/cc-usage-panel.c:324
++msgid "Clear Recent"
++msgstr "최근 기록 비우기"
++
+ #: panels/usage/cc-usage-panel.c:325
+ msgid "Clear all items in Recent?"
+ msgstr "모든 최근 기록을 비우시겠습니까?"
+@@ -6808,6 +6812,10 @@ msgstr "모든 최근 기록을 완전히 정리합니다."
+ msgid "_Clear Recent"
+ msgstr "최근 기록 비우기(_C)"
+ 
++#: panels/usage/cc-usage-panel.c:153
++msgid "Empty Trash"
++msgstr "휴지통 비우기"
++
+ #: panels/usage/cc-usage-panel.c:154
+ msgid "Empty all items from Trash?"
+ msgstr "휴지통의 모든 항목을 비우시겠습니까?"
+@@ -6820,6 +6828,10 @@ msgstr "휴지통의 모든 항목을 완전히 삭제합니다."
+ msgid "_Empty Trash"
+ msgstr "휴지통 비우기(_E)"
+ 
++#: panels/usage/cc-usage-panel.c:176
++msgid "Purge Temporary Files"
++msgstr "임시 파일 지우기"
++
+ #: panels/usage/cc-usage-panel.c:177
+ msgid "Delete all the temporary files?"
+ msgstr "모든 임시 파일을 지우시겠습니까?"

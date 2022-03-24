@@ -1,0 +1,94 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-39-Fixed-color-profile-apply-all-users
+
+---
+ panels/color/cc-color-panel.c | 40 ++++++++++++++++++++++++++++++++++++++++
+ po/ko.po                      | 12 ++++++++++++
+ 2 files changed, 52 insertions(+)
+
+diff --git a/panels/color/cc-color-panel.c b/panels/color/cc-color-panel.c
+index 5c11be1..ba1475d 100644
+--- a/panels/color/cc-color-panel.c
++++ b/panels/color/cc-color-panel.c
+@@ -204,10 +204,41 @@ gcm_prefs_combobox_add_profile (CcColorPanel *prefs,
+                       -1);
+ }
+ 
++static gboolean
++run_warning (GtkWindow *parent, char *prompt, char *text, char *button_title)
++{
++  GtkWidget *dialog;
++  GtkWidget *button;
++  int result;
++  dialog = gtk_message_dialog_new (parent,
++                                   0,
++                                   GTK_MESSAGE_WARNING,
++                                   GTK_BUTTONS_NONE,
++                                   NULL);
++  g_object_set (dialog,
++                "text", prompt,
++                "secondary-text", text,
++                NULL);
++  gtk_dialog_add_button (GTK_DIALOG (dialog), _("_Cancel"), GTK_RESPONSE_CANCEL);
++  gtk_dialog_add_button (GTK_DIALOG (dialog), button_title, GTK_RESPONSE_OK);
++
++  gtk_dialog_set_default_response (GTK_DIALOG (dialog), FALSE);
++
++  button = gtk_dialog_get_widget_for_response (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
++  gtk_style_context_add_class (gtk_widget_get_style_context (button), "destructive-action");
++
++  result = gtk_dialog_run (GTK_DIALOG (dialog));
++  gtk_widget_destroy (dialog);
++
++  return result == GTK_RESPONSE_OK;
++}
++
+ static void
+ gcm_prefs_default_cb (CcColorPanel *prefs)
+ {
+   g_autoptr(CdProfile) profile = NULL;
++  GtkWidget *dialog;
++  gboolean interactive_ret;
+   gboolean ret;
+   g_autoptr(GError) error = NULL;
+ 
+@@ -216,6 +247,15 @@ gcm_prefs_default_cb (CcColorPanel *prefs)
+   if (profile == NULL)
+     return;
+ 
++  dialog = prefs->main_window;
++  interactive_ret = run_warning (GTK_WINDOW (dialog), _("Apply profile to all users?"),
++                                 _("Profiles of all users are changed to selected profile."),
++                                 _("_Apply Profile"));
++
++  if (!interactive_ret)
++    return;
++
++
+   /* install somewhere out of $HOME */
+   ret = cd_profile_install_system_wide_sync (profile,
+                                              cc_panel_get_cancellable (CC_PANEL (prefs)),
+diff --git a/po/ko.po b/po/ko.po
+index 3e28f9d..f692246 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -710,6 +710,18 @@ msgstr "색 영역: "
+ msgid "Test profile: "
+ msgstr "시험용 프로파일: "
+ 
++#: panels/color/cc-color-panel.c:254
++msgid "Apply profile to all users?"
++msgstr "모든 사용자에게 프로파일을 적용하시겠습니까?"
++
++#: panels/color/cc-color-panel.c:255
++msgid "Profiles of all users are changed to selected profile."
++msgstr "모든 사용자의 프로파일이 선택된 프로파일로 변경됩니다."
++
++#: panels/color/cc-color-panel.c:256
++msgid "_Apply Profile"
++msgstr "프로파일 적용(_A)"
++
+ #. TRANSLATORS: an ICC profile is a file containing colorspace data
+ #: panels/color/cc-color-panel.c:236
+ msgid "Select ICC Profile File"

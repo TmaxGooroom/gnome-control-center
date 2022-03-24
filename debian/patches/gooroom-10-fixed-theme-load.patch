@@ -1,0 +1,354 @@
+From: HaeRyongJeong <jeong89@gooroom.kr>
+Date: Thu, 11 Jun 2020 12:55:20 +0900
+Subject: [PATCH] Fixed Theme load
+
+Change-Id: I2d941c0d5a9b6d7391dbbf1e97c519ede4758ad2
+---
+ panels/themes/cc-themes-panel.c              | 165 +++++++++++++++++----------
+ panels/themes/data/meson.build               |   4 +
+ panels/themes/data/themes/gooroom-themes.ini |  21 ++++
+ panels/themes/meson.build                    |   2 +
+ 4 files changed, 132 insertions(+), 60 deletions(-)
+ create mode 100644 panels/themes/data/meson.build
+ create mode 100644 panels/themes/data/themes/gooroom-themes.ini
+
+diff --git a/panels/themes/cc-themes-panel.c b/panels/themes/cc-themes-panel.c
+index 2a72ec7..b33d1b1 100644
+--- a/panels/themes/cc-themes-panel.c
++++ b/panels/themes/cc-themes-panel.c
+@@ -22,37 +22,29 @@
+ //#include "font-dialog.h"
+ #include "cc-themes-resources.h"
+ 
++#include <locale.h>
+ #include <config.h>
+ #include <gtk/gtk.h>
+ 
+ #include <glib/gi18n.h>
++#include <glib/gstdio.h>
+ 
+ #define DEFAULT_GTK_THEME   "Default"
+ #define DEFAULT_WM_THEME    "Default"
+ #define DEFAULT_ICON_THEME  "Rodent"
+ 
+ #define DEFAULT_THEME_DIR   "/usr/share/icons"
++#define DEFAULT_THEMES_INI  "/usr/share/gnome-control-center/themes/gooroom-themes.ini"
+ 
+ #define WID(y) (GtkWidget *) gtk_builder_get_object (panel->builder, y)
+ 
+-struct {
+-  char *icon_theme;
+-  //char *icon_name;
+-  int   number;
+-  char *bg_path;
+-} icon_themes[] = {
+-  { "Gooroom-Arc", 1, "file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_1.jpg" },
+-  { "Gooroom-Faenza", 2, "file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_2.jpg" },
+-  { "Gooroom-Papirus", 3, "file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_3.jpg" },
+-};
+-
+ enum
+ {
+   COL_THUMBNAIL,
+-  COL_ICON_THEME,
+-  COL_LABEL_ICON_NAME,
++  COL_NAME,
++  COL_ICON,
++  COL_BACKGROUND,
+   COL_THUMB_PATH,
+-  COL_PICTURE_URI,
+   NUM_COLS
+ };
+ 
+@@ -69,8 +61,8 @@ struct _CcThemesPanel
+   GtkListStore      *themes_liststore;
+ 
+   GdkPixbuf         *current_theme_thumbnail;
+-  gchar             *icon_theme;
+-  gchar             *picture_uri;
++  gchar             *icon;
++  gchar             *background;
+ };
+ 
+ CC_PANEL_REGISTER (CcThemesPanel, cc_themes_panel)
+@@ -112,34 +104,87 @@ create_store (void)
+   return store;
+ }
+ 
++static gchar*
++get_language ()
++{
++  const gchar *locale = NULL;
++  const gchar **split = NULL;
++  const g_autofree gchar *lang = NULL;
++
++  locale = setlocale (LC_ALL, NULL);
++
++  split = g_strsplit (locale, ".", -1);
++  lang = g_strdup_printf ("%s", split[0]);
++
++  g_free (locale);
++  g_strfreev (split);
++
++  if (g_strcmp0 (lang, "ko") == 0 ||
++      g_strcmp0 (lang, "ko_KR") == 0) {
++    return "ko";
++  }
++  else if (g_strcmp0 (lang, "en") == 0 ||
++      g_strcmp0 (lang, "en_GB") == 0 ||
++      g_strcmp0 (lang, "en_US") == 0) {
++    return "en";
++  }
++
++  return "ko";
++}
++
++static void
++set_theme_liststore (GtkListStore *store, GKeyFile *keyfile, gchar *group, gchar *locale)
++{
++  gchar *name;
++  gchar *background;
++  gchar *icon;
++  gchar *thumb_path;
++  g_autoptr(GError) error = NULL;
++  GtkTreeIter iter;
++  
++
++  name = g_key_file_get_locale_string (keyfile, group, "Name", locale, NULL);
++  background = g_key_file_get_value (keyfile, group, "Background", NULL);
++  icon = g_key_file_get_value (keyfile, group, "Icon", &error);
++  if (icon == NULL) {
++    g_warning ("Error icon:%s", error->message);
++    return;
++  }
++
++  thumb_path = g_strdup_printf ("%s/%s/thumbnail.png", DEFAULT_THEME_DIR, icon);
++
++  gtk_list_store_append (store, &iter);
++  gtk_list_store_set (store, &iter,
++                      COL_THUMBNAIL, gdk_pixbuf_new_from_file_at_size (thumb_path, 180, 110, NULL),
++                      COL_NAME, name ? name : NULL,
++                      COL_ICON, icon ? icon : NULL,
++                      COL_BACKGROUND, background ? background : NULL,
++                      COL_THUMB_PATH, thumb_path, -1);
++}
++
+ static GtkListStore *
+ load_themes_liststore (CcThemesPanel *panel)
+ {
+   GtkListStore *store;
+-  GtkTreeIter iter;
+-  GSList *l = NULL;
+-  gboolean has_icon_theme = FALSE;
++  g_autoptr(GError) error = NULL;
++  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
++  gchar **groups = NULL;
++  gsize *group_length;
++  gchar *locale = NULL;
+ 
++  if (!g_key_file_load_from_file (keyfile, DEFAULT_THEMES_INI, G_KEY_FILE_KEEP_TRANSLATIONS, &error))
++  {
++    g_warning ("Error loading default-themes.ini: %s", error->message);
++    return NULL;
++  }
++
++  locale = get_language ();
+   store = create_store ();
+ 
+-  for (int i = 0; i < G_N_ELEMENTS (icon_themes); i++)
++  groups = g_key_file_get_groups (keyfile, &group_length);
++  for (int i = 0; i < group_length; i++)
+   {
+-    gchar *thumb_path = NULL;
+-    gchar *icon_theme = NULL;
+-    gchar *icon_name = NULL;
+-    gchar *picture_uri = NULL;
+-
+-    thumb_path = g_strdup_printf ("%s/%s/thumbnail.png", DEFAULT_THEME_DIR, icon_themes[i].icon_theme);
+-    icon_name = g_strdup_printf (_("Gooroom Icon Theme %d"), icon_themes[i].number);
+-    picture_uri = g_strdup_printf ("%s",icon_themes[i].bg_path);
+-
+-    gtk_list_store_append (store, &iter);
+-    gtk_list_store_set (store, &iter,
+-                        COL_THUMBNAIL, gdk_pixbuf_new_from_file_at_size (thumb_path, 180, 110, NULL),
+-                        COL_ICON_THEME, g_strdup_printf ("%s", icon_themes[i].icon_theme),
+-                        COL_LABEL_ICON_NAME, icon_name ? icon_name : NULL,
+-                        COL_PICTURE_URI, picture_uri ? picture_uri : NULL,
+-                        COL_THUMB_PATH, thumb_path, -1);
++    set_theme_liststore (store, keyfile, groups[i], locale);
+   }
+ 
+   return store;
+@@ -177,13 +222,13 @@ cc_themes_panel_draw_theme (GtkWidget *widget, cairo_t *cr, gpointer data)
+ 
+ static void 
+ cc_themes_panel_selected_theme (GtkIconView *icon_view,
+-                    CcThemesPanel *panel)
++                                CcThemesPanel *panel)
+ {
+   GList *list;
+   GtkTreeModel *model;
+   GtkTreeIter iter;
+   gchar *icon_name;
+-  gchar *picture_uri;
++  gchar *background;
+   gchar *thumb_path;
+ 
+   list = gtk_icon_view_get_selected_items (icon_view);
+@@ -196,14 +241,14 @@ cc_themes_panel_selected_theme (GtkIconView *icon_view,
+     goto bail;
+ 
+   gtk_tree_model_get (model, &iter,
+-                      COL_ICON_THEME, &icon_name,
+-                      COL_PICTURE_URI, &picture_uri,
++                      COL_ICON, &icon_name,
++                      COL_BACKGROUND, &background,
+                       COL_THUMB_PATH, &thumb_path, -1);
+ 
+   set_thumbnail (panel, thumb_path);
+ 
+   g_settings_set_string (panel->interface_settings, "icon-theme", icon_name);
+-  g_settings_set_string (panel->bg_settings, "picture-uri", picture_uri);
++  g_settings_set_string (panel->bg_settings, "picture-uri", background);
+ 
+ bail:
+   g_list_free_full (list, (GDestroyNotify) gtk_tree_path_free);
+@@ -216,9 +261,9 @@ cc_themes_panel_apply_theme (GtkButton *button, CcThemesPanel *panel)
+   GList *list;
+   GtkTreeModel *model;
+   GtkTreeIter iter;
+-  gchar *icon_theme;
+-  gchar *label_icon_name;
+-  gchar *picture_uri;
++  gchar *icon;
++  gchar *icon_name;
++  gchar *background;
+ 
+   list = gtk_icon_view_get_selected_items (panel->icon_view);
+   if (list == NULL)
+@@ -229,14 +274,14 @@ cc_themes_panel_apply_theme (GtkButton *button, CcThemesPanel *panel)
+     goto bail;
+ 
+   gtk_tree_model_get (GTK_TREE_MODEL (model), &iter,
+-                      COL_ICON_THEME, &icon_theme,
+-                      COL_LABEL_ICON_NAME, &label_icon_name,
+-                      COL_PICTURE_URI, &picture_uri, -1);
++                      COL_NAME, &icon_name,
++                      COL_ICON, &icon,
++                      COL_BACKGROUND, &background, -1);
+ 
+-  panel->icon_theme = icon_theme;
+-  panel->picture_uri =  picture_uri;
++  panel->icon = icon;
++  panel->background = background;
+ 
+-  gtk_label_set_text (WID ("current-theme-label"), label_icon_name);
++  gtk_label_set_text (WID ("current-theme-label"), icon_name);
+ 
+ bail:
+   g_list_free_full (list, (GDestroyNotify) gtk_tree_path_free);
+@@ -271,9 +316,9 @@ cc_themes_panel_dispose (GObject *object)
+   CcThemesPanel *panel = CC_THEMES_PANEL (object);
+ 
+   if (panel->interface_settings)
+-    g_settings_set_string (panel->interface_settings, "icon-theme", panel->icon_theme);
++    g_settings_set_string (panel->interface_settings, "icon-theme", panel->icon);
+   if (panel->bg_settings)
+-    g_settings_set_string (panel->bg_settings, "picture-uri", panel->picture_uri);
++    g_settings_set_string (panel->bg_settings, "picture-uri", panel->background);
+ 
+   g_clear_object (&panel->interface_settings);
+   g_clear_object (&panel->bg_settings);
+@@ -306,7 +351,7 @@ cc_themes_panel_init (CcThemesPanel *panel)
+   gdouble i_val;
+   GtkWidget *themes_list_sw;
+   GtkTreeIter iter;
+-  gchar *icon_theme;
++  gchar *icon;
+   gchar *icon_name;
+   gchar *thumb_path;
+   gboolean ret = FALSE;
+@@ -331,21 +376,21 @@ cc_themes_panel_init (CcThemesPanel *panel)
+   panel->interface_settings = g_settings_new ("org.gnome.desktop.interface");
+   panel->bg_settings = g_settings_new ("org.gnome.desktop.background");
+ 
+-  panel->icon_theme = g_settings_get_string (panel->interface_settings, "icon-theme");
+-  panel->picture_uri = g_settings_get_string (panel->bg_settings, "picture-uri");
++  panel->icon = g_settings_get_string (panel->interface_settings, "icon-theme");
++  panel->background = g_settings_get_string (panel->bg_settings, "picture-uri");
+ 
+-  panel->themes_liststore = load_themes_liststore(panel);
++  panel->themes_liststore = load_themes_liststore (panel);
+ 
+   /* init current thumbnail and current label */
+   ret = gtk_tree_model_get_iter_first (GTK_TREE_MODEL (panel->themes_liststore), &iter);
+   do
+   {
+     gtk_tree_model_get (GTK_TREE_MODEL (panel->themes_liststore), &iter,
+-                        COL_ICON_THEME, &icon_theme,
+-                        COL_LABEL_ICON_NAME, &icon_name,
++                        COL_NAME, &icon_name,
++                        COL_ICON, &icon,
+                         COL_THUMB_PATH, &thumb_path, -1);
+   
+-    if (g_strcmp0 (panel->icon_theme, icon_theme) == 0)
++    if (g_strcmp0 (panel->icon, icon) == 0)
+     {
+       set_thumbnail (panel, thumb_path); // /usr/.../.png
+       gtk_label_set_text (WID ("current-theme-label"), icon_name);
+@@ -361,7 +406,7 @@ cc_themes_panel_init (CcThemesPanel *panel)
+   gtk_icon_view_set_selection_mode (GTK_ICON_VIEW (panel->icon_view),
+                                     GTK_SELECTION_SINGLE);
+ 
+-  gtk_icon_view_set_text_column (GTK_ICON_VIEW (panel->icon_view), COL_LABEL_ICON_NAME);
++  gtk_icon_view_set_text_column (GTK_ICON_VIEW (panel->icon_view), COL_NAME);
+ 
+   gtk_icon_view_set_pixbuf_column (GTK_ICON_VIEW (panel->icon_view), COL_THUMBNAIL);
+   gtk_icon_view_set_columns (GTK_ICON_VIEW (panel->icon_view), 3);
+diff --git a/panels/themes/data/meson.build b/panels/themes/data/meson.build
+new file mode 100644
+index 0000000..75b0780
+--- /dev/null
++++ b/panels/themes/data/meson.build
+@@ -0,0 +1,4 @@
++install_subdir(
++  'themes',
++  install_dir : join_paths(control_center_datadir, 'gnome-control-center')
++)
+diff --git a/panels/themes/data/themes/gooroom-themes.ini b/panels/themes/data/themes/gooroom-themes.ini
+new file mode 100644
+index 0000000..07957c4
+--- /dev/null
++++ b/panels/themes/data/themes/gooroom-themes.ini
+@@ -0,0 +1,21 @@
++[Gooroom Theme 1]
++Name=Gooroom Icon Theme 1
++Name[ko]=구름 테마 1
++Name[ko_KR]=구름 테마 1
++Name[ko_KR.UTF-8]=구름 테마 1
++Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_1.jpg
++Icon=Gooroom-Arc
++[Gooroom Theme 2]
++Name=Gooroom Icon Theme 2
++Name[ko]=구름 테마 2
++Name[ko_KR]=구름 테마 2
++Name[ko_KR.UTF-8]=구름 테마 2
++Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_2.jpg
++Icon=Gooroom-Faenza
++[Gooroom Theme 3]
++Name=Gooroom Icon Theme 3
++Name[ko]=구름 테마 3
++Name[ko_KR]=구름 테마 3
++Name[ko_KR.UTF-8]=구름 테마 3
++Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_3.jpg
++Icon=Gooroom-Papirus
+diff --git a/panels/themes/meson.build b/panels/themes/meson.build
+index 7d21107..bea1d6e 100644
+--- a/panels/themes/meson.build
++++ b/panels/themes/meson.build
+@@ -50,3 +50,5 @@ themes_panel_lib = static_library(
+   c_args: cflags
+ )
+ panels_libs += [ themes_panel_lib ]
++
++subdir('data')

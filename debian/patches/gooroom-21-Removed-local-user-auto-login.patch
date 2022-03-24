@@ -1,0 +1,54 @@
+From: donghun <donghun@gooroom.kr>
+Date: Wed, 1 Jul 2020 17:27:35 +0900
+Subject: [PATCH] Removed local user auto login
+
+Change-Id: I7b5e3565dbdf6d4949baa844c6962b38aba9d51c
+---
+ panels/user-accounts/cc-user-panel.c | 27 +++++++++++++++++++++++++--
+ 1 file changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/panels/user-accounts/cc-user-panel.c b/panels/user-accounts/cc-user-panel.c
+index 8cedb15..88a993d 100644
+--- a/panels/user-accounts/cc-user-panel.c
++++ b/panels/user-accounts/cc-user-panel.c
+@@ -809,6 +809,28 @@ get_autologin_possible (ActUser *user)
+         return !(locked || set_password_at_login);
+ }
+ 
++static gboolean
++is_ecryptfs_user (const gchar *user)
++{
++    const gchar *fn;
++    g_autoptr (GDir) dir = NULL;
++    g_autofree gchar *path = NULL;
++
++    path = g_strdup (ECRYPTFS_DIR);
++    dir = g_dir_open (path, 0, NULL);
++
++    if (dir == NULL)
++        return FALSE;
++
++    while ((fn = g_dir_read_name (dir)) != NULL)
++    {
++        if (g_strcmp0 (fn, user) == 0)
++            return TRUE;
++    }
++
++    return FALSE;
++}
++
+ static void on_permission_changed (CcUserPanel *self);
+ static void full_name_edit_button_toggled (CcUserPanel *self);
+ 
+@@ -940,8 +962,9 @@ show_user (ActUser *user, CcUserPanel *self)
+         }
+ 
+         /* Autologin: show when local account */
+-        show = act_user_is_local_account (user);
+-        gtk_widget_set_visible (GTK_WIDGET (self->autologin_row), show);
++        show = is_ecryptfs_user (act_user_get_user_name (user));
++        //act_user_is_local_account (user);
++        gtk_widget_set_visible (GTK_WIDGET (self->autologin_row), !show);
+ 
+ #ifdef HAVE_MALCONTENT
+         /* Parental Controls: Unavailable if user is admin */

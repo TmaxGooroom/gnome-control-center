@@ -1,0 +1,40 @@
+From: "subin.kim" <subin.kim@gooroom.kr>
+Date: Fri, 19 Mar 2021 18:16:33 +0900
+Subject: [PATCH] [Bug:3360]
+
+Change-Id: I6144a175591ed33d8a4b3f108823013b09f83723
+---
+ panels/printers/cc-printers-panel.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/panels/printers/cc-printers-panel.c b/panels/printers/cc-printers-panel.c
+index 5896c93..04e2e39 100644
+--- a/panels/printers/cc-printers-panel.c
++++ b/panels/printers/cc-printers-panel.c
+@@ -1058,6 +1058,7 @@ update_sensitivity (gpointer user_data)
+   GtkWidget               *widget;
+   gboolean                 local_server = TRUE;
+   gboolean                 no_cups = FALSE;
++  gboolean                 empty = FALSE;
+   const gchar             *test;
+ 
+   self->is_authorized =
+@@ -1071,6 +1072,9 @@ update_sensitivity (gpointer user_data)
+   if (g_strcmp0 (gtk_stack_get_visible_child_name (GTK_STACK (widget)), "no-cups-page") == 0)
+     no_cups = TRUE;
+ 
++  if (g_strcmp0 (gtk_stack_get_visible_child_name (GTK_STACK (widget)), "empty-state") == 0)
++    empty = TRUE;
++
+   cups_server = cupsServer ();
+   if (cups_server &&
+       g_ascii_strncasecmp (cups_server, "localhost", 9) != 0 &&
+@@ -1080,7 +1084,7 @@ update_sensitivity (gpointer user_data)
+     local_server = FALSE;
+ 
+   widget = (GtkWidget*) gtk_builder_get_object (self->builder, "search-button");
+-  gtk_widget_set_visible (widget, !no_cups);
++  gtk_widget_set_visible (widget, !empty);
+ 
+   widget = (GtkWidget*) gtk_builder_get_object (self->builder, "search-bar");
+   gtk_widget_set_visible (widget, !no_cups);

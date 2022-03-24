@@ -1,0 +1,30 @@
+From: "byunghui.jeun@gooroom.kr" <byunghui.jeun@gooroom.kr>
+Date: Tue, 23 Mar 2021 11:32:55 +0900
+Subject: [PATCH] [Bug:3358] Printer Searching Issue Fixed.
+
+---
+ panels/printers/pp-new-printer-dialog.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/panels/printers/pp-new-printer-dialog.c b/panels/printers/pp-new-printer-dialog.c
+index 7ace4d7..b734b5b 100644
+--- a/panels/printers/pp-new-printer-dialog.c
++++ b/panels/printers/pp-new-printer-dialog.c
+@@ -1499,11 +1499,13 @@ search_address (const gchar        *text,
+                               DEVICE_COLUMN, &device,
+                               -1);
+ 
+-          gtk_list_store_set (GTK_LIST_STORE (self->store), &iter,
+-                              DEVICE_VISIBLE_COLUMN, TRUE,
+-                              -1);
+-
+           acquisition_method = pp_print_device_get_acquisition_method (device);
++          if (acquisition_method != ACQUISITION_METHOD_DEFAULT_CUPS_SERVER)
++            {
++              gtk_list_store_set (GTK_LIST_STORE (self->store), &iter,
++                                  DEVICE_VISIBLE_COLUMN, TRUE,
++                                  -1);
++            }
+           g_object_unref (device);
+           if (acquisition_method == ACQUISITION_METHOD_REMOTE_CUPS_SERVER ||
+               acquisition_method == ACQUISITION_METHOD_SNMP ||

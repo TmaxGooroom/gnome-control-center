@@ -1,0 +1,21 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-71-Enabled-universial-access-repeat-key-setting
+
+---
+ panels/universal-access/cc-ua-panel.ui | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/panels/universal-access/cc-ua-panel.ui b/panels/universal-access/cc-ua-panel.ui
+index 9a9f9f7..c51b0ee 100644
+--- a/panels/universal-access/cc-ua-panel.ui
++++ b/panels/universal-access/cc-ua-panel.ui
+@@ -552,7 +552,7 @@
+                                     </child-->
+                                     <child>
+                                       <object class="GtkListBoxRow" id="row_repeat_keys">
+-                                        <property name="visible">False</property>
++                                        <property name="visible">True</property>
+                                         <property name="can_focus">True</property>
+                                         <child>
+                                           <object class="GtkBox" id="box_repeat_keys">

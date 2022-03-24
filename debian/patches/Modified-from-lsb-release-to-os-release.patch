@@ -1,0 +1,61 @@
+From: JunYoung Chang <junyoung_chang@tmax.co.kr>
+Date: Tue, 28 Dec 2021 06:08:55 -0500
+Subject: Modified from lsb-release to os-release
+
+---
+ panels/info-overview/cc-info-overview-panel.c | 24 +++++++++++++++++++-----
+ 1 file changed, 19 insertions(+), 5 deletions(-)
+
+diff --git a/panels/info-overview/cc-info-overview-panel.c b/panels/info-overview/cc-info-overview-panel.c
+index 8e4fe2b..cd571e0 100644
+--- a/panels/info-overview/cc-info-overview-panel.c
++++ b/panels/info-overview/cc-info-overview-panel.c
+@@ -693,6 +693,8 @@ info_overview_panel_setup_overview (CcInfoOverviewPanel *self)
+   g_autofree char *cpu_text = NULL;
+   g_autofree char *os_type_text = NULL;
+   g_autofree char *os_info_text = NULL;
++  g_autofree char *os_name_text = NULL;
++  g_autofree char *os_version_text = NULL;
+   g_autofree char *contents = NULL;
+   g_autofree gchar *graphics_hardware_string = NULL;
+ 
+@@ -713,22 +715,34 @@ info_overview_panel_setup_overview (CcInfoOverviewPanel *self)
+   os_type_text = get_os_type ();
+   cc_list_row_set_secondary_label (self->os_type_row, os_type_text);
+ 
+-  g_file_get_contents ("/etc/lsb-release", &contents, NULL, NULL);
++  g_file_get_contents ("/etc/os-release", &contents, NULL, NULL);
+ 
+   if (contents) {
+     guint i = 0;
+     gchar **lines = g_strsplit (contents, "\n", -1);
+     for (i = 0; lines[i] != NULL; i++) {
+-      if (g_str_has_prefix (lines[i], "DISTRIB_DESCRIPTION=")) {
++      if (os_name_text != NULL && os_version_text != NULL) {
++        break;
++      }
++      if (g_str_has_prefix (lines[i], "NAME=")) {
+         gchar **tokens = g_strsplit (lines[i], "=", -1);
+         if (tokens[1]) {
+-          os_info_text = g_strdelimit (g_strdup(tokens[1]), "\"",' ');
+-          g_strstrip (os_info_text);
++          os_name_text = g_strdelimit (g_strdup(tokens[1]), "\"",' ');
++          g_strstrip (os_name_text);
++        }
++        g_strfreev (tokens);
++      } else if (g_str_has_prefix (lines[i], "VERSION_ID=")) {
++        gchar **tokens = g_strsplit (lines[i], "=", -1);
++        if (tokens[1]) {
++          os_version_text = g_strdelimit (g_strdup(tokens[1]), "\"",' ');
++          g_strstrip (os_version_text);
+         }
+         g_strfreev (tokens);
+-        break;
+       }
+     }
++    if (os_name_text && os_version_text) {
++      os_info_text = g_strjoin (' ', os_name_text, os_version_text);
++    }
+     g_strfreev (lines);
+   }
+ 

@@ -1,0 +1,21 @@
+From: HaeRyong Jeong <jeong89@gooroom.kr>
+Date: Thu, 23 Jul 2020 14:51:03 +0900
+Subject: [PATCH] Fixed wifi panel title
+
+Change-Id: I403928fa2bbf757870df6b4f1a3400cf52e2fc1c
+---
+ panels/network/cc-wifi-panel.ui | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/panels/network/cc-wifi-panel.ui b/panels/network/cc-wifi-panel.ui
+index ec68adc..49e65b7 100644
+--- a/panels/network/cc-wifi-panel.ui
++++ b/panels/network/cc-wifi-panel.ui
+@@ -410,6 +410,7 @@
+   <object class="GtkBox" id="empty_center_box">
+     <property name="visible">True</property>
+     <property name="can_focus">False</property>
++    <property name="valign">center</property>
+     <property name="orientation">vertical</property>
+     <child>
+       <object class="GtkLabel">

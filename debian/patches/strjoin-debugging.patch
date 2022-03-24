@@ -1,0 +1,21 @@
+From: JunYoung Chang <junyoung_chang@tmax.co.kr>
+Date: Tue, 28 Dec 2021 19:40:15 -0500
+Subject: strjoin debugging
+
+---
+ panels/info-overview/cc-info-overview-panel.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/panels/info-overview/cc-info-overview-panel.c b/panels/info-overview/cc-info-overview-panel.c
+index cd571e0..b328303 100644
+--- a/panels/info-overview/cc-info-overview-panel.c
++++ b/panels/info-overview/cc-info-overview-panel.c
+@@ -741,7 +741,7 @@ info_overview_panel_setup_overview (CcInfoOverviewPanel *self)
+       }
+     }
+     if (os_name_text && os_version_text) {
+-      os_info_text = g_strjoin (' ', os_name_text, os_version_text);
++      os_info_text = g_strjoin (" ", os_name_text, os_version_text);
+     }
+     g_strfreev (lines);
+   }

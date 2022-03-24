@@ -1,0 +1,59 @@
+From: gangmo_seong <gangmo_seong@tmax.co.kr>
+Date: Wed, 20 Oct 2021 18:45:03 +0900
+Subject: background preview change
+
+- background preview change similar to tos
+
+[IMS] 268706
+---
+ panels/background/cc-background-preview.ui | 19 ++++++++++---------
+ 1 file changed, 10 insertions(+), 9 deletions(-)
+
+diff --git a/panels/background/cc-background-preview.ui b/panels/background/cc-background-preview.ui
+index 30f7902..5506442 100644
+--- a/panels/background/cc-background-preview.ui
++++ b/panels/background/cc-background-preview.ui
+@@ -38,7 +38,7 @@
+                 <property name="visible">True</property>
+                 <property name="can-focus">False</property>
+                 <property name="shadow-type">none</property>
+-                <property name="valign">start</property>
++                <property name="valign">end</property>
+                 <style>
+                   <class name="desktop-preview" />
+                 </style>
+@@ -49,25 +49,26 @@
+                     <property name="can-focus">False</property>
+ 
+                     <child>
+-                      <object class="GtkLabel">
++                      <object class="GtkImage">
+                         <property name="visible">True</property>
+                         <property name="can-focus">False</property>
+-                        <property name="label" translatable="yes">Activities</property>
++                        <property name="icon-name">start-here-symbolic</property>
++                            <property name="pixel-size">6</property>
+                       </object>
+                     </child>
+ 
+-                    <child type="center">
+-                      <object class="GtkLabel" id="desktop_clock_label">
++                    <child>
++                      <object class="GtkBox">
+                         <property name="visible">True</property>
+                         <property name="can-focus">False</property>
+-                      </object>
+-                    </child>
++                        <property name="spacing">4</property>
+ 
+                     <child>
+-                      <object class="GtkBox">
++                      <object class="GtkLabel" id="desktop_clock_label">
+                         <property name="visible">True</property>
+                         <property name="can-focus">False</property>
+-                        <property name="spacing">4</property>
++                      </object>
++                    </child>
+ 
+                         <child>
+                           <object class="GtkImage">

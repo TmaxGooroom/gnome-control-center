@@ -1,0 +1,147 @@
+From: "subin.kim" <subin.kim@gooroom.kr>
+Date: Wed, 22 Apr 2020 16:47:07 +0900
+Subject: [PATCH] [Bug:2018]Removed always show universial access menu
+
+---
+ panels/universal-access/cc-ua-panel.c  | 25 ----------------------
+ panels/universal-access/cc-ua-panel.ui | 38 ----------------------------------
+ 2 files changed, 63 deletions(-)
+
+diff --git a/panels/universal-access/cc-ua-panel.c b/panels/universal-access/cc-ua-panel.c
+index d2063a4..1a5acfd 100644
+--- a/panels/universal-access/cc-ua-panel.c
++++ b/panels/universal-access/cc-ua-panel.c
+@@ -38,10 +38,6 @@
+ #define DPI_FACTOR_NORMAL 1.0
+ #define HIGH_CONTRAST_THEME     "HighContrast"
+ 
+-/* shell settings */
+-#define A11Y_SETTINGS               "org.gnome.desktop.a11y"
+-#define KEY_ALWAYS_SHOW_STATUS       "always-show-universal-access-status"
+-
+ /* interface settings */
+ #define INTERFACE_SETTINGS           "org.gnome.desktop.interface"
+ #define KEY_TEXT_SCALING_FACTOR      "text-scaling-factor"
+@@ -142,10 +138,8 @@ struct _CcUaPanel
+   //GtkWidget *screen_keyboard_switch;
+   GtkWidget *screen_reader_dialog;
+   GtkWidget *screen_reader_switch;
+-  GtkWidget *section_status;
+   GtkWidget *sound_keys_dialog;
+   GtkWidget *sound_keys_switch;
+-  GtkWidget *switch_status;
+   GtkWidget *typing_bouncekeys_beep_rejected_check;
+   GtkWidget *typing_bouncekeys_delay_box;
+   GtkWidget *typing_bouncekeys_delay_scale;
+@@ -181,7 +175,6 @@ struct _CcUaPanel
+   GtkWidget *visual_alerts_window_radio;
+ 
+   GSettings *wm_settings;
+-  GSettings *a11y_settings;
+   GSettings *interface_settings;
+   GSettings *kb_settings;
+   GSettings *mouse_settings;
+@@ -211,7 +204,6 @@ cc_ua_panel_dispose (GObject *object)
+   self->toplevels = NULL;
+ 
+   g_clear_object (&self->wm_settings);
+-  g_clear_object (&self->a11y_settings);
+   g_clear_object (&self->interface_settings);
+   g_clear_object (&self->kb_settings);
+   g_clear_object (&self->mouse_settings);
+@@ -283,10 +275,8 @@ cc_ua_panel_class_init (CcUaPanelClass *klass)
+   //gtk_widget_class_bind_template_child (widget_class, CcUaPanel, screen_keyboard_switch);
+   gtk_widget_class_bind_template_child (widget_class, CcUaPanel, screen_reader_dialog);
+   //gtk_widget_class_bind_template_child (widget_class, CcUaPanel, screen_reader_switch);
+-  gtk_widget_class_bind_template_child (widget_class, CcUaPanel, section_status);
+   gtk_widget_class_bind_template_child (widget_class, CcUaPanel, sound_keys_dialog);
+   gtk_widget_class_bind_template_child (widget_class, CcUaPanel, sound_keys_switch);
+-  gtk_widget_class_bind_template_child (widget_class, CcUaPanel, switch_status);
+   gtk_widget_class_bind_template_child (widget_class, CcUaPanel, typing_bouncekeys_beep_rejected_check);
+   gtk_widget_class_bind_template_child (widget_class, CcUaPanel, typing_bouncekeys_delay_box);
+   gtk_widget_class_bind_template_child (widget_class, CcUaPanel, typing_bouncekeys_delay_scale);
+@@ -580,19 +570,6 @@ add_section (GtkWidget *list, CcUaPanel *self)
+   self->sections_reverse = g_list_prepend (self->sections_reverse, list);
+ }
+ 
+-static void
+-cc_ua_panel_init_status (CcUaPanel *self)
+-{
+-  GtkWidget *box;
+-
+-  box = GTK_WIDGET (self->section_status);
+-  self->sections_reverse = g_list_prepend (self->sections_reverse, box);
+-
+-  g_settings_bind (self->a11y_settings, KEY_ALWAYS_SHOW_STATUS,
+-                   self->switch_status, "active",
+-                   G_SETTINGS_BIND_DEFAULT);
+-}
+-
+ static void
+ toggle_switch (GtkWidget *sw)
+ {
+@@ -1114,7 +1091,6 @@ cc_ua_panel_init (CcUaPanel *self)
+   gtk_widget_init_template (GTK_WIDGET (self));
+ 
+   self->interface_settings = g_settings_new (INTERFACE_SETTINGS);
+-  self->a11y_settings = g_settings_new (A11Y_SETTINGS);
+   self->wm_settings = g_settings_new (WM_SETTINGS);
+   self->kb_settings = g_settings_new (KEYBOARD_SETTINGS);
+   self->kb_desktop_settings = g_settings_new (KEYBOARD_DESKTOP_SETTINGS);
+@@ -1122,7 +1098,6 @@ cc_ua_panel_init (CcUaPanel *self)
+   self->gsd_mouse_settings = g_settings_new (GSD_MOUSE_SETTINGS);
+   self->application_settings = g_settings_new (APPLICATION_SETTINGS);
+ 
+-  cc_ua_panel_init_status (self);
+   cc_ua_panel_init_seeing (self);
+ //  cc_ua_panel_init_hearing (self);
+   cc_ua_panel_init_keyboard (self);
+diff --git a/panels/universal-access/cc-ua-panel.ui b/panels/universal-access/cc-ua-panel.ui
+index 0e0bcdc..606273b 100644
+--- a/panels/universal-access/cc-ua-panel.ui
++++ b/panels/universal-access/cc-ua-panel.ui
+@@ -64,44 +64,6 @@
+                         <property name="can_focus">False</property>
+                         <property name="orientation">vertical</property>
+                         <property name="hexpand">True</property>
+-                        <child>
+-                          <object class="GtkBox" id="section_status">
+-                            <property name="visible">True</property>
+-                            <property name="can_focus">False</property>
+-                            <property name="margin_bottom">32</property>
+-                            <child>
+-                              <object class="GtkLabel" id="heading_status">
+-                                <property name="visible">True</property>
+-                                <property name="can_focus">False</property>
+-                                <property name="label" translatable="yes">_Always Show Accessibility Menu</property>
+-                                <property name="use_underline">True</property>
+-                                <property name="mnemonic_widget">switch_status</property>
+-                              </object>
+-                              <packing>
+-                                <property name="expand">False</property>
+-                                <property name="fill">True</property>
+-                                <property name="position">0</property>
+-                              </packing>
+-                            </child>
+-                            <child>
+-                              <object class="GtkSwitch" id="switch_status">
+-                                <property name="visible">True</property>
+-                                <property name="can_focus">True</property>
+-                                <property name="halign">end</property>
+-                              </object>
+-                              <packing>
+-                                <property name="expand">True</property>
+-                                <property name="fill">True</property>
+-                                <property name="position">1</property>
+-                              </packing>
+-                            </child>
+-                          </object>
+-                          <packing>
+-                            <property name="expand">False</property>
+-                            <property name="fill">True</property>
+-                            <property name="position">0</property>
+-                          </packing>
+-                        </child>
+                         <child>
+                           <object class="GtkBox" id="section_seeing">
+                             <property name="visible">True</property>

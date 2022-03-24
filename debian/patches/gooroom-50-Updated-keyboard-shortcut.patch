@@ -1,0 +1,28 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-50-Updated-keyboard-shortcut
+
+---
+ panels/keyboard/01-input-sources.xml.in | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/panels/keyboard/01-input-sources.xml.in b/panels/keyboard/01-input-sources.xml.in
+index 355bba4..627db9e 100644
+--- a/panels/keyboard/01-input-sources.xml.in
++++ b/panels/keyboard/01-input-sources.xml.in
+@@ -3,13 +3,13 @@
+                 schema="org.gnome.desktop.wm.keybindings"
+                 name="Typing">
+ 
+-  <KeyListEntry name="switch-input-source"
++  <!--KeyListEntry name="switch-input-source"
+ 		reverse-entry="switch-input-source-backward"
+                 description="Switch to next input source"/>
+ 
+   <KeyListEntry name="switch-input-source-backward"
+ 		reverse-entry="switch-input-source"
+ 		is-reversed="true"
+-                description="Switch to previous input source"/>
++                description="Switch to previous input source"/-->
+ 
+ </KeyListEntries>

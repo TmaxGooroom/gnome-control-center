@@ -1,0 +1,30 @@
+From: os1_3 <os1_3@tmax.co.kr>
+Date: Tue, 15 Mar 2022 16:11:39 +0900
+Subject: gooroom-92-Updated-wifi-panel-no-known-wifi
+
+---
+ panels/network/net-device-wifi.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/panels/network/net-device-wifi.c b/panels/network/net-device-wifi.c
+index 94a6855..64dff9f 100644
+--- a/panels/network/net-device-wifi.c
++++ b/panels/network/net-device-wifi.c
+@@ -1004,7 +1004,7 @@ update_list (GtkContainer *list, NetDeviceWifi *self)
+                 connections = net_device_get_valid_connections (self->client, self->device);
+ 
+                 length = g_list_length (connections);
+-                if (length == 1) {
++                if (length == 0) {
+                         label = create_label();
+                         gtk_widget_show (label);
+                         gtk_container_add (GTK_CONTAINER (list), label);
+@@ -1158,7 +1158,7 @@ history_button_clicked_cb (NetDeviceWifi *self)
+         connections = net_device_get_valid_connections (self->client, self->device);
+ 
+         length = g_slist_length (connections);        
+-        if (length == 1) {
++        if (length == 0) {
+           label = create_label();
+           gtk_widget_show (label);
+           gtk_container_add (GTK_CONTAINER (list), label);

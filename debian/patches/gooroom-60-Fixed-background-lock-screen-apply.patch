@@ -1,0 +1,57 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-60-Fixed-background-lock-screen-apply
+
+---
+ panels/background/cc-background-panel.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/panels/background/cc-background-panel.c b/panels/background/cc-background-panel.c
+index 8e529ca..896c4d0 100644
+--- a/panels/background/cc-background-panel.c
++++ b/panels/background/cc-background-panel.c
+@@ -79,6 +79,7 @@ struct _CcBackgroundPanel
+ 
+   CcBackgroundItem *current_background;
+   CcBackgroundItem *current_lock_background;
++  gchar            *prior_lock_background_uri;
+ 
+   GCancellable *copy_cancellable;
+ 
+@@ -456,6 +457,18 @@ on_type_changed (GtkComboBox       *combo_box,
+ 
+     panel->background_mode = MODE_EACH;
+     panel->applied_background = APPLY_DESKTOP;
++
++    if (panel->prior_lock_background_uri) { 
++      CcBackgroundItem *prior_lock_background = NULL;
++
++      prior_lock_background = cc_background_item_new (panel->prior_lock_background_uri);
++      set_background (panel, panel->lock_settings, prior_lock_background);
++
++      panel->prior_lock_background_uri = NULL;
++      g_clear_object (&prior_lock_background);
++    }
++    else
++      set_background (panel, panel->lock_settings, panel->current_lock_background);
+   }
+   else if (panel->background_mode == MODE_ALL) {
+     set_visible_checked_icon (panel->desktop_thumbnail_box,
+@@ -470,6 +483,8 @@ on_type_changed (GtkComboBox       *combo_box,
+     gtk_widget_set_visible (box, FALSE);
+ 
+     panel->applied_background = APPLY_ALL;
++    panel->prior_lock_background_uri = g_strdup (cc_background_item_get_uri (panel->current_lock_background));
++    set_background (panel, panel->lock_settings, panel->current_background);
+   }
+ }
+ 
+@@ -595,6 +610,8 @@ cc_background_panel_dispose (GObject *object)
+   g_clear_object (&panel->selected_prov);
+   g_clear_object (&panel->default_prov);
+ 
++  g_clear_pointer (&panel->prior_lock_background_uri, g_free);
++
+   G_OBJECT_CLASS (cc_background_panel_parent_class)->dispose (object);
+ }
+ 

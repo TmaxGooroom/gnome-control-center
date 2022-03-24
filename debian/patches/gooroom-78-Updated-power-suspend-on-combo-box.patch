@@ -1,0 +1,44 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-78-Updated-power-suspend-on-combo-box
+
+---
+ panels/power/cc-power-panel.c | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/panels/power/cc-power-panel.c b/panels/power/cc-power-panel.c
+index e8e4438..8f5d9da 100644
+--- a/panels/power/cc-power-panel.c
++++ b/panels/power/cc-power-panel.c
+@@ -1087,6 +1087,13 @@ combo_time_changed_cb (CcPowerPanel *self, GtkWidget *widget)
+   g_settings_set_int (self->gsd_settings, key, value);
+ }
+ 
++static void
++switch_activated_cb (CcPowerPanel *self)
++{
++  if (gtk_switch_get_active (self->suspend_on_ac_switch))
++    combo_time_changed_cb (self, self->suspend_on_ac_delay_combo); 
++}
++
+ static void
+ set_value_for_combo (GtkComboBox *combo_box, gint value)
+ {
+@@ -2082,7 +2089,16 @@ add_power_saving_section (CcPowerPanel *self)
+ 
+       g_object_set_data (G_OBJECT (self->suspend_on_ac_delay_combo), "_gsettings_key", "sleep-inactive-ac-timeout");
+       value = g_settings_get_int (self->gsd_settings, "sleep-inactive-ac-timeout");
+-      set_value_for_combo (GTK_COMBO_BOX (self->suspend_on_ac_delay_combo), value);
++      if (value == 0) {
++        if (gtk_switch_get_active (self->suspend_on_ac_switch))
++          gtk_switch_set_active (self->suspend_on_ac_switch, FALSE);
++        set_value_for_combo (GTK_COMBO_BOX (self->suspend_on_ac_delay_combo), 900);
++      } else {
++        set_value_for_combo (GTK_COMBO_BOX (self->suspend_on_ac_delay_combo), value);
++      }
++
++      g_signal_connect_object (self->suspend_on_ac_switch, "notify::active",
++                               G_CALLBACK (switch_activated_cb), self, G_CONNECT_SWAPPED);
+       g_signal_connect_object (self->suspend_on_ac_delay_combo, "changed",
+                                G_CALLBACK (combo_time_changed_cb), self, G_CONNECT_SWAPPED);
+       g_object_bind_property (self->suspend_on_ac_switch, "active", self->suspend_on_ac_delay_combo, "sensitive",

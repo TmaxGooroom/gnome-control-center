@@ -1,0 +1,28 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-55-Dont-change-gsettings-values-when-timeout-values-are-zero
+
+---
+ panels/power/cc-power-panel.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/panels/power/cc-power-panel.c b/panels/power/cc-power-panel.c
+index cd12b0c..e8e4438 100644
+--- a/panels/power/cc-power-panel.c
++++ b/panels/power/cc-power-panel.c
+@@ -2016,6 +2016,7 @@ add_power_saving_section (CcPowerPanel *self)
+ 
+   can_suspend = can_suspend_or_hibernate (self, "CanSuspend");
+ 
++#if 0
+   /* The default values for these settings are unfortunate for us;
+    * timeout == 0, action == suspend means 'do nothing' - just
+    * as timout === anything, action == nothing.
+@@ -2032,6 +2033,7 @@ add_power_saving_section (CcPowerPanel *self)
+       g_settings_set_enum (self->gsd_settings, "sleep-inactive-battery-type", GSD_POWER_ACTION_NOTHING);
+       g_settings_set_int (self->gsd_settings, "sleep-inactive-battery-timeout", 1800);
+     }
++#endif
+ 
+   /* Automatic suspend row */
+   if (can_suspend)

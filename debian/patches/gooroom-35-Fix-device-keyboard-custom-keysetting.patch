@@ -1,0 +1,29 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:43 +0900
+Subject: gooroom-35-Fix-device-keyboard-custom-keysetting
+
+---
+ panels/keyboard/cc-keyboard-shortcut-editor.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/panels/keyboard/cc-keyboard-shortcut-editor.c b/panels/keyboard/cc-keyboard-shortcut-editor.c
+index 8b4c9f1..2cfcaa8 100644
+--- a/panels/keyboard/cc-keyboard-shortcut-editor.c
++++ b/panels/keyboard/cc-keyboard-shortcut-editor.c
+@@ -541,6 +541,7 @@ reset_custom_clicked_cb (CcKeyboardShortcutEditor *self)
+   if (self->item)
+     cc_keyboard_manager_reset_shortcut (self->manager, self->item);
+ 
++  memset (self->custom_combo, 0, sizeof (CcKeyCombo));
+   gtk_stack_set_visible_child (self->custom_shortcut_stack, GTK_WIDGET (self->change_custom_shortcut_button));
+   gtk_widget_hide (GTK_WIDGET (self->reset_custom_button));
+ }
+@@ -623,7 +624,7 @@ setup_keyboard_item (CcKeyboardShortcutEditor *self,
+ 
+   /* Accelerator labels */
+ //  gtk_shortcut_label_set_accelerator (self->shortcut_accel_label, accel);
+-//  gtk_shortcut_label_set_accelerator (self->custom_shortcut_accel_label, accel);
++  gtk_shortcut_label_set_accelerator (self->custom_shortcut_accel_label, accel);
+ 
+   /* Setup the custom entries */
+   if (is_custom)

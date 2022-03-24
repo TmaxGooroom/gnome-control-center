@@ -1,0 +1,33 @@
+From: TmaxOS Infra <os_infra@tmax.co.kr>
+Date: Tue, 21 Dec 2021 11:25:44 +0900
+Subject: gooroom-70-Added-gooroom-new-theme
+
+---
+ panels/themes/data/themes/gooroom-themes.ini.in.in | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/panels/themes/data/themes/gooroom-themes.ini.in.in b/panels/themes/data/themes/gooroom-themes.ini.in.in
+index 844397b..570c2c6 100644
+--- a/panels/themes/data/themes/gooroom-themes.ini.in.in
++++ b/panels/themes/data/themes/gooroom-themes.ini.in.in
+@@ -1,12 +1,16 @@
+ [Gooroom Theme 1]
+ Name=Gooroom Icon Theme 1
+-Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_1.jpg
+-Icon=Gooroom-Arc
++Background=file:///usr/share/backgrounds/gooroom/gooroom_bg_13.jpg
++Icon=Gooroom-Numix-Circle
+ [Gooroom Theme 2]
+ Name=Gooroom Icon Theme 2
+-Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_2.jpg
+-Icon=Gooroom-Faenza
++Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_1.jpg
++Icon=Gooroom-Arc
+ [Gooroom Theme 3]
+ Name=Gooroom Icon Theme 3
++Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_2.jpg
++Icon=Gooroom-Faenza
++[Gooroom Theme 4]
++Name=Gooroom Icon Theme 4
+ Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_3.jpg
+ Icon=Gooroom-Papirus

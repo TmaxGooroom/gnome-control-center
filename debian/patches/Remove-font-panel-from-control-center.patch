@@ -1,0 +1,35 @@
+From: jiyong_kim2 <jiyong_kim2@tmax.co.kr>
+Date: Fri, 31 Dec 2021 10:21:43 +0900
+Subject: Remove font panel from control center
+
+---
+ shell/cc-panel-loader.c                   | 2 +-
+ shell/org.gnome.ControlCenter.gschema.xml | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/shell/cc-panel-loader.c b/shell/cc-panel-loader.c
+index a42bc1a..8dc805e 100644
+--- a/shell/cc-panel-loader.c
++++ b/shell/cc-panel-loader.c
+@@ -98,7 +98,7 @@ static CcPanelLoaderVtable default_panels[] =
+ #ifdef BUILD_BLUETOOTH
+   PANEL_TYPE("bluetooth",        cc_bluetooth_panel_get_type,            NULL),
+ #endif
+-  PANEL_TYPE("font",             cc_font_panel_get_type,                 NULL),
++//  PANEL_TYPE("font",             cc_font_panel_get_type,                 NULL),
+ //  PANEL_TYPE("themes",           cc_themes_panel_get_type,               NULL),
+   PANEL_TYPE("camera",           cc_camera_panel_get_type,               NULL),
+   PANEL_TYPE("color",            cc_color_panel_get_type,                NULL),
+diff --git a/shell/org.gnome.ControlCenter.gschema.xml b/shell/org.gnome.ControlCenter.gschema.xml
+index 46d1b81..92cd79a 100644
+--- a/shell/org.gnome.ControlCenter.gschema.xml
++++ b/shell/org.gnome.ControlCenter.gschema.xml
+@@ -16,7 +16,7 @@
+       </description>
+     </key>
+     <key name="whitelist-panels" type="as">
+-      <default>['bluetooth', 'background', 'region', 'universal-access', 'font', 'privacy', 'devices', 'details', 'location', 'camera', 'microphone', 'usage', 'lock', 'sound', 'power', 'network', 'wifi', 'wacom', 'display', 'keyboard', 'printers', 'mouse', 'removable-media', 'thunderbolt', 'color', 'info-overview', 'datetime', 'user-accounts', 'themes']</default>
++      <default>['bluetooth', 'background', 'region', 'universal-access', 'privacy', 'devices', 'details', 'location', 'camera', 'microphone', 'usage', 'lock', 'sound', 'power', 'network', 'wifi', 'wacom', 'display', 'keyboard', 'printers', 'mouse', 'removable-media', 'thunderbolt', 'color', 'info-overview', 'datetime', 'user-accounts', 'themes']</default>
+       <summary>Show settings list</summary>
+       <description>Show side panel list that matches the User settings values.</description>
+     </key>

@@ -1,0 +1,21 @@
+From: gangmo_seong <gangmo_seong@tmax.co.kr>
+Date: Tue, 19 Oct 2021 15:36:09 +0900
+Subject: changed default background in background chooser
+
+---
+ panels/background/bg-wallpapers-source.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/panels/background/bg-wallpapers-source.c b/panels/background/bg-wallpapers-source.c
+index d423e48..14317fb 100644
+--- a/panels/background/bg-wallpapers-source.c
++++ b/panels/background/bg-wallpapers-source.c
+@@ -82,7 +82,7 @@ load_default_bg (BgWallpapersSource *self)
+ 
+     filename = g_build_filename (system_data_dirs[i],
+ 				 "gnome-background-properties",
+-				 "adwaita.xml",
++				 "tmax-background.xml",
+ 				 NULL);
+     if (cc_background_xml_load_xml (self->xml, filename))
+       break;

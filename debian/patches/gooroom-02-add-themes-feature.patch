@@ -1,0 +1,889 @@
+From: JeongHaeRyong <jeong89@gooroom.kr>
+Date: Wed, 1 Apr 2020 16:29:25 +0900
+Subject: [PATCH 2/4] gooroom add themes feature
+
+---
+ panels/meson.build                             |   1 +
+ panels/themes/cc-themes-panel.c                | 393 +++++++++++++++++++++++++
+ panels/themes/cc-themes-panel.h                |  32 ++
+ panels/themes/gnome-themes-panel.desktop.in.in |  14 +
+ panels/themes/meson.build                      |  52 ++++
+ panels/themes/themes.gresource.xml             |   7 +
+ panels/themes/themes.ui                        | 165 +++++++++++
+ po/POTFILES.in                                 |   3 +
+ po/en.po                                       |  28 ++
+ po/en_GB.po                                    |  24 ++
+ po/ko.po                                       |  28 ++
+ shell/cc-panel-list.c                          |   1 +
+ shell/cc-panel-loader.c                        |   2 +
+ 13 files changed, 750 insertions(+)
+ create mode 100644 panels/themes/cc-themes-panel.c
+ create mode 100644 panels/themes/cc-themes-panel.h
+ create mode 100644 panels/themes/gnome-themes-panel.desktop.in.in
+ create mode 100644 panels/themes/meson.build
+ create mode 100644 panels/themes/themes.gresource.xml
+ create mode 100644 panels/themes/themes.ui
+
+diff --git a/panels/meson.build b/panels/meson.build
+index 24da59b..f6b8e05 100644
+--- a/panels/meson.build
++++ b/panels/meson.build
+@@ -28,6 +28,7 @@ panels = [
+   'usage',
+   'user-accounts',
+   'font',
++  'themes',
+ ]
+ 
+ if host_is_linux
+diff --git a/panels/themes/cc-themes-panel.c b/panels/themes/cc-themes-panel.c
+new file mode 100644
+index 0000000..2a72ec7
+--- /dev/null
++++ b/panels/themes/cc-themes-panel.c
+@@ -0,0 +1,393 @@
++/*
++ * Copyright (C) 2010 Intel, Inc
++ * Copyright (C) 2019 gooroom <gooroom@gooroom.kr>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++ *
++ */
++
++#include "cc-themes-panel.h"
++//#include "font-dialog.h"
++#include "cc-themes-resources.h"
++
++#include <config.h>
++#include <gtk/gtk.h>
++
++#include <glib/gi18n.h>
++
++#define DEFAULT_GTK_THEME   "Default"
++#define DEFAULT_WM_THEME    "Default"
++#define DEFAULT_ICON_THEME  "Rodent"
++
++#define DEFAULT_THEME_DIR   "/usr/share/icons"
++
++#define WID(y) (GtkWidget *) gtk_builder_get_object (panel->builder, y)
++
++struct {
++  char *icon_theme;
++  //char *icon_name;
++  int   number;
++  char *bg_path;
++} icon_themes[] = {
++  { "Gooroom-Arc", 1, "file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_1.jpg" },
++  { "Gooroom-Faenza", 2, "file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_2.jpg" },
++  { "Gooroom-Papirus", 3, "file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_3.jpg" },
++};
++
++enum
++{
++  COL_THUMBNAIL,
++  COL_ICON_THEME,
++  COL_LABEL_ICON_NAME,
++  COL_THUMB_PATH,
++  COL_PICTURE_URI,
++  NUM_COLS
++};
++
++struct _CcThemesPanel
++{
++  CcPanel           parent_instance;
++
++  GtkBuilder        *builder;
++
++  GSettings         *interface_settings;
++  GSettings         *bg_settings;
++
++  GtkIconView       *icon_view;
++  GtkListStore      *themes_liststore;
++
++  GdkPixbuf         *current_theme_thumbnail;
++  gchar             *icon_theme;
++  gchar             *picture_uri;
++};
++
++CC_PANEL_REGISTER (CcThemesPanel, cc_themes_panel)
++
++static const char *
++cc_themes_panel_get_help_uri (CcPanel *panel)
++{
++  return "help:gnome-help/themes";
++}
++
++static void
++set_thumbnail (CcThemesPanel *panel, gchar *thumb_path)
++{
++  GdkPixbuf *old_pixbuf;
++  old_pixbuf = panel->current_theme_thumbnail;
++  gint width;
++  gint height;
++
++  if (panel->current_theme_thumbnail != NULL)
++  {
++    g_clear_object (&panel->current_theme_thumbnail);
++    panel->current_theme_thumbnail = NULL;
++  }
++
++  panel->current_theme_thumbnail = gdk_pixbuf_new_from_file (thumb_path, NULL);
++}
++
++static GtkListStore*
++create_store (void)
++{
++  GtkListStore *store;
++
++  store = gtk_list_store_new (NUM_COLS,
++                              GDK_TYPE_PIXBUF,
++                              G_TYPE_STRING,
++                              G_TYPE_STRING,
++                              G_TYPE_STRING,
++                              G_TYPE_STRING);
++  return store;
++}
++
++static GtkListStore *
++load_themes_liststore (CcThemesPanel *panel)
++{
++  GtkListStore *store;
++  GtkTreeIter iter;
++  GSList *l = NULL;
++  gboolean has_icon_theme = FALSE;
++
++  store = create_store ();
++
++  for (int i = 0; i < G_N_ELEMENTS (icon_themes); i++)
++  {
++    gchar *thumb_path = NULL;
++    gchar *icon_theme = NULL;
++    gchar *icon_name = NULL;
++    gchar *picture_uri = NULL;
++
++    thumb_path = g_strdup_printf ("%s/%s/thumbnail.png", DEFAULT_THEME_DIR, icon_themes[i].icon_theme);
++    icon_name = g_strdup_printf (_("Gooroom Icon Theme %d"), icon_themes[i].number);
++    picture_uri = g_strdup_printf ("%s",icon_themes[i].bg_path);
++
++    gtk_list_store_append (store, &iter);
++    gtk_list_store_set (store, &iter,
++                        COL_THUMBNAIL, gdk_pixbuf_new_from_file_at_size (thumb_path, 180, 110, NULL),
++                        COL_ICON_THEME, g_strdup_printf ("%s", icon_themes[i].icon_theme),
++                        COL_LABEL_ICON_NAME, icon_name ? icon_name : NULL,
++                        COL_PICTURE_URI, picture_uri ? picture_uri : NULL,
++                        COL_THUMB_PATH, thumb_path, -1);
++  }
++
++  return store;
++}
++
++static gboolean
++cc_themes_panel_draw_theme (GtkWidget *widget, cairo_t *cr, gpointer data)
++{
++  GdkPixbuf *pixbuf;
++  CcThemesPanel *panel = CC_THEMES_PANEL (data);
++  cairo_t *_cr;
++  GdkRGBA color;
++
++  color.red = 1.0;
++  color.green = 1.0;
++  color.blue = 1.0;
++  color.alpha = 1.0;
++
++  _cr = gdk_cairo_create (gtk_widget_get_window (widget));
++
++  /* border color */
++  gdk_cairo_set_source_rgba (_cr, &color);
++
++  if (panel->current_theme_thumbnail)
++  {
++    pixbuf = gdk_pixbuf_scale_simple (panel->current_theme_thumbnail, 302, 181, GDK_INTERP_BILINEAR);
++    gdk_cairo_set_source_pixbuf (_cr, pixbuf, 20, 22);
++  }
++
++  cairo_paint (_cr);
++  cairo_destroy (_cr);
++
++  return FALSE;
++}
++
++static void 
++cc_themes_panel_selected_theme (GtkIconView *icon_view,
++                    CcThemesPanel *panel)
++{
++  GList *list;
++  GtkTreeModel *model;
++  GtkTreeIter iter;
++  gchar *icon_name;
++  gchar *picture_uri;
++  gchar *thumb_path;
++
++  list = gtk_icon_view_get_selected_items (icon_view);
++  if (list == NULL)
++    return;
++
++  model = gtk_icon_view_get_model (GTK_ICON_VIEW (icon_view));
++
++  if (gtk_tree_model_get_iter (model, &iter, (GtkTreePath*)list->data) == FALSE)
++    goto bail;
++
++  gtk_tree_model_get (model, &iter,
++                      COL_ICON_THEME, &icon_name,
++                      COL_PICTURE_URI, &picture_uri,
++                      COL_THUMB_PATH, &thumb_path, -1);
++
++  set_thumbnail (panel, thumb_path);
++
++  g_settings_set_string (panel->interface_settings, "icon-theme", icon_name);
++  g_settings_set_string (panel->bg_settings, "picture-uri", picture_uri);
++
++bail:
++  g_list_free_full (list, (GDestroyNotify) gtk_tree_path_free);
++
++}
++
++static gboolean
++cc_themes_panel_apply_theme (GtkButton *button, CcThemesPanel *panel)
++{
++  GList *list;
++  GtkTreeModel *model;
++  GtkTreeIter iter;
++  gchar *icon_theme;
++  gchar *label_icon_name;
++  gchar *picture_uri;
++
++  list = gtk_icon_view_get_selected_items (panel->icon_view);
++  if (list == NULL)
++    return FALSE;
++
++  model = gtk_icon_view_get_model (GTK_ICON_VIEW (panel->icon_view));
++  if (gtk_tree_model_get_iter (GTK_TREE_MODEL (model), &iter, (GtkTreePath*)list->data) == FALSE)
++    goto bail;
++
++  gtk_tree_model_get (GTK_TREE_MODEL (model), &iter,
++                      COL_ICON_THEME, &icon_theme,
++                      COL_LABEL_ICON_NAME, &label_icon_name,
++                      COL_PICTURE_URI, &picture_uri, -1);
++
++  panel->icon_theme = icon_theme;
++  panel->picture_uri =  picture_uri;
++
++  gtk_label_set_text (WID ("current-theme-label"), label_icon_name);
++
++bail:
++  g_list_free_full (list, (GDestroyNotify) gtk_tree_path_free);
++
++return FALSE;
++}
++
++static void
++cc_themes_panel_constructed (GObject *object)
++{
++  CcThemesPanel *panel = CC_THEMES_PANEL (object);
++  CcShell *shell;
++  GtkWidget *button;
++
++  G_OBJECT_CLASS (cc_themes_panel_parent_class)->constructed (object);
++
++  button = (GtkWidget *)gtk_button_new_with_mnemonic (_("_Apply"));
++  gtk_widget_set_visible (button, TRUE);
++
++  shell = cc_panel_get_shell (CC_PANEL (panel));
++  cc_shell_embed_widget_in_header (shell, button, GTK_POS_RIGHT);
++
++  g_signal_connect (button,
++                    "clicked",
++                    G_CALLBACK (cc_themes_panel_apply_theme),
++                    panel);
++}
++
++static void
++cc_themes_panel_dispose (GObject *object)
++{
++  CcThemesPanel *panel = CC_THEMES_PANEL (object);
++
++  if (panel->interface_settings)
++    g_settings_set_string (panel->interface_settings, "icon-theme", panel->icon_theme);
++  if (panel->bg_settings)
++    g_settings_set_string (panel->bg_settings, "picture-uri", panel->picture_uri);
++
++  g_clear_object (&panel->interface_settings);
++  g_clear_object (&panel->bg_settings);
++  g_clear_object (&panel->builder);
++
++  g_clear_object (&panel->current_theme_thumbnail);
++
++  G_OBJECT_CLASS (cc_themes_panel_parent_class)->dispose (object);
++}
++
++static void
++cc_themes_panel_class_init (CcThemesPanelClass *klass)
++{
++  GObjectClass *object_class = G_OBJECT_CLASS (klass);
++  CcPanelClass *panel_class = CC_PANEL_CLASS (klass);
++
++  object_class->constructed = cc_themes_panel_constructed;
++  object_class->dispose = cc_themes_panel_dispose;
++
++  panel_class->get_help_uri = cc_themes_panel_get_help_uri;
++}
++
++static void
++cc_themes_panel_init (CcThemesPanel *panel)
++{
++  gchar *objects[] = {"themes-main-scrolled-window", NULL};
++  g_autoptr(GError) err = NULL;
++  GtkWidget *w;
++  gint button_val;
++  gdouble i_val;
++  GtkWidget *themes_list_sw;
++  GtkTreeIter iter;
++  gchar *icon_theme;
++  gchar *icon_name;
++  gchar *thumb_path;
++  gboolean ret = FALSE;
++
++  panel->current_theme_thumbnail = NULL;
++
++  g_resources_register (cc_themes_get_resource ());
++
++  panel->builder = gtk_builder_new ();
++  gtk_builder_add_objects_from_resource (panel->builder,
++                                         "/org/gnome/control-center/themes/themes.ui",
++                                         objects, &err);
++
++  if (err)
++  {
++    g_warning ("Could not load ui: %s", err->message);
++    return;
++  }
++
++  themes_list_sw = WID ("themes-list-sw");
++
++  panel->interface_settings = g_settings_new ("org.gnome.desktop.interface");
++  panel->bg_settings = g_settings_new ("org.gnome.desktop.background");
++
++  panel->icon_theme = g_settings_get_string (panel->interface_settings, "icon-theme");
++  panel->picture_uri = g_settings_get_string (panel->bg_settings, "picture-uri");
++
++  panel->themes_liststore = load_themes_liststore(panel);
++
++  /* init current thumbnail and current label */
++  ret = gtk_tree_model_get_iter_first (GTK_TREE_MODEL (panel->themes_liststore), &iter);
++  do
++  {
++    gtk_tree_model_get (GTK_TREE_MODEL (panel->themes_liststore), &iter,
++                        COL_ICON_THEME, &icon_theme,
++                        COL_LABEL_ICON_NAME, &icon_name,
++                        COL_THUMB_PATH, &thumb_path, -1);
++  
++    if (g_strcmp0 (panel->icon_theme, icon_theme) == 0)
++    {
++      set_thumbnail (panel, thumb_path); // /usr/.../.png
++      gtk_label_set_text (WID ("current-theme-label"), icon_name);
++
++      break;
++    }
++  
++  }
++  while (ret && gtk_tree_model_iter_next (GTK_TREE_MODEL (panel->themes_liststore), &iter));
++
++  /* create icon view from list store */
++  panel->icon_view = gtk_icon_view_new_with_model (GTK_TREE_MODEL (panel->themes_liststore));
++  gtk_icon_view_set_selection_mode (GTK_ICON_VIEW (panel->icon_view),
++                                    GTK_SELECTION_SINGLE);
++
++  gtk_icon_view_set_text_column (GTK_ICON_VIEW (panel->icon_view), COL_LABEL_ICON_NAME);
++
++  gtk_icon_view_set_pixbuf_column (GTK_ICON_VIEW (panel->icon_view), COL_THUMBNAIL);
++  gtk_icon_view_set_columns (GTK_ICON_VIEW (panel->icon_view), 3);
++  gtk_icon_view_set_item_width (GTK_ICON_VIEW (panel->icon_view), 120);
++  gtk_icon_view_set_column_spacing (GTK_ICON_VIEW (panel->icon_view), 10);
++  gtk_icon_view_set_margin (GTK_ICON_VIEW (panel->icon_view), 10);
++
++  g_signal_connect (WID ("current-theme-drawingarea"),
++                    "draw",
++                    G_CALLBACK(cc_themes_panel_draw_theme),
++                    panel);
++  g_signal_connect (panel->icon_view,
++                    "selection-changed",
++                    G_CALLBACK (cc_themes_panel_selected_theme),
++                    panel);
++
++  gtk_scrolled_window_set_shadow_type (themes_list_sw, GTK_SHADOW_ETCHED_IN);
++  gtk_scrolled_window_set_policy (themes_list_sw,
++                                  GTK_POLICY_AUTOMATIC,
++                                  GTK_POLICY_AUTOMATIC);
++
++  gtk_container_add (GTK_CONTAINER (themes_list_sw), panel->icon_view);
++  gtk_widget_grab_focus (panel->icon_view);
++
++  w = WID ("themes-main-scrolled-window");
++
++  gtk_container_add (GTK_CONTAINER (panel), w);
++  gtk_widget_show_all (GTK_WIDGET (panel));
++}
+diff --git a/panels/themes/cc-themes-panel.h b/panels/themes/cc-themes-panel.h
+new file mode 100644
+index 0000000..1a28cb9
+--- /dev/null
++++ b/panels/themes/cc-themes-panel.h
+@@ -0,0 +1,32 @@
++/*
++ * Copyright (C) 2010 Intel, Inc
++ * Copyright (C) 2019 gooroom <gooroom@gooroom.kr>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++ *
++ */
++
++#ifndef _CC_THEMES_PANEL_H
++#define _CC_THEMES_PANEL_H
++
++#include <shell/cc-panel.h>
++
++#define CC_TYPE_THEMES_PANEL (cc_themes_panel_get_type ())
++
++G_DECLARE_FINAL_TYPE (CcThemesPanel, cc_themes_panel, CC, THEMES_PANEL, CcPanel)
++
++G_END_DECLS
++
++#endif /* _CC_THEMES_PANEL_H */
+diff --git a/panels/themes/gnome-themes-panel.desktop.in.in b/panels/themes/gnome-themes-panel.desktop.in.in
+new file mode 100644
+index 0000000..4a43041
+--- /dev/null
++++ b/panels/themes/gnome-themes-panel.desktop.in.in
+@@ -0,0 +1,14 @@
++[Desktop Entry]
++Name=Themes
++Comment=Change your Thema for window and icon
++Exec=gnome-control-center themes
++# Translators: Do NOT translate or transliterate this text (this is an icon file name)!
++Icon=preferences-desktop-wallpaper
++Terminal=false
++Type=Application
++NoDisplay=true
++StartupNotify=true
++Categories=GNOME;GTK;Settings;DesktopSettings;X-GNOME-Settings-Panel;X-GNOME-PersonalizationSettings;
++OnlyShowIn=GNOME;
++# Translators: Search terms to find the Background panel. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
++Keywords=Theme;Desktop;
+diff --git a/panels/themes/meson.build b/panels/themes/meson.build
+new file mode 100644
+index 0000000..7d21107
+--- /dev/null
++++ b/panels/themes/meson.build
+@@ -0,0 +1,52 @@
++panels_list += cappletname
++desktop = 'gnome-@0@-panel.desktop'.format(cappletname)
++
++desktop_in = configure_file(
++  input: desktop + '.in.in',
++  output: desktop + '.in',
++  configuration: desktop_conf
++)
++
++i18n.merge_file(
++  desktop,
++  type: 'desktop',
++  input: desktop_in,
++  output: desktop,
++  po_dir: po_dir,
++  install: true,
++  install_dir: control_center_desktopdir
++)
++
++sources = files(
++  'cc-themes-panel.c',
++)
++
++resource_data = files(
++  'themes.ui'
++)
++
++sources += gnome.compile_resources(
++  'cc-' + cappletname + '-resources',
++  cappletname + '.gresource.xml',
++  c_name: 'cc_' + cappletname,
++  dependencies: resource_data,
++  export: true
++)
++
++deps = common_deps + [
++  cups_dep,
++  m_dep,
++  polkit_gobject_dep,
++  dependency('smbclient')
++]
++
++cflags += '-DGNOMELOCALEDIR="@0@"'.format(control_center_localedir)
++
++themes_panel_lib = static_library(
++  cappletname,
++  sources: sources,
++  include_directories: [top_inc, common_inc, shell_inc],
++  dependencies: deps,
++  c_args: cflags
++)
++panels_libs += [ themes_panel_lib ]
+diff --git a/panels/themes/themes.gresource.xml b/panels/themes/themes.gresource.xml
+new file mode 100644
+index 0000000..b3915eb
+--- /dev/null
++++ b/panels/themes/themes.gresource.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<gresources>
++  <gresource prefix="/org/gnome/control-center/themes">
++    <file preprocess="xml-stripblanks">themes.ui</file>
++  </gresource>
++</gresources>
++
+diff --git a/panels/themes/themes.ui b/panels/themes/themes.ui
+new file mode 100644
+index 0000000..086d6f0
+--- /dev/null
++++ b/panels/themes/themes.ui
+@@ -0,0 +1,165 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!-- Generated with glade 3.22.1 -->
++<interface>
++  <requires lib="gtk+" version="3.20"/>
++  <object class="GtkSizeGroup" id="sizegroup1">
++    <property name="mode">both</property>
++  </object>
++  <object class="GtkScrolledWindow" id="themes-main-scrolled-window">
++    <property name="visible">True</property>
++    <property name="can_focus">True</property>
++    <property name="shadow_type">in</property>
++    <property name="min_content_width">700</property>
++    <property name="min_content_height">400</property>
++    <child>
++      <object class="GtkViewport">
++        <property name="visible">True</property>
++        <property name="can_focus">False</property>
++        <child>
++          <object class="GtkBox">
++            <property name="visible">True</property>
++            <property name="can_focus">False</property>
++            <property name="hexpand">True</property>
++            <property name="vexpand">True</property>
++            <property name="orientation">vertical</property>
++            <property name="spacing">1</property>
++            <property name="baseline_position">top</property>
++            <child>
++              <object class="GtkFixed">
++                <property name="visible">True</property>
++                <property name="can_focus">False</property>
++                <child>
++                  <object class="GtkBox">
++                    <property name="visible">True</property>
++                    <property name="can_focus">False</property>
++                    <property name="halign">start</property>
++                    <property name="valign">start</property>
++                    <child>
++                      <object class="GtkLabel">
++                        <property name="visible">True</property>
++                        <property name="can_focus">False</property>
++                        <property name="halign">start</property>
++                        <property name="valign">start</property>
++                        <property name="label" translatable="yes">Current Theme : </property>
++                        <attributes>
++                          <attribute name="weight" value="bold"/>
++                        </attributes>
++                      </object>
++                      <packing>
++                        <property name="expand">False</property>
++                        <property name="fill">True</property>
++                        <property name="position">0</property>
++                      </packing>
++                    </child>
++                    <child>
++                      <object class="GtkLabel" id="current-theme-label">
++                        <property name="visible">True</property>
++                        <property name="can_focus">False</property>
++                        <property name="halign">start</property>
++                        <property name="valign">start</property>
++                        <property name="label" translatable="yes">This theme is not listed.</property>
++                        <attributes>
++                          <attribute name="weight" value="bold"/>
++                        </attributes>
++                      </object>
++                      <packing>
++                        <property name="expand">False</property>
++                        <property name="fill">True</property>
++                        <property name="position">1</property>
++                      </packing>
++                    </child>
++                  </object>
++                  <packing>
++                    <property name="x">10</property>
++                    <property name="y">13</property>
++                  </packing>
++                </child>
++                <child>
++                  <object class="GtkBox">
++                    <property name="visible">True</property>
++                    <property name="can_focus">False</property>
++                    <property name="margin_top">22</property>
++                    <property name="orientation">vertical</property>
++                    <child>
++                      <object class="GtkDrawingArea" id="current-theme-drawingarea">
++                        <property name="width_request">330</property>
++                        <property name="height_request">234</property>
++                        <property name="visible">True</property>
++                        <property name="can_focus">False</property>
++                        <property name="margin_top">15</property>
++                        <property name="margin_bottom">10</property>
++                      </object>
++                      <packing>
++                        <property name="expand">False</property>
++                        <property name="fill">True</property>
++                        <property name="position">1</property>
++                      </packing>
++                    </child>
++                  </object>
++                  <packing>
++                    <property name="x">208</property>
++                    <property name="y">10</property>
++                  </packing>
++                </child>
++              </object>
++              <packing>
++                <property name="expand">False</property>
++                <property name="fill">True</property>
++                <property name="position">0</property>
++              </packing>
++            </child>
++            <child>
++              <object class="GtkBox" id="themes-list-box">
++                <property name="visible">True</property>
++                <property name="can_focus">False</property>
++                <property name="orientation">vertical</property>
++                <child>
++                  <object class="GtkLabel">
++                    <property name="visible">True</property>
++                    <property name="can_focus">False</property>
++                    <property name="halign">start</property>
++                    <property name="valign">start</property>
++                    <property name="margin_left">25</property>
++                    <property name="label" translatable="yes">Theme List</property>
++                    <attributes>
++                      <attribute name="weight" value="bold"/>
++                    </attributes>
++                  </object>
++                  <packing>
++                    <property name="expand">False</property>
++                    <property name="fill">True</property>
++                    <property name="position">0</property>
++                  </packing>
++                </child>
++                <child>
++                  <object class="GtkScrolledWindow" id="themes-list-sw">
++                    <property name="visible">True</property>
++                    <property name="can_focus">False</property>
++                    <property name="margin_left">25</property>
++                    <property name="margin_right">25</property>
++                    <property name="margin_top">10</property>
++                    <property name="margin_bottom">10</property>
++                    <property name="shadow_type">in</property>
++                    <child>
++                      <placeholder/>
++                    </child>
++                  </object>
++                  <packing>
++                    <property name="expand">True</property>
++                    <property name="fill">True</property>
++                    <property name="position">1</property>
++                  </packing>
++                </child>
++              </object>
++              <packing>
++                <property name="expand">True</property>
++                <property name="fill">True</property>
++                <property name="position">2</property>
++              </packing>
++            </child>
++          </object>
++        </child>
++      </object>
++    </child>
++  </object>
++</interface>
+diff --git a/po/POTFILES.in b/po/POTFILES.in
+index dd555df..ddcc1af 100644
+--- a/po/POTFILES.in
++++ b/po/POTFILES.in
+@@ -261,5 +261,8 @@ shell/help-overlay.ui
+ shell/org.gnome.ControlCenter.gschema.xml
+ panels/font/cc-font-panel.c
+ panels/font/font.ui
++panels/themes/gnome-themes-panel.desktop.in.in
++panels/themes/cc-themes-panel.c
++panels/themes/themes.ui
+ # Please do not remove this file from POTFILES.in. Run "git submodule init && git submodule update" to get it.
+ subprojects/gvc/gvc-mixer-control.c
+diff --git a/po/en.po b/po/en.po
+index e8e14a0..df0db45 100644
+--- a/po/en.po
++++ b/po/en.po
+@@ -3263,3 +3263,31 @@ msgstr ""
+ #: ../panels/font/cc-font-panel.c:341
+ msgid "_large"
+ msgstr ""
++
++#: ../panels/themes/gnome-themes-panel.desktop.in.in:4
++msgid "Change your Thema for window and icon"
++msgstr ""
++
++#: ../panels/themes/themes.ui:37
++msgid "Current Theme : "
++msgstr ""
++
++#: ../panels/themes/themes.ui:116
++msgid "Theme List"
++msgstr ""
++
++#: ../panels/themes/gnome-themes-panel.desktop.in.in:3
++msgid "Themes"
++msgstr ""
++
++#: ../panels/themes/themes.ui:52
++msgid "theme"
++msgstr ""
++
++#: ../panels/themes/cc-themes-panel.c:133
++msgid "Gooroom Icon Theme %d"
++msgstr ""
++
++#: ../panels/themes/themes.ui:60
++msgid "This theme is not listed."
++msgstr ""
+diff --git a/po/en_GB.po b/po/en_GB.po
+index b71a371..4d1c708 100644
+--- a/po/en_GB.po
++++ b/po/en_GB.po
+@@ -14476,3 +14476,27 @@ msgstr "Medium"
+ #: ../panels/font/cc-font-panel.c:341
+ msgid "_large"
+ msgstr "Large"
++
++#: ../panels/themes/gnome-themes-panel.desktop.in.in:4
++msgid "Change your Thema for window and icon"
++msgstr "Change your Thema for window and icon"
++
++#: ../panels/themes/themes.ui:37
++msgid "Current Theme : "
++msgstr "Current Theme : "
++
++#: ../panels/themes/themes.ui:116
++msgid "Theme List"
++msgstr "Theme List"
++
++#: ../panels/themes/themes.ui:52
++msgid "theme"
++msgstr "theme"
++
++#: ../panels/themes/cc-themes-panel.c:133
++msgid "Gooroom Icon Theme %d"
++msgstr "Gooroom Theme %d"
++
++#: ../panels/themes/themes.ui:60
++msgid "This theme is not listed."
++msgstr "This theme is not listed."
+diff --git a/po/ko.po b/po/ko.po
+index 66be476..31f0cd6 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -8213,6 +8213,34 @@ msgstr "중간"
+ msgid "_large"
+ msgstr "크게"
+ 
++#: ../panels/themes/gnome-themes-panel.desktop.in.in:4
++msgid "Change your Thema for window and icon"
++msgstr "아이콘 또는 윈도우 창의 테마를 변경합니다."
++
++#: ../panels/themes/themes.ui:37
++msgid "Current Theme : "
++msgstr "현재 테마 : "
++
++#: ../panels/themes/themes.ui:116
++msgid "Theme List"
++msgstr "테마 목록"
++
++#: ../panels/themes/gnome-themes-panel.desktop.in.in:3
++msgid "Themes"
++msgstr "테마"
++
++#: ../panels/themes/themes.ui:52
++msgid "theme"
++msgstr "테마"
++
++#: ../panels/themes/cc-themes-panel.c:133
++msgid "Gooroom Icon Theme %d"
++msgstr "구름 테마 %d"
++
++#: ../panels/themes/themes.ui:60
++msgid "This theme is not listed."
++msgstr "목록에 없는 테마입니다."
++
+ # 권한 이름
+ #~ msgid "Add user accounts and change passwords"
+ #~ msgstr "사용자 계정 추가 및 암호 바꾸기"
+diff --git a/shell/cc-panel-list.c b/shell/cc-panel-list.c
+index 3c194c5..0b358ef 100644
+--- a/shell/cc-panel-list.c
++++ b/shell/cc-panel-list.c
+@@ -391,6 +391,7 @@ static const gchar * const panel_order[] = {
+   "bluetooth",
+   "background",
+   "font",
++  "themes",
+   "notifications",
+   "search",
+   "applications",
+diff --git a/shell/cc-panel-loader.c b/shell/cc-panel-loader.c
+index 0ca2b70..394e642 100644
+--- a/shell/cc-panel-loader.c
++++ b/shell/cc-panel-loader.c
+@@ -71,6 +71,7 @@ extern GType cc_usage_panel_get_type (void);
+ extern GType cc_lock_panel_get_type (void);
+ extern GType cc_diagnostics_panel_get_type (void);
+ extern GType cc_font_panel_get_type (void);
++extern GType cc_themes_panel_get_type (void);
+ 
+ /* Static init functions */
+ extern void cc_diagnostics_panel_static_init_func (void);
+@@ -131,6 +132,7 @@ static CcPanelLoaderVtable default_panels[] =
+   PANEL_TYPE("wacom",            cc_wacom_panel_get_type,                cc_wacom_panel_static_init_func),
+ #endif
+   PANEL_TYPE("font",             cc_font_panel_get_type,                 NULL),
++  PANEL_TYPE("themes",           cc_themes_panel_get_type,               NULL),
+ };
+ 
+ /* Override for the panel vtable. When NULL, the default_panels will
