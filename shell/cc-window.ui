@@ -39,6 +39,7 @@
                     <property name="primary_icon_sensitive">False</property>
                     <signal name="activate" handler="search_entry_activate_cb" object="CcWindow" swapped="yes" />
                     <signal name="notify::text" handler="update_list_title" object="CcWindow" swapped="yes" />
+                    <signal name="preedit-changed" handler="search_entry_preedit_changed_cb" object="CcWindow" swapped="no"/>
                   </object>
                 </child>
               </object>
@@ -326,6 +327,8 @@
         <attribute name="label" translatable="yes">Keyboard Shortcuts</attribute>
         <attribute name="action">win.show-help-overlay</attribute>
       </item>
+    </section>
+    <section>
       <item>
         <attribute name="label" translatable="yes">Help</attribute>
         <attribute name="action">app.help</attribute>

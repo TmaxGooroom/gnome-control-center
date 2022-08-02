@@ -82,7 +82,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="halign">center</property>
-                        <property name="disabled-text" translatable="yes">Disabled</property>
+                        <property name="disabled-text" translatable="yes">Not use</property>
                       </object>
                     </child>
                     <child>
@@ -104,6 +104,19 @@
                         <property name="pack_type">end</property>
                       </packing>
                     </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="shortcut_reset_label">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Press reset button on the right to change the command to default setting. Close current window to enter another command.</property>
+                    <property name="hexpand">True</property>
+                    <property name="wrap">True</property>
+                    <property name="wrap_mode">word-char</property>
+                    <property name="width_chars">15</property>
+                    <property name="max_width_chars">20</property>
+                    <property name="xalign">0</property>
                   </object>
                 </child>
                 <child>

@@ -1,5 +1,6 @@
 /*
  * Copyright © 2013 Red Hat, Inc.
+ * Copyright (C) 2019 gooroom <gooroom@gooroom.kr>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -216,7 +217,7 @@ static void
 cc_application_startup (GApplication *application)
 {
   CcApplication *self = CC_APPLICATION (application);
-  const gchar *help_accels[] = { "F1", NULL };
+//  const gchar *help_accels[] = { "F1", NULL };
 
   g_action_map_add_action_entries (G_ACTION_MAP (self),
                                    cc_app_actions,
@@ -227,8 +228,8 @@ cc_application_startup (GApplication *application)
 
   hdy_init ();
 
-  gtk_application_set_accels_for_action (GTK_APPLICATION (application),
-                                         "app.help", help_accels);
+//  gtk_application_set_accels_for_action (GTK_APPLICATION (application),
+//                                         "app.help", help_accels);
 
   self->model = cc_shell_model_new ();
   self->window = cc_window_new (GTK_APPLICATION (application), self->model);

@@ -72,7 +72,10 @@ struct _CcColorPanel
   GtkTreeModel  *liststore_calib_sensor;
   GtkWidget     *main_window;
   GtkWidget     *toolbar_devices;
+  GtkWidget     *toolbutton_device_stack;
   GtkWidget     *toolbutton_device_calibrate;
+  GtkWidget     *toolbox_device_default;
+  GtkWidget     *toolbox_device_enable;
   GtkWidget     *toolbutton_device_default;
   GtkWidget     *toolbutton_device_enable;
   GtkWidget     *toolbutton_profile_add;
@@ -201,10 +204,41 @@ gcm_prefs_combobox_add_profile (CcColorPanel *prefs,
                       -1);
 }
 
+static gboolean
+run_warning (GtkWindow *parent, char *prompt, char *text, char *button_title)
+{
+  GtkWidget *dialog;
+  GtkWidget *button;
+  int result;
+  dialog = gtk_message_dialog_new (parent,
+                                   0,
+                                   GTK_MESSAGE_WARNING,
+                                   GTK_BUTTONS_NONE,
+                                   NULL);
+  g_object_set (dialog,
+                "text", prompt,
+                "secondary-text", text,
+                NULL);
+  gtk_dialog_add_button (GTK_DIALOG (dialog), _("_Cancel"), GTK_RESPONSE_CANCEL);
+  gtk_dialog_add_button (GTK_DIALOG (dialog), button_title, GTK_RESPONSE_OK);
+
+  gtk_dialog_set_default_response (GTK_DIALOG (dialog), FALSE);
+
+  button = gtk_dialog_get_widget_for_response (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
+  gtk_style_context_add_class (gtk_widget_get_style_context (button), "destructive-action");
+
+  result = gtk_dialog_run (GTK_DIALOG (dialog));
+  gtk_widget_destroy (dialog);
+
+  return result == GTK_RESPONSE_OK;
+}
+
 static void
 gcm_prefs_default_cb (CcColorPanel *prefs)
 {
   g_autoptr(CdProfile) profile = NULL;
+  GtkWidget *dialog;
+  gboolean interactive_ret;
   gboolean ret;
   g_autoptr(GError) error = NULL;
 
@@ -212,6 +246,15 @@ gcm_prefs_default_cb (CcColorPanel *prefs)
   profile = cd_device_get_default_profile (prefs->current_device);
   if (profile == NULL)
     return;
+
+  dialog = prefs->main_window;
+  interactive_ret = run_warning (GTK_WINDOW (dialog), _("Apply profile to all users?"),
+                                 _("Profiles of all users are changed to selected profile."),
+                                 _("_Apply Profile"));
+
+  if (!interactive_ret)
+    return;
+
 
   /* install somewhere out of $HOME */
   ret = cd_profile_install_system_wide_sync (profile,
@@ -1784,11 +1827,18 @@ gcm_prefs_refresh_toolbar_buttons (CcColorPanel *panel)
   else
     g_assert_not_reached ();
 
-  gtk_widget_set_visible (panel->toolbutton_device_default, !is_device && cc_color_profile_get_is_default (CC_COLOR_PROFILE (row)));
   if (profile)
-    gtk_widget_set_sensitive (panel->toolbutton_device_default, !cd_profile_get_is_system_wide (profile));
-  gtk_widget_set_visible (panel->toolbutton_device_enable, !is_device && !cc_color_profile_get_is_default (CC_COLOR_PROFILE (row)));
+    gtk_widget_set_sensitive (panel->toolbox_device_default, !cd_profile_get_is_system_wide (profile));
+
+  if (!is_device) {
+    gboolean is_profile = cc_color_profile_get_is_default (CC_COLOR_PROFILE (row));
+    if (is_profile)
+      gtk_stack_set_visible_child (GTK_STACK (panel->toolbutton_device_stack), panel->toolbox_device_default);
+    else
+      gtk_stack_set_visible_child (GTK_STACK (panel->toolbutton_device_stack), panel->toolbox_device_enable);
+  }
   gtk_widget_set_visible (panel->toolbutton_device_calibrate, is_device);
+
   gtk_widget_set_visible (panel->toolbutton_profile_add, is_device);
   gtk_widget_set_visible (panel->toolbutton_profile_view, !is_device);
   gtk_widget_set_visible (panel->toolbutton_profile_remove, !is_device);
@@ -1969,7 +2019,10 @@ cc_color_panel_class_init (CcColorPanelClass *klass)
   gtk_widget_class_bind_template_child (widget_class, CcColorPanel, liststore_calib_kind);
   gtk_widget_class_bind_template_child (widget_class, CcColorPanel, liststore_calib_sensor);
   gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbar_devices);
+  gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbutton_device_stack);
   gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbutton_device_calibrate);
+  gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbox_device_default);
+  gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbox_device_enable);
   gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbutton_device_default);
   gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbutton_device_enable);
   gtk_widget_class_bind_template_child (widget_class, CcColorPanel, toolbutton_profile_add);

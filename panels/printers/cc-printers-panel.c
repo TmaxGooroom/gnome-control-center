@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2010 Red Hat, Inc
+ * Copyright (C) 2019 gooroom <gooroom@gooroom.kr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -75,6 +76,7 @@ struct _CcPrintersPanel
 
   GPermission *permission;
   gboolean is_authorized;
+  gboolean is_authenticating;
 
   GSettings *lockdown_settings;
   CcPermissionInfobar *permission_infobar;
@@ -98,6 +100,7 @@ struct _CcPrintersPanel
   gchar    *renamed_printer_name;
   gchar    *old_printer_name;
   gchar    *deleted_printer_name;
+  gchar    *filter_text;
   GList    *deleted_printers;
   GObject  *reference;
 
@@ -304,6 +307,7 @@ cc_printers_panel_dispose (GObject *object)
   g_clear_pointer (&self->new_printer_name, g_free);
   g_clear_pointer (&self->renamed_printer_name, g_free);
   g_clear_pointer (&self->old_printer_name, g_free);
+  g_clear_pointer (&self->filter_text, g_free);
   g_clear_object (&self->builder);
   g_clear_object (&self->lockdown_settings);
   g_clear_object (&self->permission);
@@ -740,11 +744,17 @@ on_printer_changed (CcPrintersPanel *self)
 
 static void
 add_printer_entry (CcPrintersPanel *self,
-                   cups_dest_t      printer)
+                   cups_dest_t      printer,
+                   gint             index)
 {
   PpPrinterEntry         *printer_entry;
+  PpPrinterEntry         *printer_entry_tmp;
   GtkWidget              *content;
   GSList                 *widgets, *l;
+
+  printer_entry_tmp = g_hash_table_lookup (self->printer_entries, printer.name);
+  if (printer_entry_tmp && pp_printer_entry_is_activate_jobs_dialog (printer_entry_tmp))
+    return;
 
   content = (GtkWidget*) gtk_builder_get_object (self->builder, "content");
 
@@ -771,10 +781,11 @@ add_printer_entry (CcPrintersPanel *self,
                            self,
                            G_CONNECT_SWAPPED);
 
-  gtk_list_box_insert (GTK_LIST_BOX (content), GTK_WIDGET (printer_entry), -1);
+  gtk_list_box_insert (GTK_LIST_BOX (content), GTK_WIDGET (printer_entry), index);
   gtk_widget_show_all (content);
 
   g_hash_table_insert (self->printer_entries, g_strdup (printer.name), printer_entry);
+  gtk_list_box_invalidate_filter (GTK_LIST_BOX (content));
 }
 
 static void
@@ -818,6 +829,11 @@ destroy_nonexisting_entries (PpPrinterEntry *entry,
           break;
         }
     }
+
+  if (exists && entry && pp_printer_entry_is_activate_jobs_dialog (entry))
+  {
+    return;
+  }
 
   if (!exists)
     {
@@ -883,7 +899,7 @@ actualize_printers_list_cb (GObject      *source_object,
       if (item != NULL)
         pp_printer_entry_update (PP_PRINTER_ENTRY (item), self->dests[i], self->is_authorized);
       else
-        add_printer_entry (self, self->dests[i]);
+        add_printer_entry (self, self->dests[i], i);
     }
 
   if (!self->entries_filled)
@@ -979,6 +995,42 @@ new_printer_dialog_response_cb (CcPrintersPanel *self,
 }
 
 static void
+acquired_permission (GObject *object,
+                     GAsyncResult *res,
+                     gpointer data)
+{
+  CcPrintersPanel        *self = (CcPrintersPanel*) data;
+
+  g_autoptr(GError) error = NULL;
+  gboolean allowed;
+
+  self->is_authenticating = FALSE;
+  allowed = g_permission_acquire_finish (self->permission, res, &error);
+  if (!allowed)
+    return;
+
+  self->is_authorized = TRUE;
+
+  actualize_printers_list (data);
+  update_sensitivity (data);
+}
+
+static void
+on_clicked_auth (GtkButton *button,
+                 gpointer user_data)
+{
+  CcPrintersPanel         *self = (CcPrintersPanel*) user_data;
+
+  if (!self->is_authenticating)
+  {
+    self->is_authenticating = TRUE;
+    g_permission_acquire_async (self->permission, NULL,
+                                acquired_permission,
+                                self);
+  }
+}
+
+static void
 printer_add_cb (CcPrintersPanel *self)
 {
   GtkWidget *toplevel;
@@ -1009,6 +1061,8 @@ update_sensitivity (gpointer user_data)
   GtkWidget               *widget;
   gboolean                 local_server = TRUE;
   gboolean                 no_cups = FALSE;
+  gboolean                 empty = FALSE;
+  const gchar             *test;
 
   self->is_authorized =
     self->permission &&
@@ -1017,8 +1071,12 @@ update_sensitivity (gpointer user_data)
     !g_settings_get_boolean (self->lockdown_settings, "disable-print-setup");
 
   widget = (GtkWidget*) gtk_builder_get_object (self->builder, "main-vbox");
+  test = gtk_stack_get_visible_child_name (GTK_STACK (widget));
   if (g_strcmp0 (gtk_stack_get_visible_child_name (GTK_STACK (widget)), "no-cups-page") == 0)
     no_cups = TRUE;
+
+  if (g_strcmp0 (gtk_stack_get_visible_child_name (GTK_STACK (widget)), "empty-state") == 0)
+    empty = TRUE;
 
   cups_server = cupsServer ();
   if (cups_server &&
@@ -1029,7 +1087,7 @@ update_sensitivity (gpointer user_data)
     local_server = FALSE;
 
   widget = (GtkWidget*) gtk_builder_get_object (self->builder, "search-button");
-  gtk_widget_set_visible (widget, !no_cups);
+  gtk_widget_set_visible (widget, !empty);
 
   widget = (GtkWidget*) gtk_builder_get_object (self->builder, "search-bar");
   gtk_widget_set_visible (widget, !no_cups);
@@ -1166,10 +1224,7 @@ filter_function (GtkListBoxRow *row,
                 "printer-location", &printer_location,
                 NULL);
 
-  search_entry = (GtkWidget*)
-    gtk_builder_get_object (self->builder, "search-entry");
-
-  if (gtk_entry_get_text_length (GTK_ENTRY (search_entry)) == 0)
+  if (self->filter_text && g_str_equal (self->filter_text, ""))
     {
       retval = TRUE;
     }
@@ -1178,11 +1233,13 @@ filter_function (GtkListBoxRow *row,
       name = cc_util_normalize_casefold_and_unaccent (printer_name);
       location = cc_util_normalize_casefold_and_unaccent (printer_location);
 
-      search = cc_util_normalize_casefold_and_unaccent (gtk_entry_get_text (GTK_ENTRY (search_entry)));
+      if (self->filter_text) {
+        search = cc_util_normalize_casefold_and_unaccent (self->filter_text);
 
-      retval = strstr (name, search) != NULL;
-      if (location != NULL)
-          retval = retval || (strstr (location, search) != NULL);
+        retval = strstr (name, search) != NULL;
+        if (location != NULL)
+            retval = retval || (strstr (location, search) != NULL);
+      }
     }
 
   if (self->deleted_printer_name != NULL &&
@@ -1204,6 +1261,31 @@ filter_function (GtkListBoxRow *row,
     }
 
   return retval;
+}
+
+static void
+search_entry_text_changed_cb (GtkEntry *entry,
+                              CcPrintersPanel *self)
+{
+  const gchar *text = gtk_entry_get_text (entry);
+
+  g_clear_pointer (&self->filter_text, g_free);
+  self->filter_text = (text == NULL) ? g_strdup ("") : g_strdup (text);
+
+  gtk_list_box_invalidate_filter (GTK_LIST_BOX (gtk_builder_get_object (self->builder, "content")));
+}
+
+static void
+search_entry_preedit_changed_cb (GtkEntry        *entry,
+                                 gchar           *preedit,
+                                 CcPrintersPanel *self)
+{
+  const gchar *text = gtk_entry_get_text (entry);
+
+  g_clear_pointer (&self->filter_text, g_free);
+  self->filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
+
+  gtk_list_box_invalidate_filter (GTK_LIST_BOX (gtk_builder_get_object (self->builder, "content")));
 }
 
 static gint
@@ -1259,6 +1341,8 @@ cc_printers_panel_init (CcPrintersPanel *self)
                                                  g_free,
                                                  NULL);
 
+  self->is_authenticating = FALSE;
+
   g_type_ensure (CC_TYPE_PERMISSION_INFOBAR);
 
   g_object_set_data_full (self->reference, "self", self, NULL);
@@ -1273,6 +1357,8 @@ cc_printers_panel_init (CcPrintersPanel *self)
       g_warning (_("Could not load ui: %s"), error->message);
       return;
     }
+
+//  g_signal_connect (GTK_BUTTON (gtk_builder_get_object (self->builder, "lock-button")), "clicked", G_CALLBACK (on_clicked_auth), self)
 
   self->notification = (GtkRevealer*)
     gtk_builder_get_object (self->builder, "notification");
@@ -1307,10 +1393,17 @@ cc_printers_panel_init (CcPrintersPanel *self)
                                 filter_function,
                                 self,
                                 NULL);
-  g_signal_connect_swapped (gtk_builder_get_object (self->builder, "search-entry"),
-                            "search-changed",
-                            G_CALLBACK (gtk_list_box_invalidate_filter),
-                            widget);
+
+  g_signal_connect (gtk_builder_get_object (self->builder, "search-entry"),
+                    "search-changed",
+                    G_CALLBACK (search_entry_text_changed_cb),
+                    self);
+
+  g_signal_connect (gtk_builder_get_object (self->builder, "search-entry"),
+                    "preedit-changed",
+                    G_CALLBACK (search_entry_preedit_changed_cb),
+                    self);
+
   gtk_list_box_set_sort_func (GTK_LIST_BOX (widget),
                               sort_function,
                               NULL,

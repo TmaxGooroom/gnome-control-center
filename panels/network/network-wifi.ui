@@ -91,6 +91,7 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="popover">header_button_popover</property>
+        <signal name="clicked" handler="button_sensitive_set" object="NetDeviceWifi" swapped="yes"/>
         <child>
           <object class="GtkImage">
             <property name="visible">True</property>
@@ -112,7 +113,7 @@
         <property name="spacing">6</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkModelButton">
+          <object class="GtkModelButton" id="connect_hidden_button">
             <property name="label" translatable="yes">_Connect to Hidden Network…</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>

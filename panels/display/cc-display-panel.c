@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2007, 2008  Red Hat, Inc.
  * Copyright (C) 2013 Intel, Inc.
+ * Copyright (C) 2019 gooroom, <gooroom@gooroom.kr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,8 +43,8 @@
  * Note that WIDTH is assumed to be the larger size and we accept portrait
  * mode too effectively (in principle we should probably restrict the rotation
  * setting in that case). */
-#define MINIMUM_WIDTH 740
-#define MINIMUM_HEIGHT 530
+#define MINIMUM_WIDTH 800
+#define MINIMUM_HEIGHT 600
 
 #define PANEL_PADDING   32
 #define SECTION_PADDING 32
@@ -218,7 +219,7 @@ config_ensure_of_type (CcDisplayPanel *panel, CcDisplayConfigType type)
           CcDisplayMonitor *output = l->data;
 
           cc_display_monitor_set_active (output, cc_display_monitor_is_usable (output));
-          cc_display_monitor_set_mode (output, cc_display_monitor_get_preferred_mode (output));
+          cc_display_monitor_set_mode (output, cc_display_monitor_get_mode (output));
         }
       break;
 

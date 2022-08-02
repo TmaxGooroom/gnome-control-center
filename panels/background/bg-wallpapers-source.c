@@ -82,7 +82,7 @@ load_default_bg (BgWallpapersSource *self)
 
     filename = g_build_filename (system_data_dirs[i],
 				 "gnome-background-properties",
-				 "adwaita.xml",
+				 "tmax-background.xml",
 				 NULL);
     if (cc_background_xml_load_xml (self->xml, filename))
       break;
@@ -111,6 +111,9 @@ bg_wallpapers_source_dispose (GObject *object)
   BgWallpapersSource *self = BG_WALLPAPERS_SOURCE (object);
 
   g_clear_object (&self->xml);
+
+  bg_source_set_thumbnail_height (BG_SOURCE (self), 125);
+  bg_source_set_thumbnail_width (BG_SOURCE (self), 200);
 
   G_OBJECT_CLASS (bg_wallpapers_source_parent_class)->dispose (object);
 }

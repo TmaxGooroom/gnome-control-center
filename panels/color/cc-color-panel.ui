@@ -729,7 +729,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="xalign">0</property>
-                <property name="label" translatable="yes">Problems detected. The profile may not work correctly. &lt;a href=""&gt;Show details.&lt;/a&gt;</property>
+                <property name="label" translatable="yes">Problems detected. The profile may not work correctly.</property>
                 <property name="use_markup">True</property>
                 <property name="wrap">True</property>
               </object>
@@ -805,7 +805,7 @@
                         <property name="position">1</property>
                       </packing>
                     </child>
-                    <child>
+                    <!--child>
                       <object class="GtkLinkButton" id="linkbutton_help">
                         <property name="label" translatable="yes">Learn more</property>
                         <property name="visible">True</property>
@@ -825,7 +825,7 @@
                         <property name="fill">True</property>
                         <property name="position">2</property>
                       </packing>
-                    </child>
+                    </child-->
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -859,34 +859,65 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <child>
-                                  <object class="GtkButton" id="toolbutton_device_default">
-                                    <property name="label" translatable="yes">_Set for all users</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">False</property>
-                                    <property name="has_tooltip">True</property>
-                                    <property name="tooltip_text" translatable="yes">Set this profile for all users on this computer</property>
-                                    <property name="use_underline">True</property>
+                                  <object class="GtkStack" id="toolbutton_device_stack">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <child>
+                                      <object class="GtkBox" id="toolbox_device_default">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <child>
+                                          <object class="GtkButton" id="toolbutton_device_default">
+                                            <property name="label" translatable="yes">_Set for all users</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">False</property>
+                                            <property name="has_tooltip">True</property>
+                                            <property name="tooltip_text" translatable="yes">Set this profile for all users on this computer</property>
+                                            <property name="use_underline">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">True</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="name">page0</property>
+                                        <property name="title" translatable="yes">page0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox" id="toolbox_device_enable">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <child>
+                                          <object class="GtkButton" id="toolbutton_device_enable">
+                                            <property name="label" translatable="yes">_Enable</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="receives_default">True</property>
+                                            <property name="has_tooltip">True</property>
+                                            <property name="tooltip_markup" translatable="yes">Set this profile for all users on this computer</property>
+                                            <property name="tooltip_text" translatable="yes">Set this profile for all users on this computer</property>
+                                            <property name="use_underline">True</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">True</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="name">page1</property>
+                                        <property name="title" translatable="yes">page1</property>
+                                      </packing>
+                                    </child>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
                                     <property name="fill">True</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="toolbutton_device_enable">
-                                    <property name="label" translatable="yes">_Enable</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="has_tooltip">True</property>
-                                    <property name="tooltip_markup" translatable="yes">Set this profile for all users on this computer</property>
-                                    <property name="tooltip_text" translatable="yes">Set this profile for all users on this computer</property>
-                                    <property name="use_underline">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">2</property>
+                                    <property name="position">0</property>
                                   </packing>
                                 </child>
                               </object>

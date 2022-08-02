@@ -43,6 +43,7 @@
 
 enum {
         DONE,
+		CANCEL,
         LAST_SIGNAL
 };
 
@@ -86,7 +87,7 @@ static void
 cancel_editing (NetConnectionEditor *self)
 {
         gtk_widget_hide (GTK_WIDGET (self));
-        g_signal_emit (self, signals[DONE], 0, FALSE);
+        g_signal_emit (self, signals[CANCEL], 0, FALSE);
 }
 
 static void
@@ -225,6 +226,15 @@ net_connection_editor_class_init (NetConnectionEditorClass *class)
                                       NULL,
                                       G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 
+		signals[CANCEL] = g_signal_new ("cancel",
+				G_OBJECT_CLASS_TYPE (object_class),
+				G_SIGNAL_RUN_FIRST,
+				0,
+				NULL, NULL,
+				NULL,
+				G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+
+
         gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/control-center/network/connection-editor.ui");
 
         gtk_widget_class_bind_template_child (widget_class, NetConnectionEditor, add_connection_box);
@@ -344,6 +354,8 @@ update_sensitivity (NetConnectionEditor *self)
                 sensitive = self->can_modify;
         }
 
+		sensitive = TRUE;
+
         for (l = self->pages; l; l = l->next)
                 gtk_widget_set_sensitive (GTK_WIDGET (l->data), sensitive);
 }
@@ -366,6 +378,7 @@ validate (NetConnectionEditor *self)
                         if (error) {
                                 g_debug ("Invalid setting %s: %s", ce_page_get_title (CE_PAGE (l->data)), error->message);
                         } else {
+								fprintf(stderr, "check validation\n");
                                 g_debug ("Invalid setting %s", ce_page_get_title (CE_PAGE (l->data)));
                         }
                 }

@@ -365,7 +365,6 @@ panel_device_status_to_localized_string (NMDevice *nm_device,
                         g_string_append (string, " - ");
                 g_string_append (string, speed);
         } else if (state == NM_DEVICE_STATE_UNAVAILABLE ||
-                   state == NM_DEVICE_STATE_DISCONNECTED ||
                    state == NM_DEVICE_STATE_DEACTIVATING ||
                    state == NM_DEVICE_STATE_FAILED) {
                 reason_str = device_state_reason_to_localized_string (nm_device);
@@ -374,6 +373,8 @@ panel_device_status_to_localized_string (NMDevice *nm_device,
                                 g_string_append (string, " - ");
                         g_string_append (string, reason_str);
                 }
+        } else if (state == NM_DEVICE_STATE_DISCONNECTED) {
+                g_string_append (string, C_("Device Status", "Disconnected"));
         }
 
         return g_string_free (string, FALSE);

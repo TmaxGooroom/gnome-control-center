@@ -240,6 +240,7 @@ cc_avatar_chooser_select_file (CcAvatarChooser *self)
 
         preview = gtk_image_new ();
         gtk_widget_set_size_request (preview, 128, -1);
+        gtk_widget_set_margin_end (preview, 12);
         gtk_file_chooser_set_preview_widget (GTK_FILE_CHOOSER (chooser), preview);
         gtk_file_chooser_set_use_preview_label (GTK_FILE_CHOOSER (chooser), FALSE);
         gtk_widget_show (preview);
@@ -544,6 +545,21 @@ popup_icon_menu (CcAvatarChooser *self)
         gtk_popover_popup (GTK_POPOVER (self));
 }
 
+static void
+popdown_icon_menu (CcAvatarChooser *self)
+{
+        gtk_popover_popdown (GTK_POPOVER (self));
+}
+
+static void
+toggle_button_inactive (CcAvatarChooser *input, CcAvatarChooser *user)
+{
+        if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (user->popup_button))){
+          gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (user->popup_button), FALSE);
+        }
+}
+
+
 static gboolean
 on_popup_button_button_pressed (CcAvatarChooser *self,
                                 GdkEventButton  *event)
@@ -553,7 +569,7 @@ on_popup_button_button_pressed (CcAvatarChooser *self,
                         popup_icon_menu (self);
                         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->popup_button), TRUE);
                 } else {
-                        gtk_popover_popdown (GTK_POPOVER (self));
+                        popdown_icon_menu (self);
                         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->popup_button), FALSE);
                 }
 
@@ -577,10 +593,13 @@ cc_avatar_chooser_new (GtkWidget *button)
         /* Set up the popup */
         self->popup_button = button;
         setup_photo_popup (self);
-        g_signal_connect_object (button, "toggled",
-                                 G_CALLBACK (popup_icon_menu), self, G_CONNECT_SWAPPED);
+        gtk_toggle_button_set_active (self->popup_button, TRUE);
+//        g_signal_connect_object (button, "toggled",
+//                                 G_CALLBACK (popup_icon_menu), self, G_CONNECT_SWAPPED);
         g_signal_connect_object (button, "button-press-event",
                                  G_CALLBACK (on_popup_button_button_pressed), self, G_CONNECT_SWAPPED);
+        g_signal_connect (self, "closed",
+                          G_CALLBACK (toggle_button_inactive), self);
 
         return self;
 }

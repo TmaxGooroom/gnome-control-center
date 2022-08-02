@@ -311,7 +311,7 @@
                                     <property name="visible">False</property>
                                     <child>
                                       <object class="GtkBox">
-                                        <property name="visible">True</property>
+                                        <property name="visible">False</property>
                                         <property name="border-width">10</property>
                                         <property name="spacing">10</property>
                                         <child>
@@ -582,6 +582,23 @@
                                 </child>
                               </object>
                             </child>
+                            <child>
+                              <object class="GtkLabel" id="encrypt_home_check_label">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="yalign">0</property>
+                                <property name="xalign">0</property>
+                                <property name="margin-start">15</property>
+                                <property name="label" translatable="yes">Applied Home Directory Encryption.</property>
+                                <property name="height-request">15</property>
+                                <property name="wrap">True</property>
+                                <property name="wrap_mode">word-char</property>
+                                <property name="hexpand">True</property>
+                                <style>
+                                  <class name="dim-label"/>
+                                </style>
+                              </object>
+                            </child>
                           </object>
                         </child>
                         <child>
@@ -663,6 +680,7 @@
       <widget name="fingerprint_row"/>
       <widget name="autologin_row"/>
       <widget name="last_login_row"/>
+      <widget name="encrypt_home_check_label"/>
     </widgets>
   </object>
 </interface>

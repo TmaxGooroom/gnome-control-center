@@ -149,7 +149,7 @@ on_active_lv3_changed_cb (GtkRadioButton      *radio,
 static void
 on_xkb_options_changed_cb (CcAltCharsKeyDialog *self)
 {
-  update_active_radio (self);
+  //update_active_radio (self);
 }
 
 static void
@@ -192,7 +192,7 @@ cc_alt_chars_key_dialog_init (CcAltCharsKeyDialog *self)
                            "changed::xkb-options",
                            G_CALLBACK (on_xkb_options_changed_cb),
                            self, G_CONNECT_SWAPPED);
-  update_active_radio (self);
+  //update_active_radio (self);
 }
 
 CcAltCharsKeyDialog *

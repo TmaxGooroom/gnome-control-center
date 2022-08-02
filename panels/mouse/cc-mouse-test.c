@@ -186,9 +186,16 @@ static gboolean
 button_drawing_area_button_press_event (CcMouseTest *self, GdkEventButton *event)
 {
 	gint double_click_time;
+        gdouble center_x, center_y;
 
 	if (event->type != GDK_BUTTON_PRESS || event->button > 3)
 		return FALSE;
+
+        center_x = gtk_widget_get_allocated_width (self->button_drawing_area) / 2.0;
+        center_y = gtk_widget_get_allocated_height (self->button_drawing_area) / 2.0;
+
+        if (!((event->x >= center_x - 80) && (event->x <= center_x + 80) && (event->y >= center_y - 80) && (event->y <= center_y + 80)))
+                return FALSE;
 
 	double_click_time = g_settings_get_int (self->mouse_settings, "double-click");
 

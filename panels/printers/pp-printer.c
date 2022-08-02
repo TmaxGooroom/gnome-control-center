@@ -607,7 +607,7 @@ pp_printer_print_file_async (PpPrinter           *self,
   PrintFileData *print_file_data;
   GTask *task;
 
-  print_file_data = g_new (PrintFileData, 1);
+  print_file_data = g_slice_new (PrintFileData);
   print_file_data->filename = g_strdup (filename);
   print_file_data->job_name = g_strdup (job_name);
 

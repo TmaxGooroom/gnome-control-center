@@ -1,6 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*-
  *
  * Copyright 2012  Red Hat, Inc,
+ * Copyright (C) 2019  gooroom <gooroom@gooroom.kr>,
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -107,7 +108,8 @@ pw_error_hint (gint error)
         case PWQ_ERROR_CRACKLIB_CHECK:
                 return C_("Password hint", "Try to avoid common words.");
         case PWQ_ERROR_PALINDROME:
-                return C_("Password hint", "Try to avoid reordering existing words.");
+                return C_("Password hint", "Do not enter the same words consecutively.");
+                //return C_("Password hint", "Try to avoid reordering existing words.");
         case PWQ_ERROR_MIN_DIGITS:
                 return C_("Password hint", "Try to use more numbers.");
         case PWQ_ERROR_MIN_UPPERS:

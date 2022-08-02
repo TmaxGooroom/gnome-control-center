@@ -70,7 +70,7 @@ struct _PpPrinterEntry
   GtkFrame       *supply_frame;
   GtkDrawingArea *supply_drawing_area;
   GtkWidget      *show_jobs_dialog_button;
-  GtkWidget      *clean_heads_menuitem;
+  //GtkWidget      *clean_heads_menuitem;
   GtkCheckButton *printer_default_checkbutton;
   GtkModelButton *remove_printer_menuitem;
   GtkBox         *printer_error;
@@ -496,10 +496,10 @@ check_clean_heads_maintenance_command_cb (GObject      *source_object,
       goto out;
     }
 
-  if (is_supported)
-    {
-      gtk_widget_show (GTK_WIDGET (self->clean_heads_menuitem));
-    }
+//  if (is_supported)
+//    {
+//      gtk_widget_show (GTK_WIDGET (self->clean_heads_menuitem));
+//    }
 
  out:
   g_object_unref (source_object);
@@ -637,6 +637,12 @@ jobs_dialog_response_cb (GtkDialog  *dialog,
     }
 }
 
+gboolean
+pp_printer_entry_is_activate_jobs_dialog (PpPrinterEntry *self)
+{
+    return self->pp_jobs_dialog == NULL ? FALSE : TRUE;
+}
+
 void
 pp_printer_entry_show_jobs_dialog (PpPrinterEntry *self)
 {
@@ -704,12 +710,12 @@ pp_printer_entry_new (cups_dest_t  printer,
 
   self = g_object_new (PP_PRINTER_ENTRY_TYPE, "printer-name", printer.name, NULL);
 
-  self->clean_command = pp_maintenance_command_new (self->printer_name,
-                                                    "Clean",
-                                                    "all",
-                                                    /* Translators: Name of job which makes printer to clean its heads */
-                                                    _("Clean print heads"));
-  check_clean_heads_maintenance_command (self);
+//  self->clean_command = pp_maintenance_command_new (self->printer_name,
+//                                                    "Clean",
+//                                                    "all",
+//                                                    /* Translators: Name of job which makes printer to clean its heads */
+//                                                    _("Clean print heads"));
+//  check_clean_heads_maintenance_command (self);
 
   g_signal_connect_object (self->supply_drawing_area, "draw", G_CALLBACK (supply_levels_draw_cb), self, G_CONNECT_SWAPPED);
 
@@ -988,7 +994,7 @@ pp_printer_entry_dispose (GObject *object)
   PpPrinterEntry *self = PP_PRINTER_ENTRY (object);
 
   g_cancellable_cancel (self->get_jobs_cancellable);
-  g_cancellable_cancel (self->check_clean_heads_cancellable);
+//  g_cancellable_cancel (self->check_clean_heads_cancellable);
 
   g_clear_pointer (&self->printer_name, g_free);
   g_clear_pointer (&self->printer_location, g_free);
@@ -996,8 +1002,8 @@ pp_printer_entry_dispose (GObject *object)
   g_clear_pointer (&self->printer_hostname, g_free);
   g_clear_pointer (&self->inklevel, ink_level_data_free);
   g_clear_object (&self->get_jobs_cancellable);
-  g_clear_object (&self->check_clean_heads_cancellable);
-  g_clear_object (&self->clean_command);
+//  g_clear_object (&self->check_clean_heads_cancellable);
+//  g_clear_object (&self->clean_command);
 
   G_OBJECT_CLASS (pp_printer_entry_parent_class)->dispose (object);
 }
@@ -1022,7 +1028,7 @@ pp_printer_entry_class_init (PpPrinterEntryClass *klass)
   gtk_widget_class_bind_template_child (widget_class, PpPrinterEntry, supply_drawing_area);
   gtk_widget_class_bind_template_child (widget_class, PpPrinterEntry, printer_default_checkbutton);
   gtk_widget_class_bind_template_child (widget_class, PpPrinterEntry, show_jobs_dialog_button);
-  gtk_widget_class_bind_template_child (widget_class, PpPrinterEntry, clean_heads_menuitem);
+  //gtk_widget_class_bind_template_child (widget_class, PpPrinterEntry, clean_heads_menuitem);
   gtk_widget_class_bind_template_child (widget_class, PpPrinterEntry, remove_printer_menuitem);
   gtk_widget_class_bind_template_child (widget_class, PpPrinterEntry, error_status);
   gtk_widget_class_bind_template_child (widget_class, PpPrinterEntry, printer_error);
@@ -1030,7 +1036,7 @@ pp_printer_entry_class_init (PpPrinterEntryClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, on_show_printer_details_dialog);
   gtk_widget_class_bind_template_callback (widget_class, on_show_printer_options_dialog);
   gtk_widget_class_bind_template_callback (widget_class, set_as_default_printer);
-  gtk_widget_class_bind_template_callback (widget_class, clean_heads);
+  //gtk_widget_class_bind_template_callback (widget_class, clean_heads);
   gtk_widget_class_bind_template_callback (widget_class, remove_printer);
   gtk_widget_class_bind_template_callback (widget_class, show_jobs_dialog);
   gtk_widget_class_bind_template_callback (widget_class, restart_printer);

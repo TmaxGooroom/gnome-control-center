@@ -69,6 +69,8 @@ struct _CcKeyboardPanel
 
   GRegex             *pictures_regex;
 
+  gchar              *filter_text;
+
   CcKeyboardManager  *manager;
 };
 
@@ -200,6 +202,7 @@ reset_all_clicked_cb (CcKeyboardPanel *self)
                                    GTK_BUTTONS_NONE,
                                    _("Reset All Shortcuts?"));
 
+  gtk_window_set_title (GTK_WINDOW (dialog), _("Reset All"));
   gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog),
                                             _("Resetting the shortcuts may affect your custom shortcuts. "
                                               "This cannot be undone."));
@@ -237,6 +240,30 @@ reset_shortcut_cb (GtkWidget      *reset_button,
   self = CC_KEYBOARD_PANEL (gtk_widget_get_ancestor (reset_button, CC_TYPE_KEYBOARD_PANEL));
 
   cc_keyboard_manager_reset_shortcut (self->manager, item);
+}
+
+static void
+search_entry_text_changed_cb (CcKeyboardPanel *self)
+{
+  const gchar *text = gtk_entry_get_text (GTK_ENTRY (self->search_entry));
+
+  g_clear_pointer (&self->filter_text, g_free);
+  self->filter_text = (text == NULL) ? g_strdup ("") : g_strdup (text);
+
+  gtk_list_box_invalidate_filter (GTK_LIST_BOX (self->shortcuts_listbox));
+}
+
+static void
+search_entry_preedit_changed_cb (GtkEntry        *entry,
+                                 gchar           *preedit,
+                                 CcKeyboardPanel *self)
+{
+  const gchar *text = gtk_entry_get_text (GTK_ENTRY (self->search_entry));
+
+  g_clear_pointer (&self->filter_text, g_free);
+  self->filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
+
+  gtk_list_box_invalidate_filter (GTK_LIST_BOX (self->shortcuts_listbox));
 }
 
 static void
@@ -572,7 +599,7 @@ filter_function (GtkListBoxRow *row,
   g_auto(GStrv) terms = NULL;
   guint i;
 
-  if (gtk_entry_get_text_length (GTK_ENTRY (self->search_entry)) == 0)
+  if (self->filter_text && g_str_equal (self->filter_text, ""))
     return TRUE;
 
   /* When searching, the '+' row is always hidden */
@@ -582,7 +609,7 @@ filter_function (GtkListBoxRow *row,
   data = g_object_get_data (G_OBJECT (row), "data");
   item = data->item;
   name = cc_util_normalize_casefold_and_unaccent (cc_keyboard_item_get_description (item));
-  search = cc_util_normalize_casefold_and_unaccent (gtk_entry_get_text (GTK_ENTRY (self->search_entry)));
+  search = cc_util_normalize_casefold_and_unaccent (self->filter_text);
   terms = g_strsplit (search, " ", -1);
 
   for (i = 0; terms && terms[i]; i++)
@@ -697,6 +724,7 @@ cc_keyboard_panel_finalize (GObject *object)
   CcKeyboardPanel *self = CC_KEYBOARD_PANEL (object);
   GtkWidget *window;
 
+  g_clear_pointer (&self->filter_text, g_free);
   g_clear_pointer (&self->pictures_regex, g_regex_unref);
   g_clear_object (&self->accelerator_sizegroup);
   g_clear_object (&self->input_source_settings);
@@ -765,6 +793,8 @@ cc_keyboard_panel_class_init (CcKeyboardPanelClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, reset_all_clicked_cb);
   gtk_widget_class_bind_template_callback (widget_class, shortcut_row_activated);
   gtk_widget_class_bind_template_callback (widget_class, alternate_chars_activated);
+  gtk_widget_class_bind_template_callback (widget_class, search_entry_text_changed_cb);
+  gtk_widget_class_bind_template_callback (widget_class, search_entry_preedit_changed_cb);
 }
 
 static void

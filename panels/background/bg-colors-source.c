@@ -90,7 +90,7 @@ bg_colors_source_add_color (BgColorsSource               *self,
                 "primary-color", color,
                 "secondary-color", color,
                 "shading", G_DESKTOP_BACKGROUND_SHADING_SOLID,
-                "placement", G_DESKTOP_BACKGROUND_STYLE_WALLPAPER,
+                "placement", G_DESKTOP_BACKGROUND_STYLE_ZOOM,
                 "flags", flags,
                 NULL);
   cc_background_item_load (item, NULL);
@@ -201,6 +201,8 @@ bg_colors_source_add (BgColorsSource       *self,
 static void
 bg_colors_source_init (BgColorsSource *self)
 {
+  bg_source_set_thumbnail_width (BG_SOURCE (self), 48);
+  bg_source_set_thumbnail_height (BG_SOURCE (self), 48);
 }
 
 static void

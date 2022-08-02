@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <KeyListEntries group="system" name="Accessibility" schema="org.gnome.settings-daemon.plugins.media-keys">
 
+<!--
 	<KeyListEntry name="magnifier" description="Turn zoom on or off"/>
 
 	<KeyListEntry name="magnifier-zoom-in" description="Zoom in"/>
@@ -16,5 +17,6 @@
 	<KeyListEntry name="decrease-text-size" description="Decrease text size"/>
 
 	<KeyListEntry name="toggle-contrast" description="High contrast on or off"/>
+-->
 
 </KeyListEntries>

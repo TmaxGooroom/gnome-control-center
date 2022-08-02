@@ -24,17 +24,18 @@
                 <property name="valign">center</property>
                 <property name="spacing">30</property>
                 <property name="orientation">vertical</property>
-                <child>
+                <!--child>
                   <object class="GtkImage">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="resource">/org/gnome/control-center/info-overview/GnomeLogoVerticalMedium.svg</property>
+                    <property name="pixel_size">128</property>
+                    <property name="pixbuf">/usr/share/icons/vendor/scalable/emblems/emblem-vendor.svg</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">False</property>
                   </packing>
-                </child>
+                </child-->
 
                 <child>
                   <object class="GtkListBox">
@@ -116,14 +117,14 @@
                     </style>
 
                     <!-- OS Name -->
-                    <child>
+                    <!--child>
                       <object class="CcListRow" id="os_name_row">
                         <property name="visible">True</property>
                         <property name="activatable">False</property>
                         <property name="title" translatable="yes"
                                   comments="translators: this field contains the distro name and version">OS Name</property>
                       </object>
-                    </child>
+                    </child-->
 
                     <!-- OS Type -->
                     <child>
@@ -131,6 +132,15 @@
                         <property name="visible">True</property>
                         <property name="activatable">False</property>
                         <property name="title" translatable="yes">OS Type</property>
+                      </object>
+                    </child>
+
+                    <!-- OS Info -->
+                    <child>
+                      <object class="CcListRow" id="os_info_row">
+                        <property name="visible">True</property>
+                        <property name="activatable">False</property>
+                        <property name="title" translatable="yes">OS Info</property>
                       </object>
                     </child>
 
@@ -208,7 +218,7 @@
           </object>
         </child>
         <child>
-          <object class="GtkEntry" id="device_name_entry">
+          <object class="CcHostnameEntry" id="device_name_entry">
             <property name="visible">True</property>
             <signal name="changed" handler="on_device_name_entry_changed" swapped="yes"/>
           </object>

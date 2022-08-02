@@ -3,7 +3,11 @@
   <gresource prefix="/org/gnome/control-center/background">
     <file preprocess="xml-stripblanks">cc-background-chooser.ui</file>
     <file preprocess="xml-stripblanks">cc-background-panel.ui</file>
-    <file preprocess="xml-stripblanks">cc-background-preview.ui</file>
-    <file>preview.css</file>
+    <!--file preprocess="xml-stripblanks">cc-background-preview.ui</file-->
+    <file preprocess="xml-stripblanks">background-chooser.ui</file>
+    <file alias="color_check_icon">color-check-icon.svg</file>
+    <file alias="check_icon">check-icon.svg</file>
+    <file>style.css</file>
+    <!--file>preview.css</file-->
   </gresource>
 </gresources>

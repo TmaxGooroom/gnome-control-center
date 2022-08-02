@@ -275,10 +275,6 @@
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes" context="purge_files" comments="Translators: Option for &quot;Purge After&quot; in &quot;Purge Trash &amp; Temporary Files&quot; dialog.">1 hour</col>
-        <col id="1">0</col>
-      </row>
-      <row>
         <col id="0" translatable="yes" context="purge_files" comments="Translators: Option for &quot;Purge After&quot; in &quot;Purge Trash &amp; Temporary Files&quot; dialog.">1 day</col>
         <col id="1">1</col>
       </row>

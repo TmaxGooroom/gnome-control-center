@@ -17,20 +17,33 @@ i18n.merge_file(
   install_dir: control_center_desktopdir
 )
 
+polkit_conf = configuration_data()
+polkit_conf.set('libexecdir', control_center_libexecdir)
+
+polkit = 'org.gnome.controlcenter.region.policy'
+
+polkit_in = configure_file(
+  input: polkit + '.in.in',
+  output: polkit + '.in',
+  configuration: polkit_conf
+)
+
+i18n.merge_file(
+  polkit,
+  input: polkit_in,
+  output: polkit,
+  po_dir: po_dir,
+  install: true,
+  install_dir: join_paths(control_center_datadir, 'polkit-1', 'actions')
+)
+
 sources = files(
   'cc-region-panel.c',
   'cc-format-chooser.c',
-  'cc-ibus-utils.c',
-  'cc-input-chooser.c',
-  'cc-input-row.c',
-  'cc-input-source.c',
-  'cc-input-source-ibus.c',
-  'cc-input-source-xkb.c',
 )
 
 resource_data = files(
   'cc-format-chooser.ui',
-  'cc-input-chooser.ui',
   'cc-region-panel.ui',
   'view-layout-symbolic.svg',
 )
@@ -49,10 +62,6 @@ deps = common_deps + [
   liblanguage_dep,
   polkit_gobject_dep
 ]
-
-if enable_ibus
-  deps += ibus_dep
-endif
 
 panels_libs += static_library(
   cappletname,

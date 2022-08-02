@@ -1,0 +1,511 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.22.1 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkScrolledWindow" id="font-main-scrolled-window">
+    <property name="height_request">400</property>
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="hscrollbar_policy">never</property>
+    <child>
+      <object class="GtkViewport" id="font-viewport">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <child>
+          <object class="GtkBox" id="box1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkBox">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="hexpand">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="hexpand">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="pack_type">end</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkBox" id="font-main-box">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">24</property>
+                <property name="margin_right">24</property>
+                <property name="margin_top">32</property>
+                <property name="margin_bottom">32</property>
+                <property name="hexpand">True</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkFrame" id="font-frame">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_bottom">32</property>
+                    <property name="hexpand">True</property>
+                    <property name="label_xalign">0</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <object class="GtkListBox" id="font-listbox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="hexpand">True</property>
+                        <property name="selection_mode">none</property>
+                        <property name="activate_on_single_click">False</property>
+                        <child>
+                          <object class="GtkListBoxRow" id="interface-text-listboxrow">
+                            <property name="height_request">32</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="activatable">False</property>
+                            <property name="selectable">False</property>
+                            <child>
+                              <object class="GtkBox" id="interface-text-box">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="valign">center</property>
+                                <property name="spacing">6</property>
+                                <child>
+                                  <object class="GtkLabel" id="interface-text-label">
+                                    <property name="height_request">32</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="margin_left">12</property>
+                                    <property name="margin_start">12</property>
+                                    <property name="margin_top">8</property>
+                                    <property name="margin_bottom">8</property>
+                                    <property name="hexpand">True</property>
+                                    <property name="label" translatable="yes">Interface Text</property>
+                                    <property name="use_underline">True</property>
+                                    <property name="xalign">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkFontButton" id="interface-fontbutton">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="halign">end</property>
+                                    <property name="valign">center</property>
+                                    <property name="margin_right">15</property>
+                                    <property name="font">Sans 12</property>
+                                    <property name="language">ko-kr</property>
+                                    <property name="preview_text"/>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkListBoxRow" id="doc-text-listboxrow">
+                            <property name="height_request">32</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="activatable">False</property>
+                            <property name="selectable">False</property>
+                            <child>
+                              <object class="GtkBox" id="doc-text-box">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="valign">center</property>
+                                <child>
+                                  <object class="GtkLabel" id="doc-text-label">
+                                    <property name="height_request">32</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="margin_left">12</property>
+                                    <property name="margin_start">12</property>
+                                    <property name="margin_top">8</property>
+                                    <property name="margin_bottom">8</property>
+                                    <property name="hexpand">True</property>
+                                    <property name="label" translatable="yes">Document Text</property>
+                                    <property name="use_underline">True</property>
+                                    <property name="xalign">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkFontButton" id="doc-text-fontbutton">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="halign">end</property>
+                                    <property name="valign">center</property>
+                                    <property name="margin_right">15</property>
+                                    <property name="font">Sans 12</property>
+                                    <property name="language">ko-kr</property>
+                                    <property name="preview_text"/>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkListBoxRow" id="mono-text-listboxrow">
+                            <property name="height_request">32</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="activatable">False</property>
+                            <property name="selectable">False</property>
+                            <child>
+                              <object class="GtkBox" id="mono-text-box">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="valign">center</property>
+                                <child>
+                                  <object class="GtkLabel" id="mono-text-label">
+                                    <property name="height_request">32</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="margin_left">12</property>
+                                    <property name="margin_start">12</property>
+                                    <property name="margin_top">8</property>
+                                    <property name="margin_bottom">8</property>
+                                    <property name="hexpand">True</property>
+                                    <property name="label" translatable="yes">Monospace Text</property>
+                                    <property name="use_underline">True</property>
+                                    <property name="xalign">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkFontButton" id="mono-text-fontbutton">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="halign">end</property>
+                                    <property name="valign">center</property>
+                                    <property name="margin_right">15</property>
+                                    <property name="font">Sans 12</property>
+                                    <property name="language">ko-kr</property>
+                                    <property name="preview_text"/>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkListBoxRow" id="windowtitle-text-listboxrow">
+                            <property name="height_request">32</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="activatable">False</property>
+                            <property name="selectable">False</property>
+                            <child>
+                              <object class="GtkBox" id="windowtitle-text-box">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="valign">center</property>
+                                <child>
+                                  <object class="GtkLabel" id="windowtitle-text-label">
+                                    <property name="height_request">32</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="margin_left">12</property>
+                                    <property name="margin_start">12</property>
+                                    <property name="margin_top">8</property>
+                                    <property name="margin_bottom">8</property>
+                                    <property name="hexpand">True</property>
+                                    <property name="label" translatable="yes">Legacy Window Titles</property>
+                                    <property name="use_underline">True</property>
+                                    <property name="xalign">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkFontButton" id="windowtitle-text-fontbutton">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="receives_default">True</property>
+                                    <property name="halign">end</property>
+                                    <property name="valign">center</property>
+                                    <property name="margin_right">15</property>
+                                    <property name="font">Sans 12</property>
+                                    <property name="language">ko-kr</property>
+                                    <property name="preview_text"/>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child type="label_item">
+                      <placeholder/>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_bottom">12</property>
+                    <property name="label" translatable="yes" comments="List of applications.">Font Rendering Settings</property>
+                    <property name="xalign">0</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkFrame" id="render-frame">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_bottom">32</property>
+                    <property name="hexpand">True</property>
+                    <property name="label_xalign">0</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <object class="GtkListBox" id="render-listbox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="selection_mode">none</property>
+                        <child>
+                          <object class="GtkListBoxRow" id="hint-listboxrow">
+                            <property name="height_request">32</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="activatable">False</property>
+                            <property name="selectable">False</property>
+                            <child>
+                              <object class="GtkBox" id="hint-box">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="valign">center</property>
+                                <child>
+                                  <object class="GtkLabel" id="hint-label">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="margin_left">12</property>
+                                    <property name="margin_start">12</property>
+                                    <property name="margin_top">8</property>
+                                    <property name="margin_bottom">8</property>
+                                    <property name="hexpand">True</property>
+                                    <property name="label" translatable="yes">Legacy Window Titles</property>
+                                    <property name="use_underline">True</property>
+                                    <property name="xalign">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkComboBoxText" id="hint-combobox">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="margin_right">15</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_bottom">10</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkListBoxRow" id="antialiasing-listboxrow">
+                            <property name="height_request">32</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="activatable">False</property>
+                            <property name="selectable">False</property>
+                            <child>
+                              <object class="GtkBox" id="antialiasing-box">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="valign">center</property>
+                                <child>
+                                  <object class="GtkLabel" id="antialiasing-label">
+                                    <property name="height_request">32</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="margin_left">12</property>
+                                    <property name="margin_start">12</property>
+                                    <property name="margin_top">8</property>
+                                    <property name="margin_bottom">8</property>
+                                    <property name="hexpand">True</property>
+                                    <property name="label" translatable="yes">AntiAliasing</property>
+                                    <property name="use_underline">True</property>
+                                    <property name="xalign">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkComboBoxText" id="antialiasing-combobox">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="margin_right">15</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_bottom">10</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <!--<child>
+                          <object class="GtkListBoxRow" id="scale-listboxrow">
+                            <property name="height_request">32</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="activatable">False</property>
+                            <property name="selectable">False</property>
+                            <child>
+                              <object class="GtkBox" id="scale-box">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <child>
+                                  <object class="GtkLabel" id="scale-label">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="margin_left">12</property>
+                                    <property name="margin_top">8</property>
+                                    <property name="margin_bottom">8</property>
+                                    <property name="ypad">2</property>
+                                    <property name="label" translatable="yes">Scale Constant</property>
+                                    <property name="use_underline">True</property>
+                                    <property name="xalign">0</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkButtonBox" id="scale-bbox">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="halign">end</property>
+                                    <property name="valign">center</property>
+                                    <property name="margin_right">15</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_bottom">10</property>
+                                    <property name="homogeneous">True</property>
+                                    <property name="layout_style">start</property>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="pack_type">end</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>-->
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkSizeGroup" id="sizegroup1">
+    <property name="mode">both</property>
+  </object>
+</interface>

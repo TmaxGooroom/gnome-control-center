@@ -115,6 +115,21 @@
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkCheckButton" id="home_directory_encrypt">
+                    <property name="label" translatable="yes">Home directory _Encryption</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="tooltip_text" translatable="yes">Encrypt all files in user's home directory with user's login password to protect sensitive data from people who can access to user's computer.</property>
+                    <property name="use_underline">True</property>
+                    <property name="draw_indicator">True</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">3</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkLabel" id="local_username_hint_label">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
@@ -136,7 +151,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">3</property>
+                    <property name="top_attach">4</property>
                   </packing>
                 </child>
                 <child>
@@ -256,7 +271,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">4</property>
+                    <property name="top_attach">5</property>
                   </packing>
                 </child>
                 <child>
@@ -297,7 +312,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">5</property>
+                    <property name="top_attach">6</property>
                     <property name="width">2</property>
                     <property name="height">1</property>
                   </packing>
@@ -317,7 +332,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">6</property>
+                    <property name="top_attach">7</property>
                     <property name="width">1</property>
                     <property name="height">1</property>
                   </packing>
@@ -335,6 +350,7 @@
                     <property name="activates_default">True</property>
                     <property name="input_purpose">password</property>
                     <signal name="notify::text" handler="local_password_entry_changed_cb" object="CcAddUserDialog" swapped="yes"/>
+                    <signal name="notify::text" handler="clear_verify_entry" object="CcAddUserDialog" swapped="yes"/>
                     <signal name="icon-press" handler="local_password_entry_icon_press_cb" object="CcAddUserDialog" swapped="yes"/>
                     <signal name="focus-out-event" handler="password_focus_out_event_cb" after="yes" object="CcAddUserDialog" swapped="yes"/>
                     <signal name="key-press-event" handler="local_password_entry_key_press_event_cb" object="CcAddUserDialog" swapped="yes"/>
@@ -342,7 +358,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">6</property>
+                    <property name="top_attach">7</property>
                     <property name="width">1</property>
                     <property name="height">1</property>
                   </packing>
@@ -364,7 +380,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">7</property>
+                    <property name="top_attach">8</property>
                     <property name="width">1</property>
                     <property name="height">1</property>
                   </packing>
@@ -392,7 +408,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">8</property>
+                    <property name="top_attach">9</property>
                     <property name="width">1</property>
                     <property name="height">1</property>
                   </packing>
@@ -412,7 +428,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">9</property>
+                    <property name="top_attach">10</property>
                     <property name="width">1</property>
                     <property name="height">1</property>
                   </packing>
@@ -433,7 +449,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">9</property>
+                    <property name="top_attach">10</property>
                     <property name="width">1</property>
                     <property name="height">1</property>
                   </packing>
@@ -459,7 +475,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">10</property>
+                    <property name="top_attach">11</property>
                     <property name="width">1</property>
                     <property name="height">1</property>
                   </packing>
@@ -820,6 +836,7 @@
   </object>
   <object class="GtkSizeGroup">
     <widgets>
+      <widget name="home_directory_encrypt"/>
       <widget name="local_username_combo"/>
       <widget name="local_username_hint_label"/>
       <widget name="local_name_entry"/>

@@ -256,7 +256,7 @@ cc_keyboard_option_constructed (GObject *object)
   self->store = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_STRING);
   gtk_list_store_append (self->store, &iter);
   gtk_list_store_set (self->store, &iter,
-                      XKB_OPTION_DESCRIPTION_COLUMN, _("Disabled"),
+                      XKB_OPTION_DESCRIPTION_COLUMN, _("Not use"),
                       XKB_OPTION_ID_COLUMN, NULL,
                       -1);
   options = gnome_xkb_info_get_options_for_group (xkb_info, self->group);
@@ -375,7 +375,7 @@ cc_keyboard_option_get_current_value_description (CcKeyboardOption *self)
   g_return_val_if_fail (CC_IS_KEYBOARD_OPTION (self), NULL);
 
   if (!self->current_value)
-    return _("Disabled");
+    return _("Not use");
 
   return gnome_xkb_info_description_for_option (xkb_info, self->group, self->current_value);
 }

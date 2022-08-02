@@ -1,6 +1,7 @@
 /* cc-panel-list.c
  *
  * Copyright (C) 2016 Endless, Inc
+ * Copyright (C) 2019 gooroom <gooroom@gooroom.kr>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,6 +44,8 @@ struct _CcPanelList
   GtkStack            parent;
 
   GtkWidget          *privacy_listbox;
+  GtkWidget          *devices_listbox;
+  GtkWidget          *details_listbox;
   GtkWidget          *main_listbox;
   GtkWidget          *search_listbox;
 
@@ -52,6 +55,8 @@ struct _CcPanelList
   gboolean            autoselect_panel : 1;
 
   GtkListBoxRow      *privacy_row;
+  GtkListBoxRow      *devices_row;
+  GtkListBoxRow      *details_row;
 
   gchar              *current_panel_id;
   gchar              *search_query;
@@ -97,6 +102,12 @@ get_widget_from_view (CcPanelList     *self,
     case CC_PANEL_LIST_PRIVACY:
       return self->privacy_listbox;
 
+    case CC_PANEL_LIST_DEVICES:
+      return self->devices_listbox;
+
+    case CC_PANEL_LIST_DETAILS:
+      return self->details_listbox;
+
     case CC_PANEL_LIST_SEARCH:
       return self->search_listbox;
 
@@ -117,6 +128,14 @@ get_listbox_from_category (CcPanelList     *self,
     {
     case CC_CATEGORY_PRIVACY:
       return self->privacy_listbox;
+      break;
+
+    case CC_CATEGORY_DEVICES:
+      return self->devices_listbox;
+      break;
+
+    case CC_CATEGORY_DETAILS:
+      return self->details_listbox;
       break;
 
     default:
@@ -156,6 +175,12 @@ get_view_from_listbox (CcPanelList *self,
 
   if (listbox == self->privacy_listbox)
     return CC_PANEL_LIST_PRIVACY;
+
+  if (listbox == self->devices_listbox)
+    return CC_PANEL_LIST_DEVICES;
+
+  if (listbox == self->details_listbox)
+    return CC_PANEL_LIST_DETAILS;
 
   return CC_PANEL_LIST_SEARCH;
 }
@@ -240,6 +265,12 @@ get_panel_id_from_row (CcPanelList   *self,
 
   if (row == self->privacy_row)
     return "privacy";
+
+  if (row == self->devices_row)
+    return "devices";
+
+  if (row == self->details_row)
+    return "details";
 
   row_data = g_object_get_data (G_OBJECT (row), "data");
 
@@ -390,12 +421,21 @@ static const gchar * const panel_order[] = {
   "mobile-broadband",
   "bluetooth",
   "background",
-  "notifications",
-  "search",
+  "font",
+  "themes",
   "applications",
+  "sound",
+  "power",
+  "region",
+  "universal-access",
   "privacy",
-  "online-accounts",
-  "sharing",
+  "devices",
+  "details",
+  /* Removed with low usability. */
+//  "notifications",
+//  "search",
+//  "online-accounts",
+//  "sharing",
 
   /* Privacy page */
   "location",
@@ -407,8 +447,6 @@ static const gchar * const panel_order[] = {
   "diagnostics",
 
   /* Devices page */
-  "sound",
-  "power",
   "display",
   "mouse",
   "keyboard",
@@ -418,8 +456,6 @@ static const gchar * const panel_order[] = {
   "color",
 
   /* Details page */
-  "region",
-  "universal-access",
   "user-accounts",
   "default-apps",
   "reset-settings",
@@ -516,6 +552,11 @@ header_func (GtkListBoxRow *row,
   if (row == self->privacy_row || before == self->privacy_row)
     return;
 
+  if (row == self->devices_row || before == self->devices_row)
+    return;
+
+  if (row == self->details_row || before == self->details_row)
+    return;
   /*
    * We can only retrieve the data after assuring that none
    * of the rows are the Privacy row.
@@ -523,20 +564,40 @@ header_func (GtkListBoxRow *row,
   row_data = g_object_get_data (G_OBJECT (row), "data");
   before_data = g_object_get_data (G_OBJECT (before), "data");
 
-  if (row_data->category != before_data->category)
-    {
-      GtkWidget *separator;
+  gtk_list_box_row_set_header (row, NULL);
+//  if (row_data->category != before_data->category)
+//    {
+//      GtkWidget *separator;
+//
+//      separator = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
+//      gtk_widget_set_hexpand (separator, TRUE);
+//      gtk_widget_show (separator);
+//
+//      gtk_list_box_row_set_header (row, separator);
+//    }
+//  else
+//    {
+//      gtk_list_box_row_set_header (row, NULL);
+//    }
+}
 
-      separator = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
-      gtk_widget_set_hexpand (separator, TRUE);
-      gtk_widget_show (separator);
+// set visible details_row & devices_row
+static void 
+show_panel_list_row_box (GtkWidget *listbox, GtkWidget *row)
+{
+  GList   *child_list, *l;
 
-      gtk_list_box_row_set_header (row, separator);
-    }
-  else
+  gtk_widget_hide ((GtkWidget*)row);
+  child_list = gtk_container_get_children (GTK_CONTAINER (listbox));
+  for (l = child_list; l != NULL; l = l->next)
+  {
+    RowData *rd = g_object_get_data (l->data, "data");
+    if (gtk_widget_get_visible (rd->row))
     {
-      gtk_list_box_row_set_header (row, NULL);
+      gtk_widget_show ((GtkWidget*)row);
+      break;
     }
+  }
 }
 
 /*
@@ -548,10 +609,23 @@ row_activated_cb (GtkWidget     *listbox,
                   CcPanelList   *self)
 {
   RowData *data;
+  GList   *child_list, *l;
 
   if (row == self->privacy_row)
     {
       switch_to_view (self, CC_PANEL_LIST_PRIVACY);
+      goto out;
+    }
+
+  if (row == self->devices_row)
+    {
+      switch_to_view (self, CC_PANEL_LIST_DEVICES);
+      goto out;
+    }
+
+  if (row == self->details_row)
+    {
+      switch_to_view (self, CC_PANEL_LIST_DETAILS);
       goto out;
     }
 
@@ -566,7 +640,17 @@ row_activated_cb (GtkWidget     *listbox,
 
       if (listbox != self->privacy_listbox)
         gtk_list_box_unselect_all (GTK_LIST_BOX (self->privacy_listbox));
+
+      if (listbox != self->devices_listbox)
+        gtk_list_box_unselect_all (GTK_LIST_BOX (self->devices_listbox));
+
+      if (listbox != self->details_listbox)
+        gtk_list_box_unselect_all (GTK_LIST_BOX (self->details_listbox));
     }
+
+  // visible details & devices list row box
+  //show_panel_list_row_box (self->details_listbox, self->details_row);
+  //show_panel_list_row_box (self->devices_listbox, self->devices_row);
 
   /*
    * Since we're not sure that the activated row is in the
@@ -613,6 +697,10 @@ search_row_activated_cb (GtkWidget     *listbox,
 
   if (data->category == CC_CATEGORY_PRIVACY)
     real_listbox = self->privacy_listbox;
+  else if (data->category == CC_CATEGORY_DEVICES)
+    real_listbox = self->devices_listbox;
+  else if (data->category == CC_CATEGORY_DETAILS)
+    real_listbox = self->details_listbox;
   else
     real_listbox = self->main_listbox;
 
@@ -783,6 +871,10 @@ cc_panel_list_class_init (CcPanelListClass *klass)
 
   gtk_widget_class_bind_template_child (widget_class, CcPanelList, privacy_listbox);
   gtk_widget_class_bind_template_child (widget_class, CcPanelList, privacy_row);
+  gtk_widget_class_bind_template_child (widget_class, CcPanelList, devices_listbox);
+  gtk_widget_class_bind_template_child (widget_class, CcPanelList, devices_row);
+  gtk_widget_class_bind_template_child (widget_class, CcPanelList, details_listbox);
+  gtk_widget_class_bind_template_child (widget_class, CcPanelList, details_row);
   gtk_widget_class_bind_template_child (widget_class, CcPanelList, main_listbox);
   gtk_widget_class_bind_template_child (widget_class, CcPanelList, search_listbox);
 
@@ -805,6 +897,16 @@ cc_panel_list_init (CcPanelList *self)
                               NULL);
 
   gtk_list_box_set_sort_func (GTK_LIST_BOX (self->privacy_listbox),
+                              sort_function,
+                              self,
+                              NULL);
+
+  gtk_list_box_set_sort_func (GTK_LIST_BOX (self->devices_listbox),
+                              sort_function,
+                              self,
+                              NULL);
+
+  gtk_list_box_set_sort_func (GTK_LIST_BOX (self->details_listbox),
                               sort_function,
                               self,
                               NULL);
@@ -847,10 +949,21 @@ cc_panel_list_activate (CcPanelList *self)
   if (!GTK_IS_LIST_BOX (listbox))
     CC_RETURN (FALSE);
 
-  /* Select the first visible row */
-  do
-    row = gtk_list_box_get_row_at_index (GTK_LIST_BOX (listbox), i++);
-  while (row && !gtk_widget_get_visible (GTK_WIDGET (row)));
+  /* 패널 검색에서 텍스트를 입력 후 Enter 또는 뒤로 가기를 한 경우
+     무조건 privacy패널을 선택하는 오류가 있어서 주석처리함... */
+//  /* Select the first visible row */
+//  do
+//    row = gtk_list_box_get_row_at_index (GTK_LIST_BOX (listbox), i++);
+//  while (row && !gtk_widget_get_visible (GTK_WIDGET (row)));
+
+  if (self->view == CC_PANEL_LIST_SEARCH)
+    row = gtk_list_box_get_row_at_y (GTK_LIST_BOX (listbox), 0);
+  else   
+    {  
+      row = gtk_list_box_get_selected_row (GTK_LIST_BOX (listbox));
+      if (!row)
+        row = gtk_list_box_get_row_at_index (GTK_LIST_BOX (listbox), 0);
+    }
 
   /* If the row is valid, activate it */
   if (row)
@@ -965,6 +1078,12 @@ cc_panel_list_add_panel (CcPanelList        *self,
   /* Only show the Devices/Details rows when there's at least one panel */
   if (category == CC_CATEGORY_PRIVACY)
     gtk_widget_show (GTK_WIDGET (self->privacy_row));
+
+  if (category == CC_CATEGORY_DEVICES)
+    gtk_widget_show (GTK_WIDGET (self->devices_row));
+
+  if (category == CC_CATEGORY_DETAILS)
+    gtk_widget_show (GTK_WIDGET (self->details_row));
 }
 
 /**

@@ -787,7 +787,8 @@ cc_keyboard_item_is_value_default (CcKeyboardItem *self)
       default_binding = get_binding_from_variant (default_value);
       user_binding = get_binding_from_variant (user_value);
 
-      is_value_default = (g_strcmp0 (default_binding, user_binding) == 0);
+      is_value_default = ((g_strcmp0 (default_binding, user_binding) == 0) ||
+                          ((!user_binding) && g_strcmp0 (default_binding, """") == 0));
 
       g_clear_pointer (&default_value, g_variant_unref);
     }

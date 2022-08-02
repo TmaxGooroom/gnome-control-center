@@ -41,6 +41,10 @@ gint bg_source_get_thumbnail_height (BgSource *source);
 
 gint bg_source_get_thumbnail_width (BgSource *source);
 
+void bg_source_set_thumbnail_height (BgSource *source, gint height);
+
+void bg_source_set_thumbnail_width (BgSource *source, gint width);
+
 GnomeDesktopThumbnailFactory* bg_source_get_thumbnail_factory (BgSource *source);
 
 G_END_DECLS

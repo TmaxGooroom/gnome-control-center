@@ -111,7 +111,7 @@
                                         </child>
                                         <child>
                                           <object class="GtkButton">
-                                            <property name="visible">True</property>
+                                            <property name="visible">False</property>
                                             <property name="label" translatable="yes">Test</property>
                                             <signal name="clicked" handler="test_output_configuration_button_clicked_cb" object="CcSoundPanel" swapped="yes"/>
                                           </object>

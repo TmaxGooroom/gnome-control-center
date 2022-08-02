@@ -365,7 +365,7 @@ convert_keysym_state_to_string (CcKeyCombo *combo)
       /* This label is displayed in a treeview cell displaying
        * a disabled accelerator key combination.
        */
-      name = g_strdup (_("Disabled"));
+      name = g_strdup (_("Not use"));
     }
   else
     {

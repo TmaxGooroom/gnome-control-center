@@ -42,7 +42,7 @@ struct _CcNightLightPage {
   GtkListBox          *listbox;
   GtkWidget           *scale_color_temperature;
   GtkWidget           *night_light_toggle_switch;
-  GtkComboBox         *schedule_type_combo;
+//  GtkComboBox         *schedule_type_combo;
   GtkWidget           *spinbutton_from_hours;
   GtkWidget           *spinbutton_from_minutes;
   GtkWidget           *spinbutton_to_hours;
@@ -144,7 +144,7 @@ dialog_update_state (CcNightLightPage *self)
 
   gtk_widget_set_sensitive (self->box_manual, enabled && !automatic);
 
-  gtk_combo_box_set_active_id (self->schedule_type_combo, automatic ? "automatic" : "manual");
+//  gtk_combo_box_set_active_id (self->schedule_type_combo, automatic ? "automatic" : "manual");
 
   /* set from */
   if (automatic && self->proxy_color != NULL)
@@ -220,7 +220,7 @@ build_schedule_combo_row (CcNightLightPage *self)
 
   gtk_widget_set_sensitive (self->box_manual, enabled && !automatic);
 
-  gtk_combo_box_set_active_id (self->schedule_type_combo, automatic ? "automatic" : "manual");
+//  gtk_combo_box_set_active_id (self->schedule_type_combo, automatic ? "automatic" : "manual");
 
   self->ignore_value_changed = FALSE;
 }
@@ -591,7 +591,7 @@ cc_night_light_page_class_init (CcNightLightPageClass *klass)
   gtk_widget_class_bind_template_child (widget_class, CcNightLightPage, infobar_disabled);
   gtk_widget_class_bind_template_child (widget_class, CcNightLightPage, listbox);
   gtk_widget_class_bind_template_child (widget_class, CcNightLightPage, night_light_toggle_switch);
-  gtk_widget_class_bind_template_child (widget_class, CcNightLightPage, schedule_type_combo);
+//  gtk_widget_class_bind_template_child (widget_class, CcNightLightPage, schedule_type_combo);
   gtk_widget_class_bind_template_child (widget_class, CcNightLightPage, scale_color_temperature);
   gtk_widget_class_bind_template_child (widget_class, CcNightLightPage, spinbutton_from_hours);
   gtk_widget_class_bind_template_child (widget_class, CcNightLightPage, spinbutton_from_minutes);

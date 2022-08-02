@@ -74,6 +74,7 @@ struct _CcInputChooser
   gchar            **filter_words;
 
   gboolean           is_login;
+  gchar             *filter_text;
 };
 
 G_DEFINE_TYPE (CcInputChooser, cc_input_chooser, GTK_TYPE_DIALOG)
@@ -556,8 +557,11 @@ do_filter (CcInputChooser *self)
 
   self->filter_timeout_id = 0;
 
+  if (!self->filter_text)
+    return G_SOURCE_REMOVE;
+
   filter_contents =
-    cc_util_normalize_casefold_and_unaccent (gtk_entry_get_text (GTK_ENTRY (self->filter_entry)));
+    cc_util_normalize_casefold_and_unaccent (self->filter_text);
 
   previous_words = self->filter_words;
   self->filter_words = g_strsplit_set (g_strstrip (filter_contents), " ", 0);
@@ -579,6 +583,26 @@ do_filter (CcInputChooser *self)
 static void
 on_filter_entry_search_changed_cb (CcInputChooser *self)
 {
+  g_free (self->filter_text);
+
+  self->filter_text = g_strdup (gtk_entry_get_text (GTK_ENTRY (self->filter_entry)));
+
+  if (self->filter_timeout_id == 0)
+    self->filter_timeout_id = g_timeout_add (FILTER_TIMEOUT, (GSourceFunc) do_fillter, self);
+}
+
+static void
+on_filter_entry_search_preedit_changed_cb (GtkEntry       *entry,
+                                           gchar          *preedit,
+                                           CcInputChooser *self)
+{
+  const gchar *text;
+
+  text = gtk_entry_get_text (GTK_ENTRY (entry));
+
+  g_free (self->filter_text);
+  self->filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
+
   if (self->filter_timeout_id == 0)
     self->filter_timeout_id = g_timeout_add (FILTER_TIMEOUT, (GSourceFunc) do_filter, self);
 }
@@ -987,6 +1011,7 @@ cc_input_chooser_dispose (GObject *object)
   g_clear_pointer (&self->locales, g_hash_table_unref);
   g_clear_pointer (&self->locales_by_language, g_hash_table_unref);
   g_clear_pointer (&self->filter_words, g_strfreev);
+  g_clear_pointer (&self->filter_text, g_free);
   g_clear_handle_id (&self->filter_timeout_id, g_source_remove);
 
   G_OBJECT_CLASS (cc_input_chooser_parent_class)->dispose (object);
@@ -1012,6 +1037,7 @@ cc_input_chooser_class_init (CcInputChooserClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, on_input_sources_listbox_selected_rows_changed_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_input_sources_listbox_button_release_event_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_filter_entry_search_changed_cb);
+  gtk_widget_class_bind_template_callback (widget_class, on_filter_entry_search_preedit_changed_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_filter_entry_key_release_event_cb);
 }
 
@@ -1033,6 +1059,7 @@ cc_input_chooser_new (gboolean      is_login,
                        "use-header-bar", 1,
                        NULL);
 
+  self->filter_text = NULL;
   self->is_login = is_login;
   self->xkb_info = g_object_ref (xkb_info);
   if (ibus_engines)

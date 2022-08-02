@@ -1,0 +1,16 @@
+[Gooroom Theme 1]
+Name=Gooroom Icon Theme 1
+Background=file:///usr/share/backgrounds/gooroom/gooroom_bg_13.jpg
+Icon=Gooroom-Numix-Circle
+[Gooroom Theme 2]
+Name=Gooroom Icon Theme 2
+Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_1.jpg
+Icon=Gooroom-Arc
+[Gooroom Theme 3]
+Name=Gooroom Icon Theme 3
+Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_2.jpg
+Icon=Gooroom-Faenza
+[Gooroom Theme 4]
+Name=Gooroom Icon Theme 4
+Background=file:///usr/share/backgrounds/gooroom/gooroom_theme_bg_3.jpg
+Icon=Gooroom-Papirus

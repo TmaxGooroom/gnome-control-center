@@ -515,6 +515,15 @@ gvc_mixer_stream_set_base_volume (GvcMixerStream *stream,
         return TRUE;
 }
 
+void
+sync_effects_base_volume_and_scale (GvcMixerStream *stream)
+{
+    gboolean result = NULL;
+    if (stream->priv->base_volume == 65536) {
+        result = gvc_mixer_stream_set_base_volume (stream, 1);
+    }
+}
+
 const GvcMixerStreamPort *
 gvc_mixer_stream_get_port (GvcMixerStream *stream)
 {

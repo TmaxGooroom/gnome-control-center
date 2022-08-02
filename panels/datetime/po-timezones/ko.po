@@ -1031,7 +1031,7 @@ msgstr "아메리카/나소(Nassau)"
 
 #: timezones.h:301
 msgid "America/New_York"
-msgstr "아메리카/뉴_욕(New_York)"
+msgstr "아메리카/뉴욕(New_York)"
 
 #. comment for time zone America/New_York
 #: timezones.h:303
@@ -1077,6 +1077,9 @@ msgstr "중부 표준시 - 노스 다코타 - 올리버 카운티 "
 #: timezones.h:316
 msgid "America/North_Dakota/New_Salem"
 msgstr "아메리카/북 다코타/뉴살렘(New_Salem)"
+
+msgid "America/North_Dakota/Beulah"
+msgstr "아메리카/북 다코타/뷰러(Beulah)"
 
 #. comment for time zone America/North_Dakota/New_Salem
 #: timezones.h:318
@@ -1636,7 +1639,7 @@ msgstr "아시아/호치민 (Ho_Chi_Minh)  "
 
 #: timezones.h:493
 msgid "Asia/Hong_Kong"
-msgstr "아시아/홍_콩(Hong_Kong)"
+msgstr "아시아/홍콩(Hong_Kong)"
 
 #: timezones.h:494
 msgid "Asia/Hovd"
@@ -3244,3 +3247,74 @@ msgstr "W-SU"
 msgid "Zulu"
 msgstr "줄루(Zulu)"
 
+msgid "Antarctica/Troll"
+msgstr "남극대륙/트롤(Troll)"
+
+msgid "America/Kralendijk"
+msgstr "아메리카/크랄렌데이크(Kralendijk)"
+
+msgid "America/Creston"
+msgstr "아메리카/크레스턴(Creston)"
+
+msgid "America/Fort_Nelson"
+msgstr "아메리카/포르 넬슨(Fort_Nelskghn)"
+
+msgid "America/Punta_Arenas"
+msgstr "아메리카/푼타아레나스(Punta_Arenas)"
+
+msgid "Asia/Famagusta"
+msgstr "아시아/파마구스타(Famagusta)"
+
+msgid "Europe/Busingen"
+msgstr "유럽/뷔징겐(Busingen)"
+
+msgid "America/Nuuk"
+msgstr "아메리카/누크(Nuuk)"
+
+msgid "Asia/Qostanay"
+msgstr "아시아/쿼스타나이(Qostanay)"
+
+msgid "Asia/Yangon"
+msgstr "아시아/양곤(Yangon)"
+
+msgid "Pacific/Bougainville"
+msgstr "태평양/부건빌(Bougainville)"
+
+msgid "Asia/Hebron"
+msgstr "아시아/히브론(Hebron)"
+
+msgid "Europe/Kirov"
+msgstr "유럽/키로프(Kirov)"
+
+msgid "Europe/Astrakhan"
+msgstr "유럽/아스트라한(Astrakhan)"
+
+msgid "Europe/Saratov"
+msgstr "유럽/사라토프(Saratov)"
+
+msgid "Europe/Ulyanovsk"
+msgstr "유럽/울랴노브스크(Ulyanovsk)"
+
+msgid "Asia/Barnaul"
+msgstr "아시아/바르나울(Barnaul)"
+
+msgid "Asia/Tomsk"
+msgstr "아시아/톰스크(Tomsk)"
+
+msgid "Asia/Khandyga"
+msgstr "아시아/한디가(Khandyga)"
+
+msgid "Asia/Ust-Nera"
+msgstr "아시아/우스네라(Ust-Nera)"
+
+msgid "Africa/Juba"
+msgstr "아프리카/주바(Juba)"
+
+msgid "America/Lower_Princes"
+msgstr "아메리카/로월프린스(Lower_Princes)"
+
+msgid "America/Sitka"
+msgstr "아메리카/싯카(Sitka)"
+
+msgid "America/Metlakatla"
+msgstr "아메리카/메틀라카틀라(Metlakatla)"

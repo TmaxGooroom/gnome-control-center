@@ -13,7 +13,8 @@
 
 	<KeyListEntry name="home" description="Home folder"/>
 
-	<KeyListEntry name="search" description="Search" msgctxt="keybinding">Search</KeyListEntry>
+	<!--KeyListEntry name="search" description="Search" msgctxt="keybinding">Search</KeyListEntry-->
+	<KeyListEntry name="search" description="Search"/>
 
 </KeyListEntries>
 

@@ -259,5 +259,13 @@ shell/cc-window.ui
 shell/gnome-control-center.desktop.in.in
 shell/help-overlay.ui
 shell/org.gnome.ControlCenter.gschema.xml
+panels/font/gnome-font-panel.desktop.in/in
+panels/font/cc-font-panel.c
+panels/font/font.ui
+panels/themes/gnome-themes-panel.desktop.in.in
+panels/themes/cc-themes-panel.c
+panels/themes/themes.ui
+panels/font/cc-font-button.c
+panels/font/font-chooser-widget.ui
 # Please do not remove this file from POTFILES.in. Run "git submodule init && git submodule update" to get it.
 subprojects/gvc/gvc-mixer-control.c

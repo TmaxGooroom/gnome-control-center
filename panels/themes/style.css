@@ -1,0 +1,28 @@
+.tile-label {
+  font-family: NotoSansCJKkr;
+  font-size: 13px;
+
+  background-color: #eaeaea;
+}
+
+.theme-overlay {
+  background-color: rgba(201,201,201,0.0);
+}
+
+.theme-box {
+  background-color: rgba(201,201,201,0.0);
+}
+
+.theme-box:active {
+  background-color: #3986e1;
+}
+
+.title-label {
+  font-family: NotoSansCJKkr;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+scrolledwindow {
+  border-width: 0px;
+}

@@ -73,6 +73,7 @@ struct _CcWindow
   GtkWidget  *current_panel;
   char       *current_panel_id;
   GQueue     *previous_panels;
+  GMenu      *primary_menu;
 
   GPtrArray  *custom_widgets;
 
@@ -273,6 +274,14 @@ update_list_title (CcWindow *self)
     {
     case CC_PANEL_LIST_PRIVACY:
       title = g_strdup (_("Privacy"));
+      break;
+
+    case CC_PANEL_LIST_DEVICES:
+      title = g_strdup (_("Devices"));
+      break;
+
+    case CC_PANEL_LIST_DETAILS:
+      title = g_strdup (_("Details"));
       break;
 
     case CC_PANEL_LIST_MAIN:
@@ -545,6 +554,22 @@ search_entry_activate_cb (CcWindow *self)
 
   gtk_search_bar_set_search_mode (self->search_bar, !changed);
 }
+
+static void
+search_entry_preedit_changed_cb (GtkEntry *entry,
+                                 gchar    *preedit,
+                                 CcWindow *self)
+{
+  gchar *filter_text = NULL;
+  const gchar *text = gtk_entry_get_text (GTK_ENTRY (self->search_entry));
+
+  filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
+
+  cc_panel_list_set_search_query (CC_PANEL_LIST (self->panel_list), filter_text);
+
+  g_free (filter_text);
+}
+
 
 static void
 back_button_clicked_cb (CcWindow *self)
@@ -889,6 +914,7 @@ cc_window_class_init (CcWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, CcWindow, stack);
   gtk_widget_class_bind_template_child (widget_class, CcWindow, top_left_box);
   gtk_widget_class_bind_template_child (widget_class, CcWindow, top_right_box);
+  gtk_widget_class_bind_template_child (widget_class, CcWindow, primary_menu);
 
   gtk_widget_class_bind_template_callback (widget_class, back_button_clicked_cb);
   gtk_widget_class_bind_template_callback (widget_class, gdk_window_set_cb);
@@ -896,6 +922,7 @@ cc_window_class_init (CcWindowClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, on_development_warning_dialog_responded_cb);
   gtk_widget_class_bind_template_callback (widget_class, previous_button_clicked_cb);
   gtk_widget_class_bind_template_callback (widget_class, search_entry_activate_cb);
+  gtk_widget_class_bind_template_callback (widget_class, search_entry_preedit_changed_cb);
   gtk_widget_class_bind_template_callback (widget_class, show_panel_cb);
   gtk_widget_class_bind_template_callback (widget_class, update_list_title);
   gtk_widget_class_bind_template_callback (widget_class, window_key_press_event_cb);
@@ -919,6 +946,9 @@ cc_window_init (CcWindow *self)
   /* Add a custom CSS class on development builds */
   if (in_flatpak_sandbox ())
     gtk_style_context_add_class (gtk_widget_get_style_context (GTK_WIDGET (self)), "devel");
+
+  if (!g_file_test ("/usr/share/gooroom-yelp-adjustments", G_FILE_TEST_EXISTS))
+    g_menu_remove (self->primary_menu, 1);
 }
 
 CcWindow *

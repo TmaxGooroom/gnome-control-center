@@ -46,6 +46,8 @@ struct _CcUsagePanel
 
 CC_PANEL_REGISTER (CcUsagePanel, cc_usage_panel)
 
+static gboolean run_warning (CcUsagePanel *panel, char *title, const gchar *prompt, const gchar *text, const gchar *button_title);
+
 static void
 purge_after_combo_changed_cb (CcUsagePanel *self)
 {
@@ -89,6 +91,14 @@ set_purge_after_value_for_combo (GtkComboBox  *combo_box,
 
   /* try to make the UI match the purge setting */
   g_settings_get (self->privacy_settings, "old-files-age", "u", &value);
+
+  if (!value)
+    value = 1;
+  else if (value>30)
+    value = 30;
+
+  g_settings_set (self->privacy_settings, "old-files-age", "u", value);
+
   do
     {
       gtk_tree_model_get (model, &iter,
@@ -110,6 +120,7 @@ set_purge_after_value_for_combo (GtkComboBox  *combo_box,
 
 static gboolean
 run_warning (CcUsagePanel *self,
+             char         *title,
              const gchar  *prompt,
              const gchar  *text,
              const gchar  *button_title)
@@ -126,6 +137,7 @@ run_warning (CcUsagePanel *self,
                                    GTK_MESSAGE_WARNING,
                                    GTK_BUTTONS_NONE,
                                    NULL);
+  gtk_window_set_title (GTK_WINDOW (dialog), title);
   g_object_set (dialog,
                 "text", prompt,
                 "secondary-text", text,
@@ -150,7 +162,7 @@ empty_trash (CcUsagePanel *self)
   g_autoptr(GDBusConnection) bus = NULL;
   gboolean result;
 
-  result = run_warning (self,
+  result = run_warning (self, _("Empty Trash"),
                         _("Empty all items from Trash?"),
                         _("All items in the Trash will be permanently deleted."),
                         _("_Empty Trash"));
@@ -173,7 +185,7 @@ purge_temp (CcUsagePanel *self)
   g_autoptr(GDBusConnection) bus = NULL;
   gboolean result;
 
-  result = run_warning (self,
+  result = run_warning (self, _("Purge Temporary Files"),
                         _("Delete all the temporary files?"),
                         _("All the temporary files will be permanently deleted."),
                         _("_Purge Temporary Files"));
@@ -316,6 +328,15 @@ static void
 clear_recent (CcUsagePanel *self)
 {
   GtkRecentManager *m;
+  gboolean result;
+
+  result = run_warning (self, _("Clear Recent"),
+                        _("Clear all items in Recent?"),
+                        _("All items in the Recent will be cleared."),
+                        _("_Clear Recent"));
+
+  if (!result)
+    return;
 
   m = gtk_recent_manager_get_default ();
   gtk_recent_manager_purge_items (m, NULL);

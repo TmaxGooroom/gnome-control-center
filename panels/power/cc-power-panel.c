@@ -3,6 +3,7 @@
  * Copyright (C) 2010 Red Hat, Inc
  * Copyright (C) 2008 William Jon McCann <jmccann@redhat.com>
  * Copyright (C) 2010,2015 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2019 gooroom <gooroom@gooroom.kr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1087,6 +1088,13 @@ combo_time_changed_cb (CcPowerPanel *self, GtkWidget *widget)
 }
 
 static void
+switch_activated_cb (CcPowerPanel *self)
+{
+  if (gtk_switch_get_active (self->suspend_on_ac_switch))
+    combo_time_changed_cb (self, self->suspend_on_ac_delay_combo); 
+}
+
+static void
 set_value_for_combo (GtkComboBox *combo_box, gint value)
 {
   GtkTreeIter iter;
@@ -1481,27 +1489,48 @@ keynav_failed (CcPowerPanel *self, GtkDirectionType direction, GtkWidget *list)
   return FALSE;
 }
 
+//static void
+//combo_idle_delay_changed_cb (CcPowerPanel *self)
+//{
+//  GtkTreeIter iter;
+//  GtkTreeModel *model;
+//  gint value;
+//  gboolean ret;
+//
+//  /* no selection */
+//  ret = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (self->idle_delay_combo), &iter);
+//  if (!ret)
+//    return;
+//
+//  /* get entry */
+//  model = gtk_combo_box_get_model (GTK_COMBO_BOX (self->idle_delay_combo));
+//  gtk_tree_model_get (model, &iter,
+//                      1, &value,
+//                      -1);
+//
+//  /* set both keys */
+//  g_settings_set_uint (self->session_settings, "idle-delay", value);
+//}
+
 static void
-combo_idle_delay_changed_cb (CcPowerPanel *self)
+scale_idle_delay_changed_cb (GtkRange *range, CcPowerPanel *self)
 {
-  GtkTreeIter iter;
-  GtkTreeModel *model;
-  gint value;
+  guint value;
   gboolean ret;
 
-  /* no selection */
-  ret = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (self->idle_delay_combo), &iter);
-  if (!ret)
-    return;
+  value = (guint) gtk_range_get_value (range);
+  value *= 60;
 
-  /* get entry */
-  model = gtk_combo_box_get_model (GTK_COMBO_BOX (self->idle_delay_combo));
-  gtk_tree_model_get (model, &iter,
-                      1, &value,
-                      -1);
-
-  /* set both keys */
   g_settings_set_uint (self->session_settings, "idle-delay", value);
+}
+
+static gchar*
+format_idle_delay_value_cb (GtkScale *scale, gdouble value, gpointer data)
+{
+  if ((gint)value <= 0)
+      return g_strdup (_("Never"));
+
+  return g_strdup_printf (_("%d minute"), (int)value);
 }
 
 static void
@@ -1546,15 +1575,17 @@ add_brightness_row (CcPowerPanel       *self,
   gtk_widget_show (box2);
   w = gtk_label_new ("");
   gtk_widget_show (w);
-  gtk_box_pack_start (GTK_BOX (box2), w, FALSE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (box2), w, FALSE, FALSE, 0);
   gtk_size_group_add_widget (self->charge_sizegroup, w);
 
   scale = g_object_new (CC_TYPE_BRIGHTNESS_SCALE,
                         "device", device,
                         NULL);
+  gtk_scale_set_value_pos (GTK_SCALE (scale), GTK_POS_BOTTOM);
   gtk_widget_show (scale);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label), scale);
-  gtk_box_pack_start (GTK_BOX (box2), scale, TRUE, TRUE, 0);
+  //gtk_label_set_mnemonic_widget (GTK_LABEL (label), scale);
+  gtk_widget_set_size_request (scale, 350, -1);
+  gtk_box_pack_end (GTK_BOX (box2), scale, TRUE, TRUE, 0);
   gtk_size_group_add_widget (self->level_sizegroup, scale);
   *brightness_scale = CC_BRIGHTNESS_SCALE (scale);
 
@@ -1828,7 +1859,10 @@ add_power_saving_section (CcPowerPanel *self)
 {
   GtkWidget *widget, *box, *label, *row;
   GtkWidget *title;
+  GtkWidget *scale;
+  GtkWidget *box2;
   GtkWidget *sw;
+  GtkWidget *w;
   int value;
   g_autofree gchar *s = NULL;
   gboolean can_suspend;
@@ -1918,8 +1952,20 @@ add_power_saving_section (CcPowerPanel *self)
   gtk_widget_show (row);
   box = row_box_new ();
   gtk_container_add (GTK_CONTAINER (row), box);
+
+  box2 = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+  gtk_widget_set_margin_top (box2, 6);
+  gtk_widget_set_margin_bottom (box2, 6);
+  gtk_box_pack_start (GTK_BOX (box), box2, TRUE, TRUE, 0);
+
   title = row_title_new (_("_Dim Screen When Inactive"), NULL, &label);
-  gtk_box_pack_start (GTK_BOX (box), title, TRUE, TRUE, 0);
+  gtk_widget_set_halign (title, GTK_ALIGN_START);
+  gtk_box_pack_start (GTK_BOX (box2), title, TRUE, TRUE, 0);
+
+  w = gtk_label_new (_("Screen dims when the computer operates on battery power."));
+  gtk_widget_set_halign (w, GTK_ALIGN_START);
+  gtk_style_context_add_class (gtk_widget_get_style_context (w), GTK_STYLE_CLASS_DIM_LABEL);
+  gtk_box_pack_start (GTK_BOX (box2), w, TRUE, TRUE, 0);
 
   sw = gtk_switch_new ();
   gtk_widget_show (sw);
@@ -1931,31 +1977,53 @@ add_power_saving_section (CcPowerPanel *self)
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), sw);
   gtk_container_add (GTK_CONTAINER (widget), row);
   gtk_size_group_add_widget (self->row_sizegroup, row);
+  gtk_widget_show_all (row);
+  gtk_widget_set_no_show_all (self->dim_screen_row, TRUE);
 
   row = no_prelight_row_new ();
   gtk_widget_show (row);
   box = row_box_new ();
   gtk_container_add (GTK_CONTAINER (row), box);
-  title = row_title_new (_("_Blank Screen"), NULL, &label);
-  gtk_box_pack_start (GTK_BOX (box), title, TRUE, TRUE, 0);
 
-  self->idle_delay_combo = gtk_combo_box_text_new ();
-  gtk_widget_show (self->idle_delay_combo);
-  gtk_combo_box_set_entry_text_column (GTK_COMBO_BOX (self->idle_delay_combo), 0);
-  gtk_combo_box_set_model (GTK_COMBO_BOX (self->idle_delay_combo),
-                           GTK_TREE_MODEL (self->liststore_idle_time));
+  title = row_title_new (_("_Blank Screen"), NULL, &label);
+  gtk_box_pack_start (GTK_BOX (box), title, FALSE, FALSE, 0);
+//
+//  self->idle_delay_combo = gtk_combo_box_text_new ();
+//  gtk_widget_show (self->idle_delay_combo);
+//  gtk_combo_box_set_entry_text_column (GTK_COMBO_BOX (self->idle_delay_combo), 0);
+//  gtk_combo_box_set_model (GTK_COMBO_BOX (self->idle_delay_combo),
+//                           GTK_TREE_MODEL (self->liststore_idle_time));
+//  value = g_settings_get_uint (self->session_settings, "idle-delay");
+//  set_value_for_combo (GTK_COMBO_BOX (self->idle_delay_combo), value);
+//  g_signal_connect_object (self->idle_delay_combo, "changed",
+//                           G_CALLBACK (combo_idle_delay_changed_cb), self, G_CONNECT_SWAPPED);
+//  gtk_widget_set_valign (self->idle_delay_combo, GTK_ALIGN_CENTER);
+//  gtk_box_pack_start (GTK_BOX (box), self->idle_delay_combo, FALSE, TRUE, 0);
+//  gtk_label_set_mnemonic_widget (GTK_LABEL (label), self->idle_delay_combo);
+//  gtk_container_add (GTK_CONTAINER (widget), row);
+//  gtk_size_group_add_widget (self->row_sizegroup, row);
+
+  scale = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 60, 1);
+  gtk_widget_show (scale);
   value = g_settings_get_uint (self->session_settings, "idle-delay");
-  set_value_for_combo (GTK_COMBO_BOX (self->idle_delay_combo), value);
-  g_signal_connect_object (self->idle_delay_combo, "changed",
-                           G_CALLBACK (combo_idle_delay_changed_cb), self, G_CONNECT_SWAPPED);
-  gtk_widget_set_valign (self->idle_delay_combo, GTK_ALIGN_CENTER);
-  gtk_box_pack_start (GTK_BOX (box), self->idle_delay_combo, FALSE, TRUE, 0);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label), self->idle_delay_combo);
+  gtk_range_set_value (GTK_RANGE (scale), value / 60);
+  g_signal_connect (G_OBJECT (scale), "format-value",
+                    G_CALLBACK (format_idle_delay_value_cb), NULL);
+  g_signal_connect (scale, "value-changed",
+                    G_CALLBACK (scale_idle_delay_changed_cb), self);
+
+  gtk_scale_set_draw_value (GTK_SCALE (scale), TRUE);
+  gtk_scale_set_value_pos (GTK_SCALE (scale), GTK_POS_BOTTOM);
+  gtk_widget_set_margin_top (scale, 6);
+  gtk_widget_set_margin_bottom (scale, 6);
+  gtk_widget_set_size_request (scale, 414, -1);
+  gtk_box_pack_end (GTK_BOX (box), scale, FALSE, TRUE, 0);
   gtk_container_add (GTK_CONTAINER (widget), row);
   gtk_size_group_add_widget (self->row_sizegroup, row);
 
   can_suspend = can_suspend_or_hibernate (self, "CanSuspend");
 
+#if 0
   /* The default values for these settings are unfortunate for us;
    * timeout == 0, action == suspend means 'do nothing' - just
    * as timout === anything, action == nothing.
@@ -1972,6 +2040,7 @@ add_power_saving_section (CcPowerPanel *self)
       g_settings_set_enum (self->gsd_settings, "sleep-inactive-battery-type", GSD_POWER_ACTION_NOTHING);
       g_settings_set_int (self->gsd_settings, "sleep-inactive-battery-timeout", 1800);
     }
+#endif
 
   /* Automatic suspend row */
   if (can_suspend)
@@ -2020,7 +2089,16 @@ add_power_saving_section (CcPowerPanel *self)
 
       g_object_set_data (G_OBJECT (self->suspend_on_ac_delay_combo), "_gsettings_key", "sleep-inactive-ac-timeout");
       value = g_settings_get_int (self->gsd_settings, "sleep-inactive-ac-timeout");
-      set_value_for_combo (GTK_COMBO_BOX (self->suspend_on_ac_delay_combo), value);
+      if (value == 0) {
+        if (gtk_switch_get_active (self->suspend_on_ac_switch))
+          gtk_switch_set_active (self->suspend_on_ac_switch, FALSE);
+        set_value_for_combo (GTK_COMBO_BOX (self->suspend_on_ac_delay_combo), 900);
+      } else {
+        set_value_for_combo (GTK_COMBO_BOX (self->suspend_on_ac_delay_combo), value);
+      }
+
+      g_signal_connect_object (self->suspend_on_ac_switch, "notify::active",
+                               G_CALLBACK (switch_activated_cb), self, G_CONNECT_SWAPPED);
       g_signal_connect_object (self->suspend_on_ac_delay_combo, "changed",
                                G_CALLBACK (combo_time_changed_cb), self, G_CONNECT_SWAPPED);
       g_object_bind_property (self->suspend_on_ac_switch, "active", self->suspend_on_ac_delay_combo, "sensitive",

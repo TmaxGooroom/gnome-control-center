@@ -1,58 +1,384 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.22.1 -->
 <interface>
-  <!-- interface-requires gtk+ 3.0 -->
+  <requires lib="gtk+" version="3.20"/>
   <template class="CcBackgroundPanel" parent="CcPanel">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <child>
+      <placeholder/>
+    </child>
+    <child>
       <object class="GtkBox">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">30</property>
         <property name="orientation">vertical</property>
-
+        <property name="spacing">40</property>
         <child>
-          <object class="HdyClamp">
-            <property name="visible">1</property>
-            <property name="maximum_size">300</property>
-            <property name="tightening_threshold">200</property>
+          <object class="GtkLabel" id="background_label">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="halign">start</property>
+            <property name="margin_top">20</property>
+            <property name="label" translatable="yes">Background</property>
+            <style>
+              <class name="main-label"/>
+            </style>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="scrolled_view">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="shadow_type">in</property>
             <child>
-              <object class="GtkBox">
+              <object class="GtkViewport">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="spacing">24</property>
-                <property name="margin-start">12</property>
-                <property name="margin-end">12</property>
-                <property name="margin-top">18</property>
-                <property name="margin-bottom">18</property>
-                <property name="hexpand">True</property>
                 <child>
-                  <object class="CcBackgroundPreview" id="desktop_preview">
+                  <object class="GtkBox">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="valign">center</property>
+                    <property name="orientation">vertical</property>
+                    <property name="spacing">40</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">40</property>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="visible">False</property>
+                            <property name="can_focus">False</property>
+                            <property name="orientation">vertical</property>
+                            <property name="spacing">10</property>
+                            <child>
+                              <object class="GtkLabel" id="type_label">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="halign">start</property>
+                                <property name="label" translatable="yes">Background Type</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBoxText" id="type_select_combobox">
+                                <property name="width_request">300</property>
+                                <property name="height_request">34</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="halign">start</property>
+                                <property name="model">type-liststore</property>
+                                <signal name="changed" handler="on_type_changed" object="CcBackgroundPanel" swapped="no"/>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="spacing">10</property>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="orientation">vertical</property>
+                                <child>
+                                  <object class="GtkBox" id="desktop_thumbnail_box">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="orientation">vertical</property>
+                                    <child>
+                                      <object class="GtkEventBox" id="desktop_eventbox">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="margin_left">3</property>
+                                        <property name="margin_right">3</property>
+                                        <property name="margin_top">3</property>
+                                        <property name="margin_bottom">3</property>
+                                        <child>
+                                          <object class="GtkOverlay" id="desktop_overlay">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <child>
+                                              <object class="GtkImage" id="desktop_image">
+                                                <property name="width_request">300</property>
+                                                <property name="height_request">188</property>
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">False</property>
+                                              </object>
+                                              <packing>
+                                                <property name="index">-1</property>
+                                              </packing>
+                                            </child>
+                                          </object>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <style>
+                                      <class name="thumbnail-box"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="desktop_label">
+                                    <property name="width_request">300</property>
+                                    <property name="height_request">36</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="margin_left">3</property>
+                                    <property name="margin_right">3</property>
+                                    <property name="margin_top">3</property>
+                                    <property name="label" translatable="yes">Home Background</property>
+                                    <style>
+                                      <class name="mode-label"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkBox" id="lock_box">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="orientation">vertical</property>
+                                <child>
+                                  <object class="GtkBox" id="lock_thumbnail_box">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="orientation">vertical</property>
+                                    <child>
+                                      <object class="GtkEventBox" id="lock_eventbox">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="margin_left">3</property>
+                                        <property name="margin_right">3</property>
+                                        <property name="margin_top">3</property>
+                                        <property name="margin_bottom">3</property>
+                                        <child>
+                                          <object class="GtkOverlay" id="lock_overlay">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <child>
+                                              <object class="GtkImage" id="lock_image">
+                                                <property name="width_request">300</property>
+                                                <property name="height_request">188</property>
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">False</property>
+                                              </object>
+                                              <packing>
+                                                <property name="index">-1</property>
+                                              </packing>
+                                            </child>
+                                          </object>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <style>
+                                      <class name="thumbnail-box"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="lock_label">
+                                    <property name="width_request">300</property>
+                                    <property name="height_request">36</property>
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="margin_left">3</property>
+                                    <property name="margin_right">3</property>
+                                    <property name="margin_top">3</property>
+                                    <property name="label" translatable="yes">Lock Background</property>
+                                    <style>
+                                      <class name="mode-label"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="CcBackgroundChooser" id="chooser">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <signal name="select-background" handler="on_select_background" object="CcBackgroundPanel" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
                   </object>
                 </child>
               </object>
             </child>
           </object>
-        </child>
-
-        <child>
-          <object class="CcBackgroundChooser" id="background_chooser">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
+          <packing>
             <property name="expand">True</property>
-            <signal name="background-chosen" handler="on_chooser_background_chosen_cb" object="CcBackgroundPanel" swapped="yes" />
-          </object>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
         </child>
       </object>
     </child>
   </template>
-
-  <!-- Header button -->
-  <object class="GtkButton" id="add_picture_button">
-    <property name="visible">True</property>
-    <property name="label" translatable="yes">Add Picture…</property>
-    <signal name="clicked" handler="on_add_picture_button_clicked_cb" object="CcBackgroundPanel" swapped="yes" />
+  <object class="GtkListStore" id="image_liststore">
+    <columns>
+      <!-- column-name column1 -->
+      <column type="gchararray"/>
+      <!-- column-name gint1 -->
+      <column type="gint"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Image</col>
+        <col id="1">0</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Color</col>
+        <col id="1">1</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkSizeGroup" id="sizegroup">
+    <property name="mode">vertical</property>
+  </object>
+  <object class="GtkListStore" id="sources-liststore">
+    <columns>
+      <!-- column-name source-name -->
+      <column type="gchararray"/>
+      <!-- column-name source-id -->
+      <column type="guint"/>
+      <!-- column-name source-pointer -->
+      <column type="gpointer"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="style-liststore">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name value -->
+      <column type="gint"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes" context="background, style">Tile</col>
+        <col id="1">1</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes" context="background, style">Zoom</col>
+        <col id="1">5</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes" context="background, style">Center</col>
+        <col id="1">2</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes" context="background, style">Scale</col>
+        <col id="1">3</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes" context="background, style">Fill</col>
+        <col id="1">4</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes" context="background, style">Span</col>
+        <col id="1">6</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkListStore" id="type-liststore">
+    <columns>
+      <!-- column-name column1 -->
+      <column type="gchararray"/>
+      <!-- column-name gint1 -->
+      <column type="gint"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Apply each of home and lock screen</col>
+        <col id="1">0</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Apply same all screen</col>
+        <col id="1">1</col>
+      </row>
+    </data>
   </object>
 </interface>

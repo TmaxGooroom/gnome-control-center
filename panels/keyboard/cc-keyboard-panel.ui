@@ -27,7 +27,8 @@
               <object class="GtkSearchEntry" id="search_entry">
                 <property name="visible">True</property>
                 <property name="width_chars">30</property>
-                <signal name="notify::text" handler="gtk_list_box_invalidate_filter" object="shortcuts_listbox" swapped="yes" />
+                <signal name="notify::text" handler="search_entry_text_changed_cb" object="CckeyboardPanel" swapped="yes" />
+                <signal name="preedit-changed" handler="search_entry_preedit_changed_cb" object="CckeyboardPanel" swapped="no" />
               </object>
             </child>
           </object>
@@ -55,11 +56,11 @@
                 <property name="halign">center</property>
                 <child>
                   <object class="GtkFrame">
-                    <property name="visible">True</property>
+                    <property name="visible">False</property>
                     <property name="can_focus">False</property>
                     <child>
                       <object class="GtkListBox" id="alternate_chars_listbox">
-                        <property name="visible">True</property>
+                        <property name="visible">False</property>
                         <property name="can_focus">True</property>
                         <property name="selection-mode">none</property>
                         <property name="width-request">250</property>

@@ -36,6 +36,8 @@ void            pp_printer_entry_show_jobs_dialog (PpPrinterEntry *self);
 
 void            pp_printer_entry_authenticate_jobs (PpPrinterEntry *self);
 
+gboolean        pp_printer_entry_is_activate_jobs_dialog (PpPrinterEntry *self);
+
 void            pp_printer_entry_update (PpPrinterEntry *self,
                                          cups_dest_t     printer,
                                          gboolean        is_authorized);

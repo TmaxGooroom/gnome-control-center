@@ -3260,3 +3260,75 @@ msgstr "W-SU"
 #: timezones.h:955
 msgid "Zulu"
 msgstr "Zulu"
+
+msgid "Antarctica/Troll"
+msgstr "Antarctica/Troll"
+
+msgid "America/Kralendijk"
+msgstr "America/Kralendijk"
+
+msgid "America/Creston"
+msgstr "America/Creston"
+
+msgid "America/Fort_Nelson"
+msgstr "America/Fort_Nelson"
+
+msgid "America/Punta_Arenas"
+msgstr "America/Punta_Arenas"
+
+msgid "Asia/Famagusta"
+msgstr "Asia/Famagusta"
+
+msgid "Europe/Busingen"
+msgstr "Europe/Busingen"
+
+msgid "America/Nuuk"
+msgstr "America/Nuuk"
+
+msgid "Asia/Qostanay"
+msgstr "Asia/Qostanay"
+
+msgid "Asia/Yangon"
+msgstr "Asia/Yangon"
+
+msgid "Pacific/Bougainville"
+msgstr "Pacific/Bougainville"
+
+msgid "Asia/Hebron"
+msgstr "Asia/Hebron"
+
+msgid "Europe/Kirov"
+msgstr "Europe/Kirov"
+
+msgid "Europe/Astrakhan"
+msgstr "Europe/Astrakhan"
+
+msgid "Europe/Saratov"
+msgstr "Europe/Saratov"
+
+msgid "Europe/Ulyanovsk"
+msgstr "Europe/Ulyanovsk"
+
+msgid "Asia/Barnaul"
+msgstr "Asia/Barnaul"
+
+msgid "Asia/Tomsk"
+msgstr "Asia/Tomsk"
+
+msgid "Asia/Khandyga"
+msgstr "Asia/Khandyga"
+
+msgid "Asia/Ust-Nera"
+msgstr "Asia/Ust-Nera"
+
+msgid "Africa/Juba"
+msgstr "Africa/Juba"
+
+msgid "America/Lower_Princes"
+msgstr "America/Lower_Princes"
+
+msgid "America/Sitka"
+msgstr "America/Sitka"
+
+msgid "America/Metlakatla"
+msgstr "America/Metlakatla"

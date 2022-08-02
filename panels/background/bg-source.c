@@ -23,8 +23,8 @@
 
 #include <cairo-gobject.h>
 
-#define THUMBNAIL_WIDTH 154
-#define THUMBNAIL_HEIGHT (THUMBNAIL_WIDTH * 3 / 4)
+#define THUMBNAIL_WIDTH 200 
+#define THUMBNAIL_HEIGHT 125
 
 typedef struct
 {
@@ -50,8 +50,10 @@ bg_source_calculate_thumbnail_dimensions (BgSource *source)
   BgSourcePrivate *priv = bg_source_get_instance_private (source);
   gint scale_factor;
 
-  priv->thumbnail_height = THUMBNAIL_HEIGHT;
-  priv->thumbnail_width = THUMBNAIL_WIDTH;
+  if (priv->thumbnail_height == 0)
+    priv->thumbnail_height = THUMBNAIL_HEIGHT;
+  if (priv->thumbnail_width == 0)
+    priv->thumbnail_width = THUMBNAIL_WIDTH;
 
   if (priv->widget == NULL)
     return;
@@ -155,6 +157,8 @@ bg_source_init (BgSource *self)
   BgSourcePrivate *priv = bg_source_get_instance_private (self);
   priv->store = g_list_store_new (CC_TYPE_BACKGROUND_ITEM);
   priv->thumbnail_factory = gnome_desktop_thumbnail_factory_new (GNOME_DESKTOP_THUMBNAIL_SIZE_LARGE);
+  priv->thumbnail_height = 0;
+  priv->thumbnail_width = 0;
 }
 
 GListStore*
@@ -210,4 +214,24 @@ bg_source_get_thumbnail_factory (BgSource *source)
 
   priv = bg_source_get_instance_private (source);
   return priv->thumbnail_factory;
+}
+
+void
+bg_source_set_thumbnail_height (BgSource *source, gint height)
+{
+  BgSourcePrivate *priv;
+  g_return_val_if_fail (BG_IS_SOURCE (source), 1);
+
+  priv = bg_source_get_instance_private (source);
+  priv->thumbnail_height = height;
+}
+
+void
+bg_source_set_thumbnail_width (BgSource *source, gint width)
+{
+  BgSourcePrivate *priv;
+  g_return_val_if_fail (BG_IS_SOURCE (source), 1);
+
+  priv = bg_source_get_instance_private (source);
+  priv->thumbnail_width = width; 
 }

@@ -534,5 +534,9 @@ cc_password_dialog_new (ActUser *user)
 
         gtk_widget_grab_default (GTK_WIDGET (self->ok_button));
 
+        g_object_set (G_OBJECT (self->password_entry), "im-module", "", NULL);
+        g_object_set (G_OBJECT (self->old_password_entry), "im-module", "", NULL);
+        g_object_set (G_OBJECT (self->verify_entry), "im-module", "", NULL);
+
         return self;
 }

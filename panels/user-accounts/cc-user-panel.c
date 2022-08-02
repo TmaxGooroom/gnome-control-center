@@ -1,6 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*-
  *
  * Copyright 2009-2010  Red Hat, Inc,
+ * Copyright (C) 2019  gooroom <gooroom@gooroom.kr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -79,6 +80,7 @@ struct _CcUserPanel {
         GtkListBoxRow   *autologin_row;
         GtkSwitch       *autologin_switch;
         CcCarousel      *carousel;
+        GtkLabel        *encrypt_home_check_label;
         GtkLabel        *fingerprint_state_label;
         GtkListBoxRow   *fingerprint_row;
         GtkStack        *full_name_stack;
@@ -92,6 +94,7 @@ struct _CcUserPanel {
         GtkBox          *no_users_box;
         GtkRevealer     *notification_revealer;
         GtkLabel        *password_button_label;
+        GtkWidget       *user_delete_dialog;
 #ifdef HAVE_MALCONTENT
         GtkLabel        *parental_controls_button_label;
         GtkImage        *parental_control_go_next;
@@ -120,6 +123,7 @@ struct _CcUserPanel {
 
 CC_PANEL_REGISTER (CcUserPanel, cc_user_panel)
 
+static gboolean is_ecryptfs_user (const gchar *user);
 static void show_restart_notification (CcUserPanel *self, const gchar *locale);
 static gint user_compare (gconstpointer i, gconstpointer u);
 
@@ -402,6 +406,8 @@ delete_user_done (ActUserManager *manager,
 
                 g_error_free (error);
         }
+
+        gtk_widget_destroy (GTK_WIDGET (self->user_delete_dialog));
 }
 
 static void
@@ -424,7 +430,19 @@ delete_user_response (CcUserPanel *self,
                 remove_files = FALSE;
         }
 
+        self->user_delete_dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (self))),
+                                                           0,
+                                                           GTK_MESSAGE_INFO,
+                                                           GTK_BUTTONS_NONE,
+                                                           _("User %s is going on delete."),
+                                                           get_real_or_user_name (get_selected_user(self)));
+
+        gtk_window_set_title (GTK_WINDOW (self->user_delete_dialog), _("Delete User"));
+        gtk_window_set_modal (GTK_WINDOW (self->user_delete_dialog), TRUE);
+        gtk_window_present (GTK_WINDOW (self->user_delete_dialog));
+
         user = get_selected_user (self);
+        gtk_widget_set_sensitive (self->remove_user_button, FALSE);
 
         /* remove autologin */
         if (act_user_get_automatic_login (user)) {
@@ -636,22 +654,40 @@ delete_user (CcUserPanel *self)
                                   G_CALLBACK (gtk_widget_destroy), NULL);
         }
         else if (act_user_is_local_account (user)) {
-                dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (self))),
-                                                 0,
-                                                 GTK_MESSAGE_QUESTION,
-                                                 GTK_BUTTONS_NONE,
-                                                 _("Do you want to keep %s’s files?"),
-                                                get_real_or_user_name (user));
+                if (is_ecryptfs_user (act_user_get_user_name (user))) {
+                        dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (self))),
+                                                         0,
+                                                         GTK_MESSAGE_QUESTION,
+                                                         GTK_BUTTONS_NONE,
+                                                         _("Do you want to delete user %s?"),
+                                                         get_real_or_user_name (user));
 
-                gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog),
-                                                          _("It is possible to keep the home directory, mail spool and temporary files around when deleting a user account."));
+                        gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog),
+                                                                  _("All data related with user %s will be deleted."), get_real_or_user_name (user));
 
-                gtk_dialog_add_buttons (GTK_DIALOG (dialog),
-                                        _("_Delete Files"), GTK_RESPONSE_NO,
-                                        _("_Keep Files"), GTK_RESPONSE_YES,
-                                        _("_Cancel"), GTK_RESPONSE_CANCEL,
-                                        NULL);
+                        gtk_dialog_add_buttons (GTK_DIALOG (dialog),
+                                                _("_Delete Files"), GTK_RESPONSE_NO,
+                                                _("_Cancel"), GTK_RESPONSE_CANCEL,
+                                                NULL);
+                } else {
+                        dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (self))),
+                                                         0,
+                                                         GTK_MESSAGE_QUESTION,
+                                                         GTK_BUTTONS_NONE,
+                                                         _("Do you want to keep %s’s files?"),
+                                                         get_real_or_user_name (user));
 
+                        gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog),
+                                                                  _("It is possible to keep the home directory, mail spool and temporary files around when deleting a user account."));
+
+                        gtk_dialog_add_buttons (GTK_DIALOG (dialog),
+                                                _("_Delete Files"), GTK_RESPONSE_NO,
+                                                _("_Keep Files"), GTK_RESPONSE_YES,
+                                                _("_Cancel"), GTK_RESPONSE_CANCEL,
+                                                NULL);
+                }
+
+                gtk_window_set_title (GTK_WINDOW (dialog), _("Delete User"));
                 gtk_window_set_icon_name (GTK_WINDOW (dialog), "system-users");
 
                 g_signal_connect_object (dialog, "response",
@@ -808,6 +844,28 @@ get_autologin_possible (ActUser *user)
         return !(locked || set_password_at_login);
 }
 
+static gboolean
+is_ecryptfs_user (const gchar *user)
+{
+    const gchar *fn;
+    g_autoptr (GDir) dir = NULL;
+    g_autofree gchar *path = NULL;
+
+    path = g_strdup (ECRYPTFS_DIR);
+    dir = g_dir_open (path, 0, NULL);
+
+    if (dir == NULL)
+        return FALSE;
+
+    while ((fn = g_dir_read_name (dir)) != NULL)
+    {
+        if (g_strcmp0 (fn, user) == 0)
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 static void on_permission_changed (CcUserPanel *self);
 static void full_name_edit_button_toggled (CcUserPanel *self);
 
@@ -939,8 +997,10 @@ show_user (ActUser *user, CcUserPanel *self)
         }
 
         /* Autologin: show when local account */
-        show = act_user_is_local_account (user);
-        gtk_widget_set_visible (GTK_WIDGET (self->autologin_row), show);
+        show = is_ecryptfs_user (act_user_get_user_name (user));
+        //act_user_is_local_account (user);
+        gtk_widget_set_visible (GTK_WIDGET (self->autologin_row), !show);
+        gtk_widget_set_visible (GTK_WIDGET (self->encrypt_home_check_label), show);
 
 #ifdef HAVE_MALCONTENT
         /* Parental Controls: Unavailable if user is admin */
@@ -1076,6 +1136,19 @@ restart_now (CcUserPanel *self)
 }
 
 static void
+response_restart_dialog (GtkDialog* dialog,
+                         gint id,
+                         gpointer user_data)
+{
+    CcUserPanel *self = user_data;
+
+    if (id == -8)
+        restart_now (self);
+    
+    gtk_widget_destroy (dialog);
+}
+
+static void
 show_restart_notification (CcUserPanel *self, const gchar *locale)
 {
         locale_t current_locale;
@@ -1089,7 +1162,19 @@ show_restart_notification (CcUserPanel *self, const gchar *locale)
                         current_locale = uselocale (new_locale);
         }
 
-        gtk_revealer_set_reveal_child (self->notification_revealer, TRUE);
+        //gtk_revealer_set_reveal_child (self->notification_revealer, TRUE);
+        GtkWidget* restart_dialog = gtk_message_dialog_new (NULL,
+                                                            0,
+                                                            GTK_MESSAGE_INFO,
+                                                            GTK_BUTTONS_YES_NO,
+                                                            _("User infomations has changed.\nChanges take effect after your session needs to be restarted.\nDo you want restart?"));
+
+        g_signal_connect (restart_dialog,
+                          "response",
+                          G_CALLBACK (response_restart_dialog),
+                          self);
+
+        gtk_widget_show (restart_dialog);
 
         if (locale && new_locale != (locale_t) 0) {
                 uselocale (current_locale);
@@ -1633,6 +1718,7 @@ cc_user_panel_class_init (CcUserPanelClass *klass)
         gtk_widget_class_bind_template_child (widget_class, CcUserPanel, autologin_row);
         gtk_widget_class_bind_template_child (widget_class, CcUserPanel, autologin_switch);
         gtk_widget_class_bind_template_child (widget_class, CcUserPanel, carousel);
+        gtk_widget_class_bind_template_child (widget_class, CcUserPanel, encrypt_home_check_label);
         gtk_widget_class_bind_template_child (widget_class, CcUserPanel, fingerprint_state_label);
         gtk_widget_class_bind_template_child (widget_class, CcUserPanel, fingerprint_row);
         gtk_widget_class_bind_template_child (widget_class, CcUserPanel, full_name_stack);

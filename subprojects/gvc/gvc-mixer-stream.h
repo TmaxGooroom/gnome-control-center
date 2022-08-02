@@ -87,6 +87,7 @@ pa_volume_t         gvc_mixer_stream_get_volume      (GvcMixerStream *stream);
 gdouble             gvc_mixer_stream_get_decibel     (GvcMixerStream *stream);
 gboolean            gvc_mixer_stream_push_volume     (GvcMixerStream *stream);
 pa_volume_t         gvc_mixer_stream_get_base_volume (GvcMixerStream *stream);
+void                sync_effects_base_volume_and_scale (GvcMixerStream *stream);
 
 gboolean            gvc_mixer_stream_get_is_muted    (GvcMixerStream *stream);
 gboolean            gvc_mixer_stream_get_can_decibel (GvcMixerStream *stream);

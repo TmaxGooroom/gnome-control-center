@@ -417,6 +417,7 @@ msgid "Activities"
 msgstr "Activities"
 
 #: panels/background/gnome-background-panel.desktop.in.in:3
+#: panels/background/background.ui:24
 msgid "Background"
 msgstr "Background"
 
@@ -1144,8 +1145,9 @@ msgid "This profile may no longer be accurate"
 msgstr "This profile may no longer be accurate"
 
 #: panels/color/gnome-color-panel.desktop.in.in:3
+#: panels/background/background.ui:314
 msgid "Color"
-msgstr "Colour"
+msgstr "Color"
 
 #: panels/color/gnome-color-panel.desktop.in.in:4
 msgid ""
@@ -6038,7 +6040,7 @@ msgstr ""
 
 #: panels/thunderbolt/cc-bolt-device-dialog.c:94
 #: panels/thunderbolt/cc-bolt-device-entry.c:125
-msgctxt "Thunderbolt Device Status"
+msgctxt "Device Status"
 msgid "Disconnected"
 msgstr "Disconnected"
 
@@ -8747,8 +8749,8 @@ msgstr "System Sounds"
 #~ msgid "Span"
 #~ msgstr "Span"
 
-#~ msgid "Wallpapers"
-#~ msgstr "Wallpapers"
+msgid "Wallpapers"
+msgstr "Wallpapers"
 
 #~ msgid "Colors"
 #~ msgstr "Colours"
@@ -12532,8 +12534,8 @@ msgstr "System Sounds"
 #~ msgid "Slide Show"
 #~ msgstr "Slide Show"
 
-#~ msgid "Image"
-#~ msgstr "Image"
+msgid "Image"
+msgstr "Image"
 
 #~ msgid ""
 #~ "<b>%s</b>\n"
@@ -14406,3 +14408,226 @@ msgstr "System Sounds"
 
 #~ msgid "The typing monitor is already running."
 #~ msgstr "The typing monitor is already running."
+
+#: ../panels/font/cc-font-chooser.c:67
+msgid "Font"
+msgstr "Font"
+
+#: ../panels/font/font.ui:10
+msgid "full"
+msgstr "Full"
+
+#: ../panels/font/font.ui:13
+msgid "medium"
+msgstr "Medium"
+
+#: ../panels/font/font.ui:16
+msgid "slight"
+msgstr "Slight"
+
+#: ../panels/font/font.ui:19
+msgid "none"
+msgstr "None"
+
+#: ../panels/font/font.ui:22
+msgid "rgba"
+msgstr "Sub Pixel(For LCD Display)"
+
+#: ../panels/font/font.ui:25
+msgid "grayscale"
+msgstr "Standard(Grayscale)"
+
+#: ../panels/font/font.ui:118
+msgid "Interface Text"
+msgstr "Interface Text"
+
+#: ../panels/font/font.ui:172
+msgid "Document Text"
+msgstr "Document Text"
+
+#: ../panels/font/font.ui:226
+msgid "Monospace Text"
+msgstr "Monospace Text"
+
+#: ../panels/font/font.ui:280 ../panels/font/font.ui:375
+#: ../panels/font/font.ui:425
+msgid "Legacy Window Titles"
+msgstr "Legacy Window Titles"
+
+#. List of applications.
+#: ../panels/font/font.ui:328
+msgid "Font Rendering Settings"
+msgstr "Font Rendering Settings"
+
+#: ../panels/font/font.ui:425
+msgid "AntiAliasing"
+msgstr "AntiAliasing"
+
+#: ../panels/font/font.ui:480
+msgid "Scale Constant"
+msgstr "Scale Constant"
+
+#: ../panels/font/cc-font-panel.c:339
+msgid "_small"
+msgstr "Small"
+
+#: ../panels/font/cc-font-panel.c:340
+msgid "_medium"
+msgstr "Medium"
+
+#: ../panels/font/cc-font-panel.c:341
+msgid "_large"
+msgstr "Large"
+
+#: ../panels/themes/gnome-themes-panel.desktop.in.in:4
+msgid "Change your Thema for window and icon"
+msgstr "Change your Thema for window and icon"
+
+#: ../panels/themes/themes.ui:37
+msgid "Current Theme : "
+msgstr "Current Theme : "
+
+#: ../panels/themes/themes.ui:116
+msgid "Theme List"
+msgstr "Theme List"
+
+#: ../panels/themes/themes.ui:52
+msgid "theme"
+msgstr "theme"
+
+#: ../panels/themes/cc-themes-panel.c:133
+msgid "Gooroom Icon Theme %d"
+msgstr "Gooroom Theme %d"
+
+#: ../panels/themes/themes.ui:60
+msgid "This theme is not listed."
+msgstr "This theme is not listed."
+
+#: ../shell/org.gnome.ControlCenter.gschema.xml:20
+msgid "Show settings list"
+msgstr "Show settings list"
+
+#: ../shell/org.gnome.ControlCenter.gschema.xml:21
+msgid "Show side panel list that matches the User settings values."
+msgstr "Show side panel list that matches the User settings values."
+
+#: ../panels/user-accounts/um-user-panel.c:998
+msgid ""
+"Your session needs to be restarted for changes to take effect.\n"
+"Do you want restart?"
+msgstr ""
+"Your session needs to be restarted for changes to take effect.\n"
+"Do you want restart?"
+
+#: ../panels/datetime/datetime.ui:333
+#: ../panels/datetime/datetime.ui:441
+msgid "Apply network time when connecting to the Internet"
+msgstr "Apply network time when connecting to the Internet"
+
+#: panels/user-accounts/pw-utils.c:97
+msgctxt "Password hint"
+msgid "Do not enter the same words consecutively."
+msgstr "Do not enter the same words consecutively."
+
+#: ../panels/power/cc-power-panel.c:1842
+msgid "Screen dims when the computer operates on battery power."
+msgstr "Screen dims when the computer operates on battery power."
+
+#: ../panels/printers/cc-printer-panel.c:1136
+msgid ""
+"Media control access not permission.\n"
+"To use, change access permission to \"allow\""
+msgstr ""
+"Media control access not permission.\n"
+"To use, change access permission to \"allow\""
+
+#: ../panels/user-accounts/um-user-panel.c:997
+msgid ""
+"User infomations has changed.\n"
+"Changes take effect after your session needs to be restarted.\n"
+"Do you want restart?"
+msgstr ""
+"User infomations has changed.\n"
+"Changes take effect after your session needs to be restarted.\n"
+"Do you want restart?"
+
+#: ../panels/font/gnome-font-panel.desktop.in.in:3
+msgid "Change your font"
+msgstr "Change your font"
+
+#: ../panels/font/font-chooser-widget.ui:53
+msgid "Search font name"
+msgstr "Search font name"
+
+#: ../panels/font/font-chooser-widget.ui:121
+#: ../panels/font/font-chooser-widget.ui:248
+msgid "Preview text"
+msgstr "Preview text"
+
+#: ../panels/font/font-chooser-widget.ui:201
+msgid "No Fonts Found"
+msgstr "No Fonts Found"
+
+#: ../panels/font/cc-font-button.c:483
+#: ../panels/font/cc-font-button.c:617
+msgid "Pick a Font"
+msgstr "Pick a Font"
+
+#: ../panels/keyboard/keyboard-shortcuts.c:368:
+#: ../panels/keyboard/cc-keyboard-option.c:259:
+#: ../panels/keyboard/cc-keyboard-option.c:378:
+#: ../panels/keyboard/cc-keyboard-shortcut-editor.ui:85:
+msgid "Not use"
+msgstr "Not use"
+
+#: ../panels/power/power.ui:33
+msgid "60 minutes"
+msgstr "60 minutes"
+
+#: ../panels/power/power.ui:49
+msgid "120 minutes"
+msgstr "120 minutes"
+
+#: ../panels/themes/data/themes/gooroom-themes.ini:2
+msgid "Gooroom Icon Theme 1"
+msgstr ""
+
+#: ../panels/themes/data/themes/gooroom-themes.ini:6
+msgid "Gooroom Icon Theme 2"
+msgstr ""
+
+#: ../panels/themes/data/themes/gooroom-themes.ini:10
+msgid "Gooroom Icon Theme 3"
+msgstr ""
+
+#: background-chooser.ui:39
+msgid "Select Background"
+msgstr "Select Background"
+
+#: panels/background/background-chooser.ui:70
+msgid "Add Image"
+msgstr "Add Image"
+
+#: panels/background/background.ui:379
+msgid "Apply same all screen"
+msgstr "Apply same all screen"
+
+#: panels/background/background.ui:375
+msgid "Apply each of home and lock screen"
+msgstr "Apply each of home and lock screen"
+
+#: panels/background/background.ui:67
+msgid "Background Type"
+msgstr "Background Type"
+
+#: background.ui:164
+msgid "Home Background"
+msgstr "Home Background"
+
+#: panels/background/background.ui:243
+msgid "Lock Background"
+msgstr "Lock Background"
+
+#: panels/background/background-chooser.ui:18
+msgid "Single Colors"
+msgstr "Single Colors"

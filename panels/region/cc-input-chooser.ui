@@ -67,6 +67,7 @@
             <property name="margin-top">6</property>
             <property name="margin-bottom">6</property>
             <signal name="search-changed" handler="on_filter_entry_search_changed_cb" object="CcInputChooser" swapped="yes" />
+            <signal name="preedit-changed" handler="on_filter_entry_search_preedit_changed_cb" object="CcInputChooser" swapped="no" />
             <signal name="key-release-event" handler="on_filter_entry_key_release_event_cb" object="CcInputChooser" swapped="yes" />
           </object>
         </child>

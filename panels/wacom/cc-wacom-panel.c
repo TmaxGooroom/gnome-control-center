@@ -430,7 +430,6 @@ static void
 cc_wacom_panel_constructed (GObject *object)
 {
 	CcWacomPanel *self = CC_WACOM_PANEL (object);
-	GtkWidget *button;
 	CcShell *shell;
 
 	G_OBJECT_CLASS (cc_wacom_panel_parent_class)->constructed (object);
@@ -438,15 +437,9 @@ cc_wacom_panel_constructed (GObject *object)
 	/* Add test area button to shell header. */
 	shell = cc_panel_get_shell (CC_PANEL (self));
 
-	button = gtk_toggle_button_new_with_mnemonic (_("Test Your _Settings"));
-	gtk_style_context_add_class (gtk_widget_get_style_context (button),
-				     "text-button");
-	gtk_widget_set_valign (button, GTK_ALIGN_CENTER);
-	gtk_widget_set_visible (button, TRUE);
+	cc_shell_embed_widget_in_header (shell, self->test_button, GTK_POS_RIGHT);
 
-	cc_shell_embed_widget_in_header (shell, button, GTK_POS_RIGHT);
-
-	self->test_popover = gtk_popover_new (button);
+	self->test_popover = gtk_popover_new (self->test_button);
 	gtk_container_set_border_width (GTK_CONTAINER (self->test_popover), 6);
 
 	self->test_draw_area = cc_drawing_area_new ();
@@ -455,14 +448,13 @@ cc_wacom_panel_constructed (GObject *object)
 			   self->test_draw_area);
 	gtk_widget_show (self->test_draw_area);
 
-	g_object_bind_property (button, "active",
+	g_object_bind_property (self->test_button, "active",
 				self->test_popover, "visible",
 				G_BINDING_BIDIRECTIONAL);
 
 	g_signal_connect_object (shell, "event",
 				 G_CALLBACK (on_shell_event_cb), self, G_CONNECT_SWAPPED);
 
-	self->test_button = button;
 	update_test_button (self);
 }
 
@@ -754,6 +746,12 @@ cc_wacom_panel_init (CcWacomPanel *self)
 						   GSD_DEVICE_TYPE_TABLET);
 	for (l = devices; l ; l = l->next)
 		add_known_device (self, l->data);
+
+        self->test_button = gtk_toggle_button_new_with_mnemonic (_("Test Your _Settings"));
+        gtk_style_context_add_class (gtk_widget_get_style_context (self->test_button),
+                                     "text-button");
+        gtk_widget_set_valign (self->test_button, GTK_ALIGN_CENTER);
+        gtk_widget_set_visible (self->test_button, TRUE);
 
 	update_current_page (self);
 }

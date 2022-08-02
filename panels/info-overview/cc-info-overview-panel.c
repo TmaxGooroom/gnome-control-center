@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Mohammed Sadiq <sadiq@sadiqpk.org>
  * Copyright (C) 2010 Red Hat, Inc
  * Copyright (C) 2008 William Jon McCann <jmccann@redhat.com>
+ * Copyright (C) 2019 gooroom <gooroom@gooroom.kr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,8 +69,9 @@ struct _CcInfoOverviewPanel
   CcListRow       *hostname_row;
   CcListRow       *memory_row;
   GtkListBox      *os_box;
-  CcListRow       *os_name_row;
+//  CcListRow       *os_name_row;
   CcListRow       *os_type_row;
+  CcListRow       *os_info_row;
   CcListRow       *processor_row;
   CcListRow       *software_updates_row;
   CcListRow       *virtualization_row;
@@ -690,7 +692,8 @@ info_overview_panel_setup_overview (CcInfoOverviewPanel *self)
   g_autofree char *memory_text = NULL;
   g_autofree char *cpu_text = NULL;
   g_autofree char *os_type_text = NULL;
-  g_autofree char *os_name_text = NULL;
+  g_autofree char *os_info_text = NULL;
+  g_autofree char *contents = NULL;
   g_autofree gchar *graphics_hardware_string = NULL;
 
   if (load_gnome_version (&gnome_version, NULL, NULL))
@@ -710,8 +713,31 @@ info_overview_panel_setup_overview (CcInfoOverviewPanel *self)
   os_type_text = get_os_type ();
   cc_list_row_set_secondary_label (self->os_type_row, os_type_text);
 
-  os_name_text = get_os_name ();
-  cc_list_row_set_secondary_label (self->os_name_row, os_name_text);
+  g_file_get_contents ("/etc/gooroom/info", &contents, NULL, NULL);
+
+  if (contents) {
+    guint i = 0;
+    gchar **lines = g_strsplit (contents, "\n", -1);
+    for (i = 0; lines[i] != NULL; i++) {
+      if (g_str_has_prefix (lines[i], "DESCRIPTION=")) {
+        gchar **tokens = g_strsplit (lines[i], "=", -1);
+        if (tokens[1]) {
+          os_info_text = g_strdelimit (g_strdup(tokens[1]), "\"",' ');
+          g_strstrip (os_info_text);
+        }
+        g_strfreev (tokens);
+        break;
+      }
+    }
+    g_strfreev (lines);
+  }
+
+  if (os_info_text) {
+    cc_list_row_set_secondary_label (self->os_info_row, os_info_text);
+  }
+
+//  os_name_text = get_os_name ();
+//  cc_list_row_set_secondary_label (self->os_name_row, os_name_text);
 
   get_primary_disc_info (self);
 
@@ -825,8 +851,9 @@ cc_info_overview_panel_class_init (CcInfoOverviewPanelClass *klass)
   gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, hostname_row);
   gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, memory_row);
   gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, os_box);
-  gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, os_name_row);
+//  gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, os_name_row);
   gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, os_type_row);
+  gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, os_info_row);
   gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, processor_row);
   gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, rename_button);
   gtk_widget_class_bind_template_child (widget_class, CcInfoOverviewPanel, software_updates_row);
@@ -854,6 +881,7 @@ cc_info_overview_panel_init (CcInfoOverviewPanel *self)
 
   info_overview_panel_setup_overview (self);
   info_overview_panel_setup_virt (self);
+  gtk_widget_set_sensitive (self->rename_button, gtk_widget_get_sensitive (GTK_WIDGET (self->device_name_entry)));
 }
 
 GtkWidget *

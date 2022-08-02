@@ -154,7 +154,7 @@ info_panel_setup_default_app (CcDefaultAppsPanel *self,
 
 static DefaultAppData preferred_app_infos[] = {
   { "x-scheme-handler/http", OFFSET (web_label), "text/html;application/xhtml+xml;x-scheme-handler/https" },
-  { "x-scheme-handler/mailto", OFFSET (mail_label), NULL },
+  { "x-scheme-handler/mailto", OFFSET (mail_label), "message/*" },
   { "text/calendar", OFFSET (calendar_label), NULL },
   { "audio/x-vorbis+ogg", OFFSET (music_label), "audio/*" },
   { "video/x-ogm+ogg", OFFSET (video_label), "video/*" },

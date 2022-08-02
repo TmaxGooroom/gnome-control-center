@@ -26,6 +26,7 @@
 #define TRACKER_SCHEMA "org.freedesktop.Tracker.Miner.Files"
 #define TRACKER_KEY_RECURSIVE_DIRECTORIES "index-recursive-directories"
 #define TRACKER_KEY_SINGLE_DIRECTORIES "index-single-directories"
+#define TRACKER_KEY_RECURSIVE_CACHE_DIRECTORIES "index-recursive-cache-directories"
 
 typedef enum {
   PLACE_XDG,
@@ -300,6 +301,42 @@ place_get_new_settings_values (CcSearchLocationsDialog *self,
   return new_values;
 }
 
+static void
+update_cache_settings_values (CcSearchLocationsDialog *self,
+                              Place *place,
+                              gboolean remove)
+{
+  g_auto(GStrv) values = NULL;
+  g_autofree gchar *path = NULL;
+  GPtrArray *new_values;
+  gboolean found;
+  gint idx;
+
+  new_values = g_ptr_array_new_with_free_func (g_free);
+  values = g_settings_get_strv (self->tracker_preferences, TRACKER_KEY_RECURSIVE_CACHE_DIRECTORIES);
+  path = g_file_get_path (place->location);
+
+  found = FALSE;
+
+  for (idx = 0; values[idx] != NULL; idx++)
+    {
+      if (g_strcmp0 (values[idx], path) == 0)
+        {
+          found = TRUE;
+          if (remove)
+            continue;
+        }
+
+      g_ptr_array_add (new_values, g_strdup (values[idx]));
+    }
+
+  if (!found && !remove)
+    g_ptr_array_add (new_values, g_strdup (path));
+
+  g_ptr_array_add (new_values, NULL);
+
+  g_settings_set_strv (self->tracker_preferences, TRACKER_KEY_RECURSIVE_CACHE_DIRECTORIES, (const gchar **)new_values->pdata);
+}
 
 static GList *
 get_tracker_locations (CcSearchLocationsDialog *self)
@@ -311,7 +348,7 @@ get_tracker_locations (CcSearchLocationsDialog *self)
   Place *location;
   const gchar *path;
 
-  locations = g_settings_get_strv (self->tracker_preferences, TRACKER_KEY_RECURSIVE_DIRECTORIES);
+  locations = g_settings_get_strv (self->tracker_preferences, TRACKER_KEY_RECURSIVE_CACHE_DIRECTORIES);
   list = NULL;
 
   for (idx = 0; locations[idx] != NULL; idx++)
@@ -448,6 +485,11 @@ switch_tracker_set_mapping (const GValue *value,
 
   remove = !g_value_get_boolean (value);
   new_values = place_get_new_settings_values (place->dialog, place, remove);
+
+  // 무조건 remove로만 들어와서 값을 지워버림..
+  // jeong89
+  update_cache_settings_values (place->dialog, place, FALSE);
+
   return g_variant_new_strv ((const gchar **) new_values->pdata, -1);
 }
 
@@ -497,6 +539,11 @@ remove_button_clicked (CcSearchLocationsDialog *self,
 
   place = g_object_get_data (G_OBJECT (button), "place");
   new_values = place_get_new_settings_values (self, place, TRUE);
+
+  // 검색위치 대화상자의 '기타'탭의 switching시 값을 지워버림
+  // jeong89
+  update_cache_settings_values (self, place, TRUE);
+
   g_settings_set_strv (self->tracker_preferences, place->settings_key, (const gchar **) new_values->pdata);
 }
 
@@ -622,6 +669,9 @@ add_file_chooser_response (CcSearchLocationsDialog *self,
   place->settings_key = TRACKER_KEY_RECURSIVE_DIRECTORIES;
 
   new_values = place_get_new_settings_values (self, place, FALSE);
+
+  update_cache_settings_values (self, place, FALSE);
+
   g_settings_set_strv (self->tracker_preferences, place->settings_key, (const gchar **) new_values->pdata);
 
   gtk_widget_destroy (GTK_WIDGET (widget));

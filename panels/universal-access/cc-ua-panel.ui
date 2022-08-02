@@ -17,7 +17,7 @@
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="repeat_speed_adjustment">
-    <property name="lower">0.5</property>
+    <property name="lower">10</property>
     <property name="upper">110</property>
     <property name="value">33.3</property>
     <property name="step_increment">1</property>
@@ -65,44 +65,6 @@
                         <property name="orientation">vertical</property>
                         <property name="hexpand">True</property>
                         <child>
-                          <object class="GtkBox" id="section_status">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="margin_bottom">32</property>
-                            <child>
-                              <object class="GtkLabel" id="heading_status">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">_Always Show Accessibility Menu</property>
-                                <property name="use_underline">True</property>
-                                <property name="mnemonic_widget">switch_status</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkSwitch" id="switch_status">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="halign">end</property>
-                              </object>
-                              <packing>
-                                <property name="expand">True</property>
-                                <property name="fill">True</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                        <child>
                           <object class="GtkBox" id="section_seeing">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
@@ -143,53 +105,6 @@
                                     <accessibility>
                                       <relation target="heading_seeing" type="labelled-by"/>
                                     </accessibility>
-                                    <child>
-                                      <object class="GtkListBoxRow" id="row_highcontrast">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="selectable">False</property>
-                                        <property name="activatable">False</property>
-                                        <child>
-                                          <object class="GtkBox" id="box_highcontrast">
-                                            <property name="visible">True</property>
-                                            <child>
-                                              <object class="GtkLabel" id="heading_highcontrast">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
-                                                <property name="margin_start">12</property>
-                                                <property name="margin_end">12</property>
-                                                <property name="margin_top">6</property>
-                                                <property name="margin_bottom">6</property>
-                                                <property name="xalign">0</property>
-                                                <property name="label" translatable="yes">_High Contrast</property>
-                                                <property name="use_underline">True</property>
-                                                <property name="mnemonic_widget">value_highcontrast</property>
-                                              </object>
-                                              <packing>
-                                                <property name="expand">True</property>
-                                                <property name="fill">True</property>
-                                                <property name="position">0</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkSwitch" id="value_highcontrast">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="margin_start">12</property>
-                                                <property name="margin_end">12</property>
-                                                <property name="margin_top">12</property>
-                                                <property name="margin_bottom">12</property>
-                                              </object>
-                                              <packing>
-                                                <property name="expand">False</property>
-                                                <property name="fill">True</property>
-                                                <property name="position">1</property>
-                                              </packing>
-                                            </child>
-                                          </object>
-                                        </child>
-                                      </object>
-                                    </child>
                                     <child>
                                       <object class="GtkListBoxRow" id="row_large_text">
                                         <property name="visible">True</property>
@@ -284,7 +199,7 @@
                                         </child>
                                       </object>
                                     </child>
-                                    <child>
+                                    <!--child>
                                       <object class="GtkListBoxRow" id="row_zoom">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
@@ -329,8 +244,8 @@
                                           </object>
                                         </child>
                                       </object>
-                                    </child>
-                                    <child>
+                                    </child-->
+                                    <!--child>
                                       <object class="GtkListBoxRow" id="row_screen_reader">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
@@ -375,7 +290,7 @@
                                           </object>
                                         </child>
                                       </object>
-                                    </child>
+                                    </child-->
                                     <child>
                                       <object class="GtkListBoxRow" id="row_sound_keys">
                                         <property name="visible">True</property>
@@ -441,7 +356,7 @@
                             <property name="position">1</property>
                           </packing>
                         </child>
-                        <child>
+                        <!--child>
                           <object class="GtkBox" id="section_hearing">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
@@ -546,7 +461,7 @@
                             <property name="fill">True</property>
                             <property name="position">2</property>
                           </packing>
-                        </child>
+                        </child-->
                         <child>
                           <object class="GtkBox" id="section_typing">
                             <property name="visible">True</property>
@@ -588,7 +503,7 @@
                                     <accessibility>
                                       <relation target="heading_typing" type="labelled-by"/>
                                     </accessibility>
-                                    <child>
+                                    <!--child>
                                       <object class="GtkListBoxRow" id="row_screen_keyboard">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
@@ -634,7 +549,7 @@
                                           </object>
                                         </child>
                                       </object>
-                                    </child>
+                                    </child-->
                                     <child>
                                       <object class="GtkListBoxRow" id="row_repeat_keys">
                                         <property name="visible">True</property>
@@ -681,7 +596,7 @@
                                         </child>
                                       </object>
                                     </child>
-                                    <child>
+                                    <!--child>
                                       <object class="GtkListBoxRow" id="row_cursor_blinking">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
@@ -726,7 +641,7 @@
                                           </object>
                                         </child>
                                       </object>
-                                    </child>
+                                    </child-->
                                     <child>
                                       <object class="GtkListBoxRow" id="row_accessx">
                                         <property name="visible">True</property>
@@ -880,7 +795,7 @@
                                       </object>
                                     </child>
                                     <child>
-                                      <object class="GtkListBoxRow">
+                                      <object class="GtkListBoxRow" id="row_locate_pointer_assist">
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="selectable">False</property>
@@ -1047,14 +962,13 @@
   <object class="GtkSizeGroup" id="rows_sizegroup">
     <property name="mode">vertical</property>
     <widgets>
-      <widget name="row_highcontrast"/>
       <widget name="row_large_text"/>
       <widget name="row_cursor_size"/>
-      <widget name="row_zoom"/>
-      <widget name="row_screen_reader"/>
+      <!--widget name="row_zoom"/-->
+      <!--widget name="row_screen_reader"/-->
       <widget name="row_sound_keys"/>
-      <widget name="row_visual_alerts"/>
-      <widget name="row_screen_keyboard"/>
+      <!--widget name="row_visual_alerts"/-->
+      <!--widget name="row_screen_keyboard"/-->
       <widget name="row_accessx"/>
       <widget name="row_mouse_keys"/>
       <widget name="row_click_assist"/>
@@ -1431,9 +1345,9 @@
         </child>
       </object>
     </child>
-    <action-widgets>
+    <!--action-widgets>
       <action-widget response="0">visual_alerts_test_button</action-widget>
-    </action-widgets>
+    </action-widgets-->
   </object>
   <object class="GtkAdjustment" id="typing_bouncekeys_delay_adjustment">
     <property name="upper">900</property>
@@ -1556,7 +1470,6 @@
                 <property name="hexpand">True</property>
                 <property name="adjustment">repeat_delay_adjustment</property>
                 <property name="draw_value">False</property>
-                <property name="has_origin">False</property>
                 <property name="width-request">400</property>
                 <child internal-child="accessible">
                   <object class="AtkObject" id="repeat_delay_scale-atkobject">
@@ -1642,8 +1555,6 @@
                 <property name="hexpand">True</property>
                 <property name="adjustment">repeat_speed_adjustment</property>
                 <property name="draw_value">False</property>
-                <property name="has_origin">False</property>
-                <property name="inverted">True</property>
                 <property name="width-request">200</property>
                 <child internal-child="accessible">
                   <object class="AtkObject" id="repeat_speed_scale-atkobject">

@@ -67,6 +67,9 @@ static void     replace_device (PpNewPrinterDialog *self,
 static void     populate_devices_list (PpNewPrinterDialog *self);
 static void     search_entry_activated_cb (PpNewPrinterDialog *self);
 static void     search_entry_changed_cb (PpNewPrinterDialog *self);
+static void     search_entry_preedit_changed_cb (GtkEntry *entry,
+                                                 gchar    *preedit,
+                                                 gpointer  user_data);
 static void     new_printer_dialog_response_cb (PpNewPrinterDialog *self,
                                                 gint                response_id);
 static void     update_dialog_state (PpNewPrinterDialog *self);
@@ -505,6 +508,7 @@ pp_new_printer_dialog_init (PpNewPrinterDialog *self)
   widget = WID ("search-entry");
   g_signal_connect_object (widget, "activate", G_CALLBACK (search_entry_activated_cb), self, G_CONNECT_SWAPPED);
   g_signal_connect_object (widget, "search-changed", G_CALLBACK (search_entry_changed_cb), self, G_CONNECT_SWAPPED);
+  g_signal_connect (widget, "preedit-changed", G_CALLBACK (search_entry_preedit_changed_cb), self);
 
   g_signal_connect_object (WID ("unlock-button"), "clicked", G_CALLBACK (authenticate_samba_server), self, G_CONNECT_SWAPPED);
 
@@ -1499,11 +1503,13 @@ search_address (const gchar        *text,
                               DEVICE_COLUMN, &device,
                               -1);
 
-          gtk_list_store_set (GTK_LIST_STORE (self->store), &iter,
-                              DEVICE_VISIBLE_COLUMN, TRUE,
-                              -1);
-
           acquisition_method = pp_print_device_get_acquisition_method (device);
+          if (acquisition_method != ACQUISITION_METHOD_DEFAULT_CUPS_SERVER)
+            {
+              gtk_list_store_set (GTK_LIST_STORE (self->store), &iter,
+                                  DEVICE_VISIBLE_COLUMN, TRUE,
+                                  -1);
+            }
           g_object_unref (device);
           if (acquisition_method == ACQUISITION_METHOD_REMOTE_CUPS_SERVER ||
               acquisition_method == ACQUISITION_METHOD_SNMP ||
@@ -1594,6 +1600,23 @@ search_entry_changed_cb (PpNewPrinterDialog *self)
   search_address (gtk_entry_get_text (GTK_ENTRY (WID ("search-entry"))),
                   self,
                   TRUE);
+}
+
+static void
+search_entry_preedit_changed_cb (GtkEntry *entry,
+                                 gchar    *preedit,
+                                 gpointer  user_data)
+{
+  gchar *filter_text = NULL;
+  const gchar *text = gtk_entry_get_text (GTK_ENTRY (entry));
+
+  filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
+
+  search_address (filter_text,
+                  PP_NEW_PRINTER_DIALOG (user_data),
+                  TRUE);
+
+  g_free (filter_text);
 }
 
 static gchar *

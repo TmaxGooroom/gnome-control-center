@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.22.1 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkSizeGroup" id="sizegroup1">
+    <property name="mode">both</property>
+  </object>
+  <object class="GtkScrolledWindow" id="themes-main-scrolled-window">
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="shadow_type">in</property>
+    <property name="min_content_width">700</property>
+    <property name="min_content_height">400</property>
+    <child>
+      <object class="GtkViewport">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="hexpand">True</property>
+            <property name="vexpand">True</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">1</property>
+            <property name="baseline_position">top</property>
+            <child>
+              <object class="GtkFixed">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">start</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">start</property>
+                        <property name="valign">start</property>
+                        <property name="label" translatable="yes">Current Theme : </property>
+                        <attributes>
+                          <attribute name="weight" value="bold"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="current-theme-label">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">start</property>
+                        <property name="valign">start</property>
+                        <property name="label" translatable="yes">This theme is not listed.</property>
+                        <attributes>
+                          <attribute name="weight" value="bold"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="x">10</property>
+                    <property name="y">13</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_top">22</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkDrawingArea" id="current-theme-drawingarea">
+                        <property name="width_request">330</property>
+                        <property name="height_request">234</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">15</property>
+                        <property name="margin_bottom">10</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="x">208</property>
+                    <property name="y">10</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkBox" id="themes-list-box">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="valign">start</property>
+                    <property name="margin_left">25</property>
+                    <property name="label" translatable="yes">Theme List</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow" id="themes-list-sw">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_left">25</property>
+                    <property name="margin_right">25</property>
+                    <property name="margin_top">10</property>
+                    <property name="margin_bottom">10</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <placeholder/>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

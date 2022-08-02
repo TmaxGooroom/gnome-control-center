@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/gnome/control-center/font">
+    <file preprocess="xml-stripblanks">font.ui</file>
+    <file preprocess="xml-stripblanks">font-button.ui</file>
+    <file preprocess="xml-stripblanks">font-chooser-dialog.ui</file>
+    <file preprocess="xml-stripblanks">font-chooser-widget.ui</file>
+    <!--<file preprocess="xml-stripblanks">font-dialog.ui</file>-->
+  </gresource>
+</gresources>
+

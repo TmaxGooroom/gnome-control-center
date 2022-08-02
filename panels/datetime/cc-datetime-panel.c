@@ -26,6 +26,7 @@
 
 #include <langinfo.h>
 #include <sys/time.h>
+#include "cc-util.h"
 #include "list-box-helper.h"
 #include "cc-timezone-map.h"
 #include "timedated.h"
@@ -46,10 +47,18 @@
 #define DEFAULT_TZ "Europe/London"
 #define GETTEXT_PACKAGE_TIMEZONES GETTEXT_PACKAGE "-timezones"
 
+#define MAX_DATE 2036
+#define MIN_DATE 1970
+
 enum {
   CITY_COL_CITY_HUMAN_READABLE,
   CITY_COL_ZONE,
   CITY_NUM_COLS
+};
+
+enum {
+  YEAR_INT_COLUMN,
+  N_COLUMNS
 };
 
 #define DATETIME_PERMISSION "org.gnome.controlcenter.datetime.configure"
@@ -81,6 +90,7 @@ struct _CcDateTimePanel
   GtkTreeModelFilter *city_filter;
 
   GDateTime *date;
+  GDateTime *default_date;
 
   GSettings *clock_settings;
   GSettings *datetime_settings;
@@ -112,7 +122,8 @@ struct _CcDateTimePanel
   GtkWidget *timezone_dialog;
   GtkWidget *timezone_label;
   GtkWidget *timezone_searchentry;
-  GtkWidget *year_spinbutton;
+  //GtkWidget *year_spinbutton;
+  GtkWidget *year_combobox;
 
   GnomeWallClock *clock_tracker;
 
@@ -122,11 +133,18 @@ struct _CcDateTimePanel
   GPermission *permission;
   GPermission *tz_permission;
   GSettings *location_settings;
+
+  gchar *filter_text;
+  gchar *preedit_text;
+  int year_index;
 };
 
 CC_PANEL_REGISTER (CcDateTimePanel, cc_date_time_panel)
 
 static void update_time (CcDateTimePanel *self);
+
+static void month_year_changed (CcDateTimePanel *self);
+static void day_changed (CcDateTimePanel *panel);
 
 static void
 cc_date_time_panel_dispose (GObject *object)
@@ -159,6 +177,8 @@ cc_date_time_panel_dispose (GObject *object)
 
   g_clear_pointer (&panel->listboxes, g_list_free);
   g_clear_pointer (&panel->listboxes_reverse, g_list_free);
+  g_clear_pointer (&panel->filter_text, g_free);
+  g_clear_pointer (&panel->preedit_text, g_free);
 
   G_OBJECT_CLASS (cc_date_time_panel_parent_class)->dispose (object);
 }
@@ -264,6 +284,61 @@ update_time (CcDateTimePanel *self)
     }
 
   gtk_label_set_text (GTK_LABEL (self->datetime_label), label);
+
+  gboolean using_ntp;
+  using_ntp = gtk_switch_get_active (GTK_SWITCH (self->network_time_switch));
+
+  if (!using_ntp)
+      return;
+
+  guint y, m, d;
+  gint default_year, year, month, day;
+
+  default_year = g_date_time_get_year (self->default_date);
+
+  year = g_date_time_get_year (self->date);
+  y = default_year - self->year_index + gtk_combo_box_get_active (GTK_COMBO_BOX (self->year_combobox));
+
+  if (y != year)
+  {
+      int i;
+      GtkListStore *tmp_liststore;
+      g_signal_handlers_block_by_func (self->year_combobox, month_year_changed, self);
+      tmp_liststore = gtk_list_store_new (N_COLUMNS, G_TYPE_INT);
+      for (i = 0; i < 29; i++) {
+        gtk_list_store_insert_with_values (tmp_liststore, NULL, i, YEAR_INT_COLUMN, year - 14 + i, -1);
+      }
+      gtk_combo_box_set_model (GTK_COMBO_BOX (self->year_combobox), GTK_TREE_MODEL (tmp_liststore));
+      gtk_combo_box_set_active (GTK_COMBO_BOX (self->year_combobox), 14);
+      self->default_date = g_date_time_new_now_local ();
+      self->year_index = 14;
+      g_signal_handlers_unblock_by_func (self->year_combobox, month_year_changed, self);
+  }
+
+//  if (y != year)
+//  {
+//      g_signal_handlers_block_by_func (self->year_spinbutton, month_year_changed, self);
+//      gtk_spin_button_set_value (GTK_SPIN_BUTTON (self->year_spinbutton), year);
+//      g_signal_handlers_unblock_by_func (self->year_spinbutton, month_year_changed, self);
+//  }
+
+  month = g_date_time_get_month (self->date);
+  m = 1+ gtk_combo_box_get_active (GTK_COMBO_BOX (self->month_combobox));
+  if (m != month)
+    {
+      g_signal_handlers_block_by_func (self->month_combobox, month_year_changed, self);
+      gtk_combo_box_set_active (GTK_COMBO_BOX (self->month_combobox), month - 1);
+      g_signal_handlers_unblock_by_func (self->month_combobox, month_year_changed, self);
+    }
+
+  day = g_date_time_get_day_of_month (self->date);
+  d = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->day_spinbutton));
+  if (d != day)
+    {
+      g_signal_handlers_block_by_func (self->day_spinbutton, day_changed, self);
+      gtk_spin_button_set_value (GTK_SPIN_BUTTON (self->day_spinbutton), day);
+      g_signal_handlers_unblock_by_func (self->day_spinbutton, day_changed, self);
+    }
 }
 
 static void
@@ -344,6 +419,11 @@ queue_set_ntp (CcDateTimePanel *self)
   gboolean using_ntp;
   /* for now just do it */
   using_ntp = gtk_switch_get_active (GTK_SWITCH (self->network_time_switch));
+  if (using_ntp)
+  {
+    g_date_time_unref (self->date);
+    self->date = g_date_time_new_now_local ();
+  }
 
   timedate1_call_set_ntp (self->dtm,
                           using_ntp,
@@ -371,14 +451,27 @@ queue_set_timezone (CcDateTimePanel *self)
 static void
 change_date (CcDateTimePanel *self)
 {
-  guint mon, y, d;
+  guint mon, y, d, num_days;
   g_autoptr(GDateTime) old_date = NULL;
 
   mon = 1 + gtk_combo_box_get_active (GTK_COMBO_BOX (self->month_combobox));
-  y = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->year_spinbutton));
+  y = g_date_time_get_year (self->default_date) - self->year_index + gtk_combo_box_get_active (GTK_COMBO_BOX (self->year_combobox));
+  //y = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->year_spinbutton));
   d = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->day_spinbutton));
 
+  num_days = g_date_get_days_in_month (g_date_time_get_month (self->date),
+                                       g_date_time_get_year (self->date));
+
   old_date = self->date;
+
+  if(d==num_days+1){
+      d = 1;
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON (self->day_spinbutton),1);
+  }else if(d==0){
+      d = num_days;
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON (self->day_spinbutton),num_days);
+  }
+
   self->date = g_date_time_new_local (y, mon, d,
                                       g_date_time_get_hour (old_date),
                                       g_date_time_get_minute (old_date),
@@ -396,17 +489,76 @@ city_changed_cb (CcDateTimePanel    *self,
                  GtkTreeIter        *iter,
                  GtkEntryCompletion *completion)
 {
-  GtkWidget *entry;
   g_autofree gchar *zone = NULL;
 
   gtk_tree_model_get (model, iter,
                       CITY_COL_ZONE, &zone, -1);
   cc_timezone_map_set_timezone (CC_TIMEZONE_MAP (self->map), zone);
 
-  entry = gtk_entry_completion_get_entry (completion);
-  gtk_entry_set_text (GTK_ENTRY (entry), "");
-
   return TRUE;
+}
+
+static void
+filter_changed (CcDateTimePanel *self)
+{
+  const gchar *text;
+  text = gtk_entry_get_text (GTK_ENTRY (self->timezone_searchentry));
+
+  g_clear_pointer (&self->filter_text, g_free);
+
+  if (self->preedit_text) {
+    self->filter_text = g_strdup_printf ("%s%s", text, self->preedit_text);
+    g_clear_pointer (&self->preedit_text, g_free);
+  } else {
+    self->filter_text = g_strdup (text);
+  }
+}
+
+static void
+filter_preedit_changed (GtkEntry        *entry,
+                        gchar           *preedit,
+                        CcDateTimePanel *self)
+{
+  g_clear_pointer (&self->preedit_text, g_free);
+  self->preedit_text = (preedit) ? g_strdup (preedit) : NULL;
+
+  g_signal_emit_by_name (G_OBJECT (entry), "changed", 0);
+}
+
+static gboolean
+match_func (GtkEntryCompletion *completion,
+            const gchar        *key,
+            GtkTreeIter        *iter,
+            gpointer            user_data)
+{
+  gchar *item = NULL;
+  gboolean ret = FALSE;
+  GtkTreeModel *model;
+  gchar *filter_text = NULL;
+
+  CcDateTimePanel *self = CC_DATE_TIME_PANEL (user_data);
+
+  if (!self->filter_text || strlen (self->filter_text) == 0)
+    return ret;
+
+  model = gtk_entry_completion_get_model (completion);
+
+  filter_text = cc_util_normalize_casefold_and_unaccent (self->filter_text);
+
+  gtk_tree_model_get (model, iter, CITY_COL_CITY_HUMAN_READABLE, &item, -1);
+  if (item != NULL) {
+    gchar *filter_contents = NULL;
+    filter_contents = cc_util_normalize_casefold_and_unaccent (item);
+    if (strstr (filter_contents, filter_text) != NULL)
+      ret = TRUE;
+
+    g_free (item);
+    g_free (filter_contents);
+  }
+
+  g_free (filter_text);
+
+  return ret;
 }
 
 static char *
@@ -566,14 +718,17 @@ month_year_changed (CcDateTimePanel *self)
   GtkSpinButton *day_spin;
 
   mon = 1 + gtk_combo_box_get_active (GTK_COMBO_BOX (self->month_combobox));
-  y = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->year_spinbutton));
+  y = g_date_time_get_year (self->default_date) - self->year_index + gtk_combo_box_get_active (GTK_COMBO_BOX (self->year_combobox));
+  if (MIN_DATE > y || y > MAX_DATE - 1)
+    return;
+  //y = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (self->year_spinbutton));
 
   /* Check the number of days in that month */
   num_days = g_date_get_days_in_month (mon, y);
 
   day_spin = GTK_SPIN_BUTTON (self->day_spinbutton);
   adj = GTK_ADJUSTMENT (gtk_spin_button_get_adjustment (day_spin));
-  gtk_adjustment_set_upper (adj, num_days + 1);
+  gtk_adjustment_set_upper (adj, num_days + 2);
 
   if (gtk_spin_button_get_value_as_int (day_spin) > num_days)
     gtk_spin_button_set_value (day_spin, num_days);
@@ -618,6 +773,27 @@ is_ntp_available (CcDateTimePanel *self)
 }
 
 static void
+on_datetime_dialog_hide (GtkWidget *widget,
+                         gpointer data)
+{
+  const gchar *str;
+  gint day, num_days;
+  CcDateTimePanel *self = CC_DATE_TIME_PANEL (data);
+
+  str = gtk_entry_get_text (GTK_ENTRY (self->day_spinbutton));
+  day = atoi (str);
+
+  num_days = g_date_get_days_in_month (g_date_time_get_month (self->date),
+                                       g_date_time_get_year (self->date));
+  if (num_days < day)
+    {
+      const gchar *tmp;
+      tmp = g_strdup_printf ("%d", num_days);
+      gtk_entry_set_text (GTK_ENTRY (self->day_spinbutton),tmp);
+    }
+}
+
+static void
 on_permission_changed (CcDateTimePanel *self)
 {
   gboolean allowed, location_allowed, tz_allowed, auto_timezone, using_ntp;
@@ -630,9 +806,9 @@ on_permission_changed (CcDateTimePanel *self)
 
   /* All the widgets but the lock button and the 24h setting */
   gtk_widget_set_sensitive (self->auto_datetime_row, allowed);
-  gtk_widget_set_sensitive (self->auto_timezone_row, location_allowed && (allowed || tz_allowed));
-  gtk_widget_set_sensitive (self->datetime_button, allowed && !using_ntp);
-  gtk_widget_set_sensitive (self->timezone_button, (allowed || tz_allowed) && (!auto_timezone || !location_allowed));
+  gtk_widget_set_sensitive (self->auto_timezone_row, allowed);
+  gtk_widget_set_sensitive (self->datetime_button, allowed);
+  gtk_widget_set_sensitive (self->timezone_button, allowed);
 
   /* Hide the subdialogs if we no longer have permissions */
   if (!allowed)
@@ -855,11 +1031,18 @@ setup_timezone_dialog (CcDateTimePanel *self)
 
   /* Create the completion object */
   completion = gtk_entry_completion_new ();
-  gtk_entry_set_completion (GTK_ENTRY (self->timezone_searchentry), completion);
 
+  gtk_entry_completion_set_minimum_key_length (completion, 0);
   gtk_entry_completion_set_model (completion, GTK_TREE_MODEL (self->city_modelsort));
 
   gtk_entry_completion_set_text_column (completion, CITY_COL_CITY_HUMAN_READABLE);
+  gtk_entry_completion_set_match_func (completion, match_func, self, NULL);
+  gtk_entry_set_completion (GTK_ENTRY (self->timezone_searchentry), completion);
+
+  g_signal_connect_swapped (self->timezone_searchentry, "changed",
+                            G_CALLBACK (filter_changed), self);
+  g_signal_connect (self->timezone_searchentry, "preedit-changed",
+                    G_CALLBACK (filter_preedit_changed), self);
 }
 
 static void
@@ -894,21 +1077,27 @@ setup_datetime_dialog (CcDateTimePanel *self)
   /* Day */
   num_days = g_date_get_days_in_month (g_date_time_get_month (self->date),
                                        g_date_time_get_year (self->date));
-  adjustment = (GtkAdjustment*) gtk_adjustment_new (g_date_time_get_day_of_month (self->date), 1,
-                                                    num_days + 1, 1, 10, 1);
+  adjustment = (GtkAdjustment*) gtk_adjustment_new (g_date_time_get_day_of_month (self->date), 0,
+                                                    num_days + 2, 1, 10, 1);
   gtk_spin_button_set_adjustment (GTK_SPIN_BUTTON (self->day_spinbutton),
                                   adjustment);
   g_signal_connect_object (G_OBJECT (self->day_spinbutton), "value-changed",
                            G_CALLBACK (day_changed), self, G_CONNECT_SWAPPED);
 
   /* Year */
-  adjustment = (GtkAdjustment*) gtk_adjustment_new (g_date_time_get_year (self->date),
-                                                    1, G_MAXDOUBLE, 1,
-                                                    10, 1);
-  gtk_spin_button_set_adjustment (GTK_SPIN_BUTTON (self->year_spinbutton),
-                                  adjustment);
-  g_signal_connect_object (G_OBJECT (self->year_spinbutton), "value-changed",
+  gtk_combo_box_set_active (GTK_COMBO_BOX (self->year_combobox),
+                            g_date_time_get_year (self->default_date) - g_date_time_get_year (self->date) + self->year_index);
+  g_signal_connect_object (G_OBJECT (self->year_combobox), "changed",
                            G_CALLBACK (month_year_changed), self, G_CONNECT_SWAPPED);
+//  guint local_year = g_date_time_get_year (self->date);
+//  adjustment = (GtkAdjustment*) gtk_adjustment_new (local_year,
+//                                                    MIN_DATE, MAX_DATE, 1,
+//                                                    10, 1);
+//
+//  gtk_spin_button_set_adjustment (GTK_SPIN_BUTTON (self->year_spinbutton),
+//                                  adjustment);
+//  g_signal_connect_object (G_OBJECT (self->year_spinbutton), "value-changed",
+//                           G_CALLBACK (month_year_changed), self, G_CONNECT_SWAPPED);
 }
 
 static void
@@ -964,13 +1153,20 @@ cc_date_time_panel_init (CcDateTimePanel *self)
   g_autoptr(GError) error = NULL;
   const char *date_grid_name;
   g_autofree gchar *tmp = NULL;
+  GtkListStore *year_liststore;
+  int year, i;
 
   g_resources_register (cc_datetime_get_resource ());
 
   gtk_widget_init_template (GTK_WIDGET (self));
 
+  self->filter_text = NULL;
+  self->preedit_text = NULL;
+  self->year_index = 0;
   self->cancellable = g_cancellable_new ();
+  self->default_date = g_date_time_new_now_local ();
   error = NULL;
+  year = 0;
   self->dtm = timedate1_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
                                                 G_DBUS_PROXY_FLAGS_NONE,
                                                 "org.freedesktop.timedate1",
@@ -999,6 +1195,20 @@ cc_date_time_panel_init (CcDateTimePanel *self)
     g_assert_not_reached ();
   }
 
+  year = g_date_time_get_year (self->default_date);
+  year_liststore = gtk_list_store_new (N_COLUMNS, G_TYPE_INT);
+
+  if (MIN_DATE > year - 14) {
+    self->year_index = year - MIN_DATE;
+  } else if (year + 14 > MAX_DATE - 1) {
+    self->year_index = 29 - (MAX_DATE - year);
+  } else {
+    self->year_index = 14;
+  }
+  for (i = 0; i < 29; i++) {
+      gtk_list_store_insert_with_values (year_liststore, NULL, i, YEAR_INT_COLUMN, year - self->year_index + i, -1);
+  }
+
   self->builder = gtk_builder_new ();
   tmp = g_strdup_printf ("/org/gnome/control-center/datetime/%s.ui", date_grid_name);
   gtk_builder_add_from_resource (self->builder, tmp, NULL);
@@ -1006,7 +1216,10 @@ cc_date_time_panel_init (CcDateTimePanel *self)
   self->day_spinbutton = GTK_WIDGET (gtk_builder_get_object (self->builder, "day_spinbutton"));
   self->month_combobox = GTK_WIDGET (gtk_builder_get_object (self->builder, "month_combobox"));
   gtk_combo_box_set_model (GTK_COMBO_BOX (self->month_combobox), GTK_TREE_MODEL (self->month_liststore));
-  self->year_spinbutton = GTK_WIDGET (gtk_builder_get_object (self->builder, "year_spinbutton"));
+  self->year_combobox = GTK_WIDGET (gtk_builder_get_object (self->builder, "year_combobox"));
+  gtk_combo_box_set_model (GTK_COMBO_BOX (self->year_combobox), GTK_TREE_MODEL (year_liststore));
+  gtk_combo_box_set_active (GTK_COMBO_BOX (self->year_combobox), self->year_index);
+  //self->year_spinbutton = GTK_WIDGET (gtk_builder_get_object (self->builder, "year_spinbutton"));
 
   gtk_box_pack_end (GTK_BOX (self->time_box), self->date_grid, FALSE, TRUE, 0);
 
@@ -1105,4 +1318,10 @@ cc_date_time_panel_init (CcDateTimePanel *self)
   /* We ignore UTC <--> LocalRTC changes at the moment */
 
   self->filechooser_settings = g_settings_new (FILECHOOSER_SCHEMA);
+
+  g_signal_connect (self->datetime_dialog, "hide",
+                         G_CALLBACK (on_datetime_dialog_hide), self);
+  /* set max length */
+  //gtk_entry_set_max_length (GTK_ENTRY (self->year_spinbutton), 4);
+  gtk_entry_set_max_length (GTK_ENTRY (self->day_spinbutton), 2);
 }

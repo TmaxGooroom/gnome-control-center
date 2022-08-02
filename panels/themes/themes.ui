@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.22.1 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <template class="CcThemesPanel" parent="CcPanel">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkScrolledWindow">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="shadow_type">in</property>
+        <child>
+          <object class="GtkViewport" id="viewport">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">30</property>
+            <property name="margin_right">30</property>
+            <property name="margin_top">20</property>
+            <property name="margin_bottom">20</property>
+            <child>
+              <object class="GtkBox">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="label" translatable="yes">Themes</property>
+                    <style>
+                      <class name="title-label"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkBox" id="themes_box">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_top">40</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

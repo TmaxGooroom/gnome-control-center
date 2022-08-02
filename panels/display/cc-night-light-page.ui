@@ -108,6 +108,7 @@
                     <child>
                       <object class="HdyActionRow">
                         <property name="visible">True</property>
+                        <property name="hexpand">False</property>
                         <property name="title" translatable="yes">Night Light</property>
                         <property name="activatable-widget">night_light_toggle_switch</property>
 
@@ -121,7 +122,7 @@
                     </child>
 
                     <!-- Schedule -->
-                    <child>
+                    <!--child>
                       <object class="HdyActionRow">
                         <property name="visible">True</property>
                         <property name="title" translatable="yes">Schedule</property>
@@ -139,7 +140,7 @@
                           </object>
                         </child>
                       </object>
-                    </child>
+                    </child-->
 
                     <!-- Time -->
                     <child>

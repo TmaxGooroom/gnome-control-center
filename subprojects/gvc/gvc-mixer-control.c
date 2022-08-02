@@ -1544,6 +1544,7 @@ update_sink (GvcMixerControl    *control,
         gvc_mixer_stream_set_is_muted (stream, info->mute);
         gvc_mixer_stream_set_can_decibel (stream, !!(info->flags & PA_SINK_DECIBEL_VOLUME));
         gvc_mixer_stream_set_base_volume (stream, (guint32) info->base_volume);
+        sync_effects_base_volume_and_scale (stream);
         gvc_mixer_stream_set_state (stream, translate_pa_state (info->state));
 
         /* Messy I know but to set the port everytime regardless of whether it has changed will cost us a
@@ -1676,6 +1677,7 @@ update_source (GvcMixerControl      *control,
         gvc_mixer_stream_set_is_muted (stream, info->mute);
         gvc_mixer_stream_set_can_decibel (stream, !!(info->flags & PA_SOURCE_DECIBEL_VOLUME));
         gvc_mixer_stream_set_base_volume (stream, (guint32) info->base_volume);
+        sync_effects_base_volume_and_scale (stream);
         g_debug ("update source");
 
         if (info->active_port != NULL) {

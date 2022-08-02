@@ -22,8 +22,10 @@
 	<KeyListEntry name="area-screenshot-clip"
                       description="Copy a screenshot of an area to clipboard"/>
 
+<!--
 	<KeyListEntry name="screencast"
 		description="Record a short screencast"/>
+-->
 
 </KeyListEntries>
 

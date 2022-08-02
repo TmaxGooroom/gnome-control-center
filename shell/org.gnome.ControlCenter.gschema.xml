@@ -15,5 +15,10 @@
         Whether Settings should show a warning when running a development build.
       </description>
     </key>
+    <key name="whitelist-panels" type="as">
+      <default>['bluetooth', 'background', 'region', 'universal-access', 'privacy', 'devices', 'details', 'location', 'camera', 'microphone', 'usage', 'lock', 'sound', 'power', 'network', 'wifi', 'wacom', 'display', 'keyboard', 'printers', 'mouse', 'removable-media', 'thunderbolt', 'color', 'info-overview', 'datetime', 'user-accounts', 'themes']</default>
+      <summary>Show settings list</summary>
+      <description>Show side panel list that matches the User settings values.</description>
+    </key>
   </schema>
 </schemalist>

@@ -80,6 +80,7 @@ struct _CcAddUserDialog {
         GtkLevelBar        *local_strength_indicator;
         GtkEntry           *local_verify_entry;
         GtkLabel           *local_verify_hint_label;
+        GtkCheckButton     *home_directory_encrypt;
         GtkGrid            *offline_grid;
         GtkSpinner         *spinner;
         GtkStack           *stack;
@@ -129,7 +130,7 @@ show_error_dialog (CcAddUserDialog *self,
         if (error != NULL) {
                 g_dbus_error_strip_remote_error (error);
                 gtk_message_dialog_format_secondary_text (GTK_MESSAGE_DIALOG (dialog),
-                                                          "%s", error->message);
+                                                          "%s", _("Username cannot start with digits."));
         }
 
         g_signal_connect (dialog, "response", G_CALLBACK (gtk_widget_destroy), NULL);
@@ -223,20 +224,23 @@ local_create_user (CcAddUserDialog *self)
         const gchar *username;
         const gchar *name;
         gint account_type;
+        gboolean encrypt_home;
 
         begin_action (self);
 
         name = gtk_entry_get_text (self->local_name_entry);
         username = gtk_combo_box_text_get_active_text (self->local_username_combo);
         account_type = (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->local_account_type_standard)) ? ACT_USER_ACCOUNT_TYPE_STANDARD : ACT_USER_ACCOUNT_TYPE_ADMINISTRATOR);
+        encrypt_home = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->home_directory_encrypt));
 
         g_debug ("Creating local user: %s", username);
 
         manager = act_user_manager_get_default ();
-        act_user_manager_create_user_async (manager,
-                                            username,
+        act_user_manager_create_user_encrypt_async (manager,
+                                            g_ascii_strdown (username, -1),
                                             name,
                                             account_type,
+                                            encrypt_home,
                                             self->cancellable,
                                             (GAsyncReadyCallback)create_user_done,
                                             self);
@@ -760,6 +764,16 @@ local_password_entry_changed_cb (CcAddUserDialog *self)
         clear_entry_validation_error (self->local_password_entry);
         clear_entry_validation_error (self->local_verify_entry);
         recheck_password_match (self);
+}
+
+static void
+clear_verify_entry (CcAddUserDialog *self)
+{
+       if (strlen (gtk_entry_get_text (self->local_password_entry)) !=
+           strlen (gtk_entry_get_text (self->local_verify_entry)))
+       {
+               gtk_entry_set_text (self->local_verify_entry, "");
+       }
 }
 
 static void
@@ -1583,6 +1597,9 @@ cc_add_user_dialog_init (CcAddUserDialog *self)
                                                self, NULL);
 
         monitor = g_network_monitor_get_default ();
+
+        g_object_set (G_OBJECT (self->local_password_entry), "im-module", "", NULL);
+        g_object_set (G_OBJECT (self->local_verify_entry), "im-module", "", NULL);
         g_signal_connect_object (monitor, "network-changed", G_CALLBACK (on_network_changed), self, 0);
 
         join_init (self);
@@ -1728,6 +1745,7 @@ cc_add_user_dialog_class_init (CcAddUserDialogClass *klass)
         gtk_widget_class_bind_template_child (widget_class, CcAddUserDialog, local_strength_indicator);
         gtk_widget_class_bind_template_child (widget_class, CcAddUserDialog, local_verify_entry);
         gtk_widget_class_bind_template_child (widget_class, CcAddUserDialog, local_verify_hint_label);
+        gtk_widget_class_bind_template_child (widget_class, CcAddUserDialog, home_directory_encrypt);
         gtk_widget_class_bind_template_child (widget_class, CcAddUserDialog, offline_grid);
         gtk_widget_class_bind_template_child (widget_class, CcAddUserDialog, spinner);
         gtk_widget_class_bind_template_child (widget_class, CcAddUserDialog, stack);
@@ -1742,6 +1760,7 @@ cc_add_user_dialog_class_init (CcAddUserDialogClass *klass)
         gtk_widget_class_bind_template_callback (widget_class, local_name_entry_changed_cb);
         gtk_widget_class_bind_template_callback (widget_class, local_name_entry_focus_out_event_cb);
         gtk_widget_class_bind_template_callback (widget_class, local_password_entry_changed_cb);
+        gtk_widget_class_bind_template_callback (widget_class, clear_verify_entry);
         gtk_widget_class_bind_template_callback (widget_class, local_password_entry_icon_press_cb);
         gtk_widget_class_bind_template_callback (widget_class, local_password_entry_key_press_event_cb);
         gtk_widget_class_bind_template_callback (widget_class, local_password_radio_changed_cb);

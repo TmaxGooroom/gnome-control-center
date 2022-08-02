@@ -271,22 +271,41 @@ sort_languages (GtkListBoxRow *a,
 }
 
 static void
-filter_changed (CcLanguageChooser *chooser)
+update_filter_changed (CcLanguageChooser *chooser, const gchar *filter_text)
 {
         g_autofree gchar *filter_contents = NULL;
 
         g_clear_pointer (&chooser->filter_words, g_strfreev);
 
-        filter_contents =
-                cc_util_normalize_casefold_and_unaccent (gtk_entry_get_text (GTK_ENTRY (chooser->language_filter_entry)));
+        filter_contents = cc_util_normalize_casefold_and_unaccent (filter_text);
         if (!filter_contents) {
-                gtk_list_box_invalidate_filter (GTK_LIST_BOX (chooser->language_listbox));
-                gtk_list_box_set_placeholder (GTK_LIST_BOX (chooser->language_listbox), NULL);
-                return;
+          gtk_list_box_invalidate_filter (GTK_LIST_BOX (chooser->language_listbox));
+          gtk_list_box_set_placeholder (GTK_LIST_BOX (chooser->language_listbox), NULL);
+          return;
         }
         chooser->filter_words = g_strsplit_set (g_strstrip (filter_contents), " ", 0);
         gtk_list_box_set_placeholder (GTK_LIST_BOX (chooser->language_listbox), chooser->no_results);
         gtk_list_box_invalidate_filter (GTK_LIST_BOX (chooser->language_listbox));
+}
+
+static void
+filter_entry_preedit_changed_cb (GtkEntry          *entry,
+                                 gchar             *preedit,
+                                 CcLanguageChooser *chooser)
+{
+        const gchar *text;
+        g_autofree gchar *filter_text = NULL;
+
+        text = gtk_entry_get_text (GTK_ENTRY (entry));
+        filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
+
+        update_filter_changed (chooser, filter_text);
+}
+
+static void
+filter_changed (CcLanguageChooser *chooser)
+{
+        update_filter_changed (chooser, gtk_entry_get_text (GTK_ENTRY (chooser->language_filter_entry)));
 }
 
 static void
@@ -409,6 +428,8 @@ cc_language_chooser_init (CcLanguageChooser *chooser)
 
         g_signal_connect_object (chooser->language_filter_entry, "search-changed",
                                  G_CALLBACK (filter_changed), chooser, G_CONNECT_SWAPPED);
+        g_signal_connect (chooser->language_filter_entry, "preedit-changed",
+                          G_CALLBACK (filter_entry_preedit_changed_cb), chooser);
 
         g_signal_connect_object (chooser->language_listbox, "row-activated",
                                  G_CALLBACK (row_activated), chooser, G_CONNECT_SWAPPED);

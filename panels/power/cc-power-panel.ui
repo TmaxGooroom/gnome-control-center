@@ -30,7 +30,7 @@
         <col id="1">2700</col>
       </row>
       <row>
-        <col id="0" translatable="yes" context="automatic_suspend" comments="Translators: Option for &quot;Delay&quot; in &quot;Automatic suspend&quot; dialog.">1 hour</col>
+        <col id="0" translatable="yes" context="automatic_suspend" comments="Translators: Option for &quot;Delay&quot; in &quot;Automatic suspend&quot; dialog.">60 minutes</col>
         <col id="1">3600</col>
       </row>
       <row>
@@ -46,7 +46,7 @@
         <col id="1">6000</col>
       </row>
       <row>
-        <col id="0" translatable="yes" context="automatic_suspend" comments="Translators: Option for &quot;Delay&quot; in &quot;Automatic suspend&quot; dialog.">2 hours</col>
+        <col id="0" translatable="yes" context="automatic_suspend" comments="Translators: Option for &quot;Delay&quot; in &quot;Automatic suspend&quot; dialog.">120 minutes</col>
         <col id="1">7200</col>
       </row>
     </data>
@@ -94,6 +94,10 @@
       <row>
         <col id="0" translatable="yes" context="blank_screen" comments="Translators: Option for &quot;Blank screen&quot; in &quot;Power&quot; panel.">15 minutes</col>
         <col id="1">900</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes" context="blank_screen" comments="Translators: Option for &quot;Blank screen&quot; in &quot;Power&quot; panel.">30 minutes</col>
+        <col id="1">1800</col>
       </row>
       <row>
         <col id="0" translatable="yes" context="blank_screen" comments="Translators: Option for &quot;Blank screen&quot; in &quot;Power&quot; panel.">Never</col>

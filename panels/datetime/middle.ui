@@ -46,7 +46,7 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">Year</property>
-        <property name="mnemonic_widget">year_spinbutton</property>
+        <property name="mnemonic_widget">year_combobox</property>
         <property name="xalign">1</property>
         <style>
           <class name="dim-label"/>
@@ -88,14 +88,26 @@
       </packing>
     </child>
     <child>
-      <object class="GtkSpinButton" id="year_spinbutton">
+      <object class="GtkComboBox" id="year_combobox">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <child>
+          <object class="GtkCellRendererText" id="cellrenderertext1">
+            <property name="height">20</property>
+          </object>
+          <attributes>
+            <attribute name="text">0</attribute>
+          </attributes>
+        </child>
+      </object>
+      <!--object class="GtkSpinButton" id="year_spinbutton">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="invisible_char">•</property>
         <property name="width_chars">5</property>
         <property name="numeric">True</property>
         <property name="wrap">True</property>
-      </object>
+      </object-->
       <packing>
         <property name="left_attach">1</property>
         <property name="top_attach">2</property>

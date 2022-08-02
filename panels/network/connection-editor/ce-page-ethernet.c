@@ -1,6 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*-
  *
  * Copyright (C) 2012 Red Hat, Inc
+ * Copyright (C) 2019 gooroom <gooroom@gooroom.kr>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -104,8 +105,8 @@ connect_ethernet_page (CEPageEthernet *self)
         /* MTU */
         g_signal_connect_object (self->mtu_spin, "output", G_CALLBACK (mtu_output_cb), self, G_CONNECT_SWAPPED);
         gtk_spin_button_set_value (self->mtu_spin, (gdouble) nm_setting_wired_get_mtu (setting));
-        g_signal_connect_object (self->mtu_spin, "value-changed", G_CALLBACK (mtu_changed), self, G_CONNECT_SWAPPED);
-        mtu_changed (self);
+//        g_signal_connect_object (self->mtu_spin, "value-changed", G_CALLBACK (mtu_changed), self, G_CONNECT_SWAPPED);
+//        mtu_changed (self);
 
         g_signal_connect_object (self->name_entry, "changed", G_CALLBACK (ce_page_changed), self, G_CONNECT_SWAPPED);
         g_signal_connect_object (self->mtu_spin, "value-changed", G_CALLBACK (ce_page_changed), self, G_CONNECT_SWAPPED);

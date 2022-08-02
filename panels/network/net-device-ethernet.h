@@ -1,6 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*-
  *
  * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2019 gooroom <gooroom@gooroom.kr>
  *
  * Licensed under the GNU General Public License Version 2
  *

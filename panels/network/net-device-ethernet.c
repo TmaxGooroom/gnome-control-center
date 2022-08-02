@@ -1,6 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*-
  *
  * Copyright (C) 2011-2012 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2019 gooroom <gooroom@gooroom.kr>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -49,6 +50,7 @@ struct _NetDeviceEthernet
         NMClient          *client;
         NMDevice          *device;
         gboolean           updating_device;
+        gboolean           is_authenticating;
         GHashTable        *connections;
 };
 
@@ -210,8 +212,32 @@ device_ethernet_refresh_ui (NetDeviceEthernet *self)
 static void
 editor_done (NetDeviceEthernet *self)
 {
+	/* for connection */
+
+        NMConnection *connection;
+
+        device_ethernet_refresh_ui (self);
+        if (self->updating_device)
+                return;
+
+        if (gtk_switch_get_active (self->device_off_switch)) {
+                connection = net_device_get_find_connection (self->client, self->device);
+                if (connection != NULL) {
+                        nm_client_activate_connection_async (self->client,
+                                                             connection,
+                                                             self->device,
+                                                             NULL, NULL, NULL, NULL);
+                }
+        }
+}
+
+static void
+editor_cancel (NetDeviceEthernet *self)
+{
         device_ethernet_refresh_ui (self);
 }
+
+
 
 static void
 show_details (NetDeviceEthernet *self, GtkButton *button, const gchar *title)
@@ -230,6 +256,7 @@ show_details (NetDeviceEthernet *self, GtkButton *button, const gchar *title)
         if (title)
                 net_connection_editor_set_title (editor, title);
         g_signal_connect_object (editor, "done", G_CALLBACK (editor_done), self, G_CONNECT_SWAPPED);
+        g_signal_connect_object (editor, "cancel", G_CALLBACK (editor_cancel), self, G_CONNECT_SWAPPED);
         net_connection_editor_run (editor);
 }
 
@@ -421,12 +448,57 @@ add_profile_button_clicked_cb (NetDeviceEthernet *self)
 }
 
 static void
+ethernet_connected (GObject *source_object,
+                    GAsyncResult *res,
+                    NetDeviceEthernet *self)
+{
+    gboolean success = FALSE;
+    GtkWidget *widget;
+    GError **error;
+    success = g_async_result_legacy_propagate_error (res, error);
+
+    widget = GTK_WIDGET (self->device_off_switch);
+    if (success)
+      gtk_switch_set_state (GTK_SWITCH (widget), FALSE);
+
+    self->is_authenticating = FALSE;
+}
+
+static void
+ethernet_disconnected (GObject *source_object,
+                       GAsyncResult *res,
+                       NetDeviceEthernet *self)
+
+{
+    GError **error;
+    gboolean success = FALSE;
+    GtkWidget *widget;
+    NMDevice *device = NM_DEVICE(source_object);
+
+    success = nm_device_disconnect_finish (device, res, error);
+
+    widget = GTK_WIDGET (self->device_off_switch);
+    if (!success)
+        gtk_switch_set_state (GTK_SWITCH (widget), TRUE);
+
+    self->is_authenticating = FALSE;
+}
+
+static void
 device_off_switch_changed_cb (NetDeviceEthernet *self)
 {
         NMConnection *connection;
+        GAsyncResult *result;
+        GError **error;
+        gboolean success;
 
         if (self->updating_device)
                 return;
+
+        if (self->is_authenticating)
+                return;
+
+        self->is_authenticating = TRUE;
 
         if (gtk_switch_get_active (self->device_off_switch)) {
                 connection = net_device_get_find_connection (self->client, self->device);
@@ -434,10 +506,10 @@ device_off_switch_changed_cb (NetDeviceEthernet *self)
                         nm_client_activate_connection_async (self->client,
                                                              connection,
                                                              self->device,
-                                                             NULL, NULL, NULL, NULL);
+                                                             NULL, NULL, ethernet_connected, self);
                 }
         } else {
-                nm_device_disconnect (self->device, NULL, NULL);
+                nm_device_disconnect_async (self->device, NULL, ethernet_disconnected, self);
         }
 }
 
@@ -500,6 +572,7 @@ net_device_ethernet_init (NetDeviceEthernet *self)
         gtk_widget_init_template (GTK_WIDGET (self));
 
         self->connections = g_hash_table_new (NULL, NULL);
+        self->is_authenticating = FALSE;
 
         gtk_list_box_set_header_func (self->connection_list, cc_list_box_update_header_func, NULL, NULL);
 }

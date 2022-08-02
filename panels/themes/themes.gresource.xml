@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/gnome/control-center/themes">
+    <file preprocess="xml-stripblanks">themes.ui</file>
+    <file preprocess="xml-stripblanks">themes-theme.ui</file>
+    <file alias="check_icon">check-icon.svg</file>
+    <file>style.css</file>
+  </gresource>
+</gresources>
+

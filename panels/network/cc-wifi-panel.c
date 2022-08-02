@@ -1,6 +1,7 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*-
  *
  * Copyright (C) 2017 Georges Basile Stavracas Neto <georges.stavracas@gmail.com>
+ * Copyright (C) 2019 gooroom <gooroom@gooroom.kr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,6 +62,7 @@ struct _CcWifiPanel
   GtkStack           *stack;
   GtkImage           *wifi_qr_image;
   CcQrCode           *qr_code;
+  GtkWidget          *empty_center_box;
 
   NMClient           *client;
 
@@ -118,7 +120,7 @@ update_panel_visibility (NMClient *client)
   application = CC_APPLICATION (g_application_get_default ());
   cc_shell_model_set_panel_visibility (cc_application_get_model (application),
                                        "wifi",
-                                       visible ? CC_PANEL_VISIBLE : CC_PANEL_VISIBLE_IN_SEARCH);
+                                       visible ? CC_PANEL_VISIBLE : CC_PANEL_HIDDEN);
 
   g_debug ("Wi-Fi panel visible: %s", visible ? "yes" : "no");
 }
@@ -368,7 +370,7 @@ wifi_panel_update_qr_image_cb (CcWifiPanel *self)
   gtk_widget_set_opacity (GTK_WIDGET (self->spinner), hotspot == NULL);
 }
 
-static void
+static gboolean
 add_wifi_device (CcWifiPanel *self,
                  NMDevice    *device)
 {
@@ -399,6 +401,8 @@ add_wifi_device (CcWifiPanel *self,
                            G_CALLBACK (wifi_panel_update_qr_image_cb),
                            self,
                            G_CONNECT_SWAPPED);
+
+  return TRUE;
 }
 
 static void
@@ -460,6 +464,7 @@ load_wifi_devices (CcWifiPanel *self)
 {
   const GPtrArray *devices;
   guint i;
+  gboolean isAdded = FALSE;
 
   devices = nm_client_get_devices (self->client);
 
@@ -473,9 +478,15 @@ load_wifi_devices (CcWifiPanel *self)
           device = g_ptr_array_index (devices, i);
           if (!NM_IS_DEVICE_WIFI (device) || !nm_device_get_managed (device))
             continue;
-          add_wifi_device (self, device);
+          isAdded = add_wifi_device (self, device);
         }
     }
+
+  if (!isAdded)
+  {
+    gtk_stack_add_named (self->center_stack, self->empty_center_box, "none");
+    gtk_stack_set_visible_child_name (self->center_stack, "none");
+  }
 
   check_main_stack_page (self);
 }
@@ -1018,6 +1029,7 @@ cc_wifi_panel_class_init (CcWifiPanelClass *klass)
   gtk_widget_class_bind_template_child (widget_class, CcWifiPanel, spinner);
   gtk_widget_class_bind_template_child (widget_class, CcWifiPanel, stack);
   gtk_widget_class_bind_template_child (widget_class, CcWifiPanel, wifi_qr_image);
+  gtk_widget_class_bind_template_child (widget_class, CcWifiPanel, empty_center_box);
 
   gtk_widget_class_bind_template_callback (widget_class, rfkill_switch_notify_activate_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_stack_visible_child_changed_cb);

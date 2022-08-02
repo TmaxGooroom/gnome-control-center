@@ -6,7 +6,7 @@ panels = [
   'camera',
   'color',
   'datetime',
-  'default-apps',
+#  'default-apps',
   'diagnostics',
   'display',
   'info-overview',
@@ -15,18 +15,20 @@ panels = [
   'lock',
   'microphone',
   'mouse',
-  'notifications',
-  'online-accounts',
+#  'notifications',
+#  'online-accounts',
   'power',
   'printers',
   'region',
   'removable-media',
-  'search',
-  'sharing',
+#  'search',
+#  'sharing',
   'sound',
   'universal-access',
   'usage',
-  'user-accounts'
+  'user-accounts',
+  'font',
+  'themes'
 ]
 
 if host_is_linux

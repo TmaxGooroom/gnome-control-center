@@ -195,7 +195,8 @@ endif
 cflags += [
   '-DGNOMELOCALEDIR="@0@"'.format(control_center_localedir),
   '-DHAVE_LIBPWQUALITY',
-  '-DUM_PIXMAP_DIR="@0@"'.format(join_paths(control_center_pkgdatadir, 'pixmaps'))
+  '-DUM_PIXMAP_DIR="@0@"'.format(join_paths(control_center_pkgdatadir, 'pixmaps')),
+  '-DECRYPTFS_DIR="/home/.ecryptfs"'
 ]
 
 panels_libs += static_library(

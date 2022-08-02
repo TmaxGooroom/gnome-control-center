@@ -1,6 +1,7 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*- */
 /*
  * Copyright (c) 2012 Giovanni Campagna <scampa.giovanni@gmail.com>
+ * Copyright (c) 2019 gooroom <gooroom@gooroom.kr>
  *
  * The Control Center is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by the
@@ -38,7 +39,7 @@ extern GType cc_bluetooth_panel_get_type (void);
 #endif /* BUILD_BLUETOOTH */
 extern GType cc_color_panel_get_type (void);
 extern GType cc_date_time_panel_get_type (void);
-extern GType cc_default_apps_panel_get_type (void);
+//extern GType cc_default_apps_panel_get_type (void);
 extern GType cc_display_panel_get_type (void);
 extern GType cc_info_overview_panel_get_type (void);
 extern GType cc_keyboard_panel_get_type (void);
@@ -47,7 +48,7 @@ extern GType cc_mouse_panel_get_type (void);
 extern GType cc_network_panel_get_type (void);
 extern GType cc_wifi_panel_get_type (void);
 #endif /* BUILD_NETWORK */
-extern GType cc_notifications_panel_get_type (void);
+//extern GType cc_notifications_panel_get_type (void);
 extern GType cc_goa_panel_get_type (void);
 extern GType cc_power_panel_get_type (void);
 extern GType cc_printers_panel_get_type (void);
@@ -56,6 +57,8 @@ extern GType cc_removable_media_panel_get_type (void);
 extern GType cc_search_panel_get_type (void);
 extern GType cc_sharing_panel_get_type (void);
 extern GType cc_sound_panel_get_type (void);
+extern GType cc_font_panel_get_type (void);
+extern GType cc_themes_panel_get_type (void);
 #ifdef BUILD_THUNDERBOLT
 extern GType cc_bolt_panel_get_type (void);
 #endif /* BUILD_THUNDERBOLT */
@@ -95,10 +98,12 @@ static CcPanelLoaderVtable default_panels[] =
 #ifdef BUILD_BLUETOOTH
   PANEL_TYPE("bluetooth",        cc_bluetooth_panel_get_type,            NULL),
 #endif
+//  PANEL_TYPE("font",             cc_font_panel_get_type,                 NULL),
+//  PANEL_TYPE("themes",           cc_themes_panel_get_type,               NULL),
   PANEL_TYPE("camera",           cc_camera_panel_get_type,               NULL),
   PANEL_TYPE("color",            cc_color_panel_get_type,                NULL),
   PANEL_TYPE("datetime",         cc_date_time_panel_get_type,            NULL),
-  PANEL_TYPE("default-apps",     cc_default_apps_panel_get_type,         NULL),
+  //PANEL_TYPE("default-apps",     cc_default_apps_panel_get_type,         NULL),
   PANEL_TYPE("diagnostics",      cc_diagnostics_panel_get_type,          cc_diagnostics_panel_static_init_func),
   PANEL_TYPE("display",          cc_display_panel_get_type,              NULL),
   PANEL_TYPE("info-overview",    cc_info_overview_panel_get_type,        NULL),
@@ -109,16 +114,18 @@ static CcPanelLoaderVtable default_panels[] =
   PANEL_TYPE("mouse",            cc_mouse_panel_get_type,                NULL),
 #ifdef BUILD_NETWORK
   PANEL_TYPE("network",          cc_network_panel_get_type,              NULL),
-  PANEL_TYPE("wifi",             cc_wifi_panel_get_type,                 cc_wifi_panel_static_init_func),
+  //PANEL_TYPE("wifi",             cc_wifi_panel_get_type,                 cc_wifi_panel_static_init_func),
+  PANEL_TYPE("wifi",             cc_wifi_panel_get_type,                 NULL),
 #endif
-  PANEL_TYPE("notifications",    cc_notifications_panel_get_type,        NULL),
-  PANEL_TYPE("online-accounts",  cc_goa_panel_get_type,                  NULL),
+  /* Removed with low usability */
+  //PANEL_TYPE("notifications",    cc_notifications_panel_get_type,        NULL),
+  //PANEL_TYPE("online-accounts",  cc_goa_panel_get_type,                  NULL),
+  //PANEL_TYPE("search",           cc_search_panel_get_type,               NULL),
+  //PANEL_TYPE("sharing",          cc_sharing_panel_get_type,              NULL),
   PANEL_TYPE("power",            cc_power_panel_get_type,                NULL),
   PANEL_TYPE("printers",         cc_printers_panel_get_type,             NULL),
   PANEL_TYPE("region",           cc_region_panel_get_type,               NULL),
   PANEL_TYPE("removable-media",  cc_removable_media_panel_get_type,      NULL),
-  PANEL_TYPE("search",           cc_search_panel_get_type,               NULL),
-  PANEL_TYPE("sharing",          cc_sharing_panel_get_type,              NULL),
   PANEL_TYPE("sound",            cc_sound_panel_get_type,                NULL),
 #ifdef BUILD_THUNDERBOLT
   PANEL_TYPE("thunderbolt",      cc_bolt_panel_get_type,                 NULL),
@@ -176,6 +183,26 @@ parse_categories (GDesktopAppInfo *app)
     }
 
   return retval;
+}
+
+void
+cc_panel_loader_visible_from_schema (CcShellModel *model)
+{
+  g_auto(GStrv) white_list;
+  GSettings *settings;
+  settings = g_settings_new ("org.gnome.ControlCenter");
+  white_list = g_settings_get_strv (settings, "whitelist-panels");
+
+  for (gint i = 0; i < G_N_ELEMENTS (default_panels); i++)
+  {
+    for (int j = 0; white_list[j] != NULL; j++)
+    {   
+      if (g_strcmp0(default_panels[i].name, white_list[j]) == 0)
+        cc_shell_model_set_panel_visibility (model, default_panels[i].name, CC_PANEL_VISIBLE);
+    }   
+  }
+
+  g_clear_object (&settings);
 }
 
 #ifndef CC_PANEL_LOADER_NO_GTYPES
@@ -243,6 +270,7 @@ cc_panel_loader_fill_model (CcShellModel *model)
       g_autoptr(GDesktopAppInfo) app = NULL;
       g_autofree gchar *desktop_name = NULL;
       gint category;
+      gboolean isVisible = TRUE;
 
       desktop_name = g_strconcat ("gnome-", panels_vtable[i].name, "-panel.desktop", NULL);
       app = g_desktop_app_info_new (desktop_name);
@@ -271,6 +299,8 @@ cc_panel_loader_fill_model (CcShellModel *model)
         panels_vtable[i].static_init_func ();
     }
 #endif
+
+  cc_panel_loader_visible_from_schema (model);
 }
 
 /**

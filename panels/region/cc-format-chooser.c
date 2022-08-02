@@ -477,16 +477,16 @@ region_visible (GtkListBoxRow *row,
 }
 
 static void
-filter_changed (CcFormatChooser *chooser)
+update_filter_changed (CcFormatChooser *chooser, const gchar *filter_text)
 {
         g_autofree gchar *filter_contents = NULL;
         gboolean visible;
 
-        g_clear_pointer (&chooser->filter_words, g_strfreev);
+        if (!filter_text)
+                return;
 
         filter_contents =
-                cc_util_normalize_casefold_and_unaccent (gtk_entry_get_text (GTK_ENTRY (chooser->region_filter_entry)));
-
+                cc_util_normalize_casefold_and_unaccent (filter_text);
         /* The popular listbox is shown only if search is empty */
         visible = filter_contents == NULL || *filter_contents == '\0';
         gtk_widget_set_visible (chooser->common_region_listbox, visible);
@@ -501,6 +501,8 @@ filter_changed (CcFormatChooser *chooser)
                 gtk_list_box_set_placeholder (GTK_LIST_BOX (chooser->region_listbox), NULL);
                 return;
         }
+
+        g_clear_pointer (&chooser->filter_words, g_strfreev);
         chooser->filter_words = g_strsplit_set (g_strstrip (filter_contents), " ", 0);
         gtk_list_box_invalidate_filter (GTK_LIST_BOX (chooser->region_listbox));
 
@@ -510,6 +512,31 @@ filter_changed (CcFormatChooser *chooser)
         else
           gtk_stack_set_visible_child (GTK_STACK (chooser->region_list_stack),
                                        GTK_WIDGET (chooser->region_list));
+}
+
+static void
+filter_changed (CcFormatChooser *chooser)
+{
+  const gchar *text;
+
+  text = gtk_entry_get_text (GTK_ENTRY (chooser->region_filter_entry));
+
+  update_filter_changed (chooser, text);
+}
+
+static void
+filter_preedit_changed (GtkEntry       *entry,
+                        gchar          *preedit,
+                        CcFormatChooser *chooser)
+{
+  const gchar *text;
+  g_autofree gchar *filter_text = NULL;
+
+  text = gtk_entry_get_text (GTK_ENTRY (entry));
+
+  filter_text = (preedit == NULL) ? g_strdup (text) : g_strdup_printf ("%s%s", text, preedit);
+
+  update_filter_changed (chooser, filter_text);
 }
 
 static void
@@ -594,6 +621,7 @@ cc_format_chooser_class_init (CcFormatChooserClass *klass)
         gtk_widget_class_bind_template_callback (widget_class, format_chooser_back_button_clicked_cb);
         gtk_widget_class_bind_template_callback (widget_class, format_chooser_leaflet_fold_changed_cb);
         gtk_widget_class_bind_template_callback (widget_class, filter_changed);
+        gtk_widget_class_bind_template_callback (widget_class, filter_preedit_changed);
         gtk_widget_class_bind_template_callback (widget_class, row_activated);
 }
 

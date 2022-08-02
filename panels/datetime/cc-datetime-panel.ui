@@ -192,7 +192,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="title" translatable="yes">Automatic _Date &amp; Time</property>
-                            <property name="subtitle" translatable="yes">Requires internet access</property>
+                            <property name="subtitle" translatable="yes">Apply network time when connecting to the Internet</property>
                             <property name="use_underline">True</property>
                             <child>
                               <object class="GtkSwitch" id="network_time_switch">
@@ -252,7 +252,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="title" translatable="yes">Automatic Time _Zone</property>
-                            <property name="subtitle" translatable="yes">Requires location services enabled and internet access</property>
+                            <property name="subtitle" translatable="yes">Apply network time when connecting to the Internet</property>
                             <property name="use_underline">True</property>
                             <child>
                               <object class="GtkSwitch" id="auto_timezone_switch">

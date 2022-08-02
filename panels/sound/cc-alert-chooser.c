@@ -273,6 +273,8 @@ cc_alert_chooser_init (CcAlertChooser *self)
     set_button (self, self->glass_button, TRUE);
   else if (g_strcmp0 (alert_name, "sonar") == 0)
     set_button (self, self->sonar_button, TRUE);
-  else if (alert_name != NULL)
+  else if (alert_name != NULL) {
     g_warning ("Current alert sound has unknown name %s", alert_name);
+    set_button (self, self->drip_button, TRUE);
+  }
 }

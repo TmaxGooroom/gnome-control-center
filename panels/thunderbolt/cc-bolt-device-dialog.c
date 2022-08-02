@@ -91,7 +91,7 @@ status_to_string_for_ui (BoltDevice *dev)
   switch (status)
     {
     case BOLT_STATUS_DISCONNECTED:
-      return C_("Thunderbolt Device Status", "Disconnected");
+      return C_("Device Status", "Disconnected");
 
     case BOLT_STATUS_CONNECTING:
       return C_("Thunderbolt Device Status", "Connecting");

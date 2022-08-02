@@ -224,7 +224,7 @@ msgstr "카메라"
 #: panels/user-accounts/cc-user-panel.c:957
 #: subprojects/gvc/gvc-mixer-control.c:1876
 msgid "Disabled"
-msgstr "사용 않음"
+msgstr "사용 안함"
 
 #: panels/applications/cc-applications-panel.ui:133
 #: panels/applications/cc-applications-panel.ui:139
@@ -406,6 +406,9 @@ msgstr "취소(_C)"
 #: panels/user-accounts/cc-avatar-chooser.c:236
 msgid "_Open"
 msgstr "열기(_O)"
+
+msgid "Open"
+msgstr "열기"
 
 #: panels/background/cc-background-item.c:140
 msgid "multiple sizes"
@@ -707,6 +710,18 @@ msgstr "색 영역: "
 msgid "Test profile: "
 msgstr "시험용 프로파일: "
 
+#: panels/color/cc-color-panel.c:254
+msgid "Apply profile to all users?"
+msgstr "모든 사용자에게 프로파일을 적용하시겠습니까?"
+
+#: panels/color/cc-color-panel.c:255
+msgid "Profiles of all users are changed to selected profile."
+msgstr "모든 사용자의 프로파일이 선택된 프로파일로 변경됩니다."
+
+#: panels/color/cc-color-panel.c:256
+msgid "_Apply Profile"
+msgstr "프로파일 적용(_A)"
+
 #. TRANSLATORS: an ICC profile is a file containing colorspace data
 #: panels/color/cc-color-panel.c:236
 msgid "Select ICC Profile File"
@@ -938,11 +953,9 @@ msgstr "추가(_A)"
 
 #: panels/color/cc-color-panel.ui:732
 msgid ""
-"Problems detected. The profile may not work correctly. <a href=\"\">Show "
-"details.</a>"
+"Problems detected. The profile may not work correctly."
 msgstr ""
-"문제가 발생했습니다. 프로파일이 동작하지 않을 수도 있습니다. <a href=\"\">자"
-"세히 보기.</a>"
+"문제가 발생했습니다. 프로파일이 동작하지 않을 수도 있습니다."
 
 #: panels/color/cc-color-panel.ui:788
 msgid "Each device needs an up to date color profile to be color managed."
@@ -1193,6 +1206,14 @@ msgstr "언어 선택"
 #: panels/common/cc-language-chooser.ui:12
 msgid "_Select"
 msgstr "선택(_S)"
+
+#: panels/background/cc-background-chooser.c:145
+msgid "Add the selected image file?"
+msgstr "선택하신 이미지 파일을 추가하시겠습니까?"
+
+#: panels/background/cc-background-chooser.c:146
+msgid "The file which has same name already exists."
+msgstr "동일한 이름을 가진 파일이 이미 존재합니다."
 
 #: panels/common/cc-permission-infobar.ui:20
 msgid "Unlock…"
@@ -1601,7 +1622,7 @@ msgstr "단일 디스플레이"
 #: panels/display/cc-display-panel.ui:108
 #: panels/display/cc-display-panel.ui:310
 msgid "Join Displays"
-msgstr "디스플레이 연결"
+msgstr "디스플레이 확장"
 
 #: panels/display/cc-display-panel.ui:126
 msgid "Mirror"
@@ -1841,6 +1862,10 @@ msgstr "알 수 없음"
 msgid "Device Name"
 msgstr "장치 이름"
 
+#: panels/info-overview/cc-info-overview-panel.ui:52
+msgid "OS Info"
+msgstr "운영 체제 정보"
+
 #: panels/info-overview/cc-info-overview-panel.ui:74
 msgid "Memory"
 msgstr "메모리"
@@ -1939,7 +1964,7 @@ msgstr "볼륨 낮추기"
 
 #: panels/keyboard/00-multimedia.xml.in:8
 msgid "Volume up"
-msgstr "음량 높이기"
+msgstr "볼륨 높이기"
 
 #: panels/keyboard/00-multimedia.xml.in:10
 msgid "Microphone mute/unmute"
@@ -2265,6 +2290,14 @@ msgid "Press Esc to cancel or Backspace to disable the keyboard shortcut."
 msgstr ""
 "키보드 바로 가기 입력에서 Esc를 누르면 취소하고, 백스페이스를 누르면 사용하"
 "지 않습니다."
+
+#: panels/keyboard/cc-keyboard-shortcut-editor.ui:60
+msgid ""
+"Press reset button on the right to change the command to default setting. "
+"Close current window to enter another command."
+msgstr ""
+"단축키를 기본 설정으로 변경하려면 우측 초기화 버튼을 눌러야 합니다. "
+"다른 단축키를 입력하려면 현재 창을 닫아야 합니다"
 
 #: panels/keyboard/cc-keyboard-shortcut-editor.ui:135
 #: panels/printers/pp-details-dialog.ui:40
@@ -3170,7 +3203,7 @@ msgstr "수동"
 #: panels/network/connection-editor/ip4-page.ui:83
 #: panels/network/connection-editor/ip6-page.ui:97
 msgid "Disable"
-msgstr "사용 않기"
+msgstr "사용안함"
 
 #: panels/network/connection-editor/ip4-page.ui:97
 #: panels/network/connection-editor/ip6-page.ui:111
@@ -3406,6 +3439,10 @@ msgstr ""
 #: panels/network/net-device-wifi.c:855
 msgid "_Forget"
 msgstr "저장 지우기(_F)"
+
+#: panels/network/net-device-wifi.c:1011
+msgid "There are no known Wi-Fi Networks."
+msgstr "알려진 와이파이 네트워크가 없습니다."
 
 #: panels/network/net-device-wifi.c:1011 panels/network/net-device-wifi.c:1018
 msgid "Known Wi-Fi Networks"
@@ -4639,8 +4676,8 @@ msgstr "45분"
 #. Translators: Option for "Delay" in "Automatic suspend" dialog.
 #: panels/power/cc-power-panel.ui:33
 msgctxt "automatic_suspend"
-msgid "1 hour"
-msgstr "1시간"
+msgid "60 minutes"
+msgstr "60분"
 
 #. Translators: Option for "Delay" in "Automatic suspend" dialog.
 #: panels/power/cc-power-panel.ui:37
@@ -4663,8 +4700,8 @@ msgstr "100분"
 #. Translators: Option for "Delay" in "Automatic suspend" dialog.
 #: panels/power/cc-power-panel.ui:49
 msgctxt "automatic_suspend"
-msgid "2 hours"
-msgstr "2시간"
+msgid "120 minutes"
+msgstr "120분"
 
 #: panels/power/cc-power-panel.ui:145
 msgid "Automatic Suspend"
@@ -5059,6 +5096,10 @@ msgstr "해상도"
 msgid "GhostScript pre-filtering"
 msgstr "고스트스크립트 우선 필터링"
 
+#: panels/printers/pp-options-dialog.c:89
+msgid "Media Size"
+msgstr "용지 크기"
+
 #. Translators: This option sets number of pages printed on one sheet
 #: panels/printers/pp-options-dialog.c:530
 msgid "Pages per side"
@@ -5339,7 +5380,7 @@ msgstr "다시 시작"
 #. Translators: This button adds new printer.
 #: panels/printers/printers.ui:12
 msgid "Add…"
-msgstr "추가…"
+msgstr "프린터 추가…"
 
 #: panels/printers/printers.ui:186
 msgid "No printers"
@@ -5464,8 +5505,8 @@ msgid "Restart the session for changes to take effect"
 msgstr "바뀐 사항을 적용하려면 세션을 다시 시작하십시오"
 
 #: panels/region/cc-region-panel.ui:112
-msgid "Restart…"
-msgstr "다시 시작…"
+msgid "Logout…"
+msgstr "로그 아웃…"
 
 #: panels/region/cc-region-panel.ui:145
 msgid "_Formats"
@@ -6038,7 +6079,7 @@ msgstr ""
 
 #: panels/thunderbolt/cc-bolt-device-dialog.c:94
 #: panels/thunderbolt/cc-bolt-device-entry.c:125
-msgctxt "Thunderbolt Device Status"
+msgctxt "Device Status"
 msgid "Disconnected"
 msgstr "연결 끊김"
 
@@ -6503,11 +6544,11 @@ msgstr "누르기 도움"
 
 #: panels/universal-access/cc-ua-panel.ui:2514
 msgid "_Simulated Secondary Click"
-msgstr "두 번째 누르기 흉내 내기(_S)"
+msgstr "오른쪽 누르기 흉내 내기(_S)"
 
 #: panels/universal-access/cc-ua-panel.ui:2532
 msgid "Trigger a secondary click by holding down the primary button"
-msgstr "단추를 누르고 있으면 두 번째 누르기로 취급"
+msgstr "단추를 누르고 있으면 오른쪽 누르기로 취급"
 
 #: panels/universal-access/cc-ua-panel.ui:2586
 msgctxt "secondary click"
@@ -6516,7 +6557,7 @@ msgstr "짧게"
 
 #: panels/universal-access/cc-ua-panel.ui:2605
 msgid "Secondary click delay"
-msgstr "두 번째 누르기 지연 시간"
+msgstr "오른쪽 누르기 지연 시간"
 
 #: panels/universal-access/cc-ua-panel.ui:2620
 msgctxt "secondary click delay"
@@ -6755,6 +6796,26 @@ msgstr "색상 효과:"
 msgid "Color Effects"
 msgstr "색상 효과"
 
+#: panels/usage/cc-usage-panel.c:324
+msgid "Clear Recent"
+msgstr "최근 기록 비우기"
+
+#: panels/usage/cc-usage-panel.c:325
+msgid "Clear all items in Recent?"
+msgstr "모든 최근 기록을 비우시겠습니까?"
+
+#: panels/usage/cc-usage-panel.c:326
+msgid "All items in the Recent will be cleared."
+msgstr "모든 최근 기록을 완전히 정리합니다."
+
+#: panels/usage/cc-usage-panel.c:327
+msgid "_Clear Recent"
+msgstr "최근 기록 비우기(_C)"
+
+#: panels/usage/cc-usage-panel.c:153
+msgid "Empty Trash"
+msgstr "휴지통 비우기"
+
 #: panels/usage/cc-usage-panel.c:154
 msgid "Empty all items from Trash?"
 msgstr "휴지통의 모든 항목을 비우시겠습니까?"
@@ -6766,6 +6827,10 @@ msgstr "휴지통의 모든 항목을 완전히 삭제합니다."
 #: panels/usage/cc-usage-panel.c:156
 msgid "_Empty Trash"
 msgstr "휴지통 비우기(_E)"
+
+#: panels/usage/cc-usage-panel.c:176
+msgid "Purge Temporary Files"
+msgstr "임시 파일 지우기"
 
 #: panels/usage/cc-usage-panel.c:177
 msgid "Delete all the temporary files?"
@@ -6933,6 +6998,10 @@ msgstr "흔적 남기지 않기"
 msgid "Should match the web address of your login provider."
 msgstr "로그인을 제공하는 곳의 웹 주소."
 
+#: panels/user-accounts/um-account-dialog.c:140
+msgid "Username cannot start with digits."
+msgstr "사용자 이름은 숫자로 시작할 수 없습니다."
+
 #: panels/user-accounts/cc-add-user-dialog.c:205
 msgid "Failed to add account"
 msgstr "계정 추가에 실패했습니다"
@@ -6984,6 +7053,32 @@ msgstr "도메인을 찾을 수 없습니다. 잘못 쓰신 것이 아닙니까?
 #: panels/user-accounts/data/join-dialog.ui:11
 msgid "Add User"
 msgstr "사용자 추가"
+
+#: panels/user-accounts/cc-add-user-dialog.ui:18
+msgid "Home directory _Encryption"
+msgstr "홈폴더 암호화(_E)"
+
+#: panels/user-accounts/cc-user-panel.c:626
+msgid "Do you want to delete user %s?"
+msgstr "정말로 %s 사용자를 삭제하시겠습니까?"
+
+#: panels/user-accounts/cc-user-panel.c:630
+msgid "All data related with user %s will be deleted."
+msgstr ""
+"%s 사용자와 관련된 모든 데이터가 삭제됩니다. 홈폴더 암호화가 적용된 계정은"
+" 계정 삭제시 항상 모든 데이터를 삭제합니다."
+
+#: panels/user-accounts/cc-add-user-dialog.ui:18
+msgid ""
+"Encrypt all files in user's home directory with user's login password"
+" to protect sensitive data from people who can access to user's computer."
+msgstr ""
+"사용자의 홈폴더에 있는 모든 파일을 사용자의 로그인 암호로 암호화하여"
+" 사용자의 컴퓨터에 물리적으로 접근 가능한 사람으로부터 민감한 정보를 보호합니다."
+
+#: panels/user-accounts/cc-user-panel.ui:429
+msgid "Applied Home Directory Encryption."
+msgstr "홈폴더 암호화가 적용되어 있습니다."
 
 #: panels/user-accounts/cc-add-user-dialog.ui:180
 msgid "_Full Name"
@@ -7367,6 +7462,10 @@ msgstr "내 계정"
 msgid "Failed to delete user"
 msgstr "사용자 삭제에 실패했습니다"
 
+#: panels/user-accounts/cc-user-panel.c:437
+msgid "User %s is going on delete."
+msgstr "사용자 %s 를 삭제중입니다."
+
 #: panels/user-accounts/cc-user-panel.c:459
 #: panels/user-accounts/cc-user-panel.c:518
 #: panels/user-accounts/cc-user-panel.c:570
@@ -7409,12 +7508,16 @@ msgstr "파일 삭제(_D)"
 msgid "_Keep Files"
 msgstr "파일 유지(_K)"
 
-#: panels/user-accounts/cc-user-panel.c:665
+#: panels/user-accounts/cc-user-panel.c:676
+msgid "Delete User"
+msgstr "사용자 삭제"
+
+#: panels/user-accounts/cc-user-panel.c:687
 #, c-format
 msgid "Are you sure you want to revoke remotely managed %s’s account?"
 msgstr "정말로 원격에서 관리하는 %s의 계정을 철회하시겠습니까?"
 
-#: panels/user-accounts/cc-user-panel.c:669
+#: panels/user-accounts/cc-user-panel.c:691
 msgid "_Delete"
 msgstr "삭제(_D)"
 
@@ -8142,6 +8245,256 @@ msgstr[0] "%u개 입력"
 #: subprojects/gvc/gvc-mixer-control.c:2750
 msgid "System Sounds"
 msgstr "시스템 사운드"
+
+#: ../panels/font/cc-font-chooser.c:67
+msgid "Font"
+msgstr "글꼴"
+
+#: ../panels/font/font.ui:10
+msgid "full"
+msgstr "완전히"
+
+#: ../panels/font/font.ui:13
+msgid "medium"
+msgstr "적당히"
+
+#: ../panels/font/font.ui:16
+msgid "slight"
+msgstr "조금"
+
+#: ../panels/font/font.ui:19
+msgid "none"
+msgstr "없음"
+
+#: ../panels/font/font.ui:22
+msgid "rgba"
+msgstr "서브픽셀(LCD 화면용)"
+
+#: ../panels/font/font.ui:25
+msgid "grayscale"
+msgstr "표준(흑백)"
+
+#: ../panels/font/font.ui:118
+msgid "Interface Text"
+msgstr "인터페이스 텍스트"
+
+#: ../panels/font/font.ui:172
+msgid "Document Text"
+msgstr "문서 텍스트"
+
+#: ../panels/font/font.ui:226
+msgid "Monospace Text"
+msgstr "고정폭 텍스트"
+
+#: ../panels/font/font.ui:280 ../panels/font/font.ui:375
+#: ../panels/font/font.ui:425
+msgid "Legacy Window Titles"
+msgstr "이전 방식 창 제목"
+
+#. List of applications.
+#: ../panels/font/font.ui:328
+msgid "Font Rendering Settings"
+msgstr "글꼴 그리기 설정"
+
+#: ../panels/font/font.ui:425
+msgid "AntiAliasing"
+msgstr "안티 알리아싱"
+
+#: ../panels/font/font.ui:480
+msgid "Scale Constant"
+msgstr "스케일 상수"
+
+#: ../panels/font/cc-font-panel.c:339
+msgid "_small"
+msgstr "작게"
+
+#: ../panels/font/cc-font-panel.c:340
+msgid "_medium"
+msgstr "중간"
+
+#: ../panels/font/cc-font-panel.c:341
+msgid "_large"
+msgstr "크게"
+
+#: ../panels/themes/gnome-themes-panel.desktop.in.in:4
+msgid "Change your Thema for window and icon"
+msgstr "아이콘 또는 윈도우 창의 테마를 변경합니다."
+
+#: ../panels/themes/themes.ui:37
+msgid "Current Theme : "
+msgstr "현재 테마 : "
+
+#: ../panels/themes/themes.ui:116
+msgid "Theme List"
+msgstr "테마 목록"
+
+#: ../panels/themes/gnome-themes-panel.desktop.in.in:3
+msgid "Themes"
+msgstr "테마"
+
+#: ../panels/themes/themes.ui:52
+msgid "theme"
+msgstr "테마"
+
+#: ../panels/themes/cc-themes-panel.c:133
+msgid "Gooroom Icon Theme %d"
+msgstr "구름 테마 %d"
+
+#: ../panels/themes/themes.ui:60
+msgid "This theme is not listed."
+msgstr "목록에 없는 테마입니다."
+
+#: ../shell/org.gnome.ControlCenter.gschema.xml:20
+msgid "Show settings list"
+msgstr "패널 목록 보여줌"
+
+#: ../shell/org.gnome.ControlCenter.gschema.xml:21
+msgid "Show side panel list that matches the User settings values."
+msgstr "사용자 설정 값과 일치하는 사이드 목록을 보여줍니다."
+
+#: ../panels/user-accounts/um-lockbutton.c:365
+msgid "Locked"
+msgstr "잠김"
+
+#: ../panels/network/network.ui.h:23
+#: ../panels/user-accounts/um-lockbutton.c:356
+msgid "Unlock"
+msgstr "잠금 해제"
+
+#: ../panels/user-accounts/um-lockbutton.c:383
+msgid ""
+"Dialog is locked.\n"
+"Click to make changes"
+msgstr ""
+"대화창이 잠겼습니다.\n"
+"바꾸려면 누르십시오"
+
+#: ../panels/user-accounts/um-user-panel.c:998
+msgid ""
+"Your session needs to be restarted for changes to take effect.\n"
+"Do you want restart?"
+msgstr ""
+"바뀐 사항을 적용하려면 세션을 다시 시작해야 합니다.\n"
+"다시 시작하시겠습니까?"
+
+#: ../panels/datetime/datetime.ui:333
+#: ../panels/datetime/datetime.ui:441
+msgid "Apply network time when connecting to the Internet"
+msgstr "인터넷 연결 시 네트워크 시간 적용"
+
+#: panels/user-accounts/pw-utils.c:97
+msgctxt "Password hint"
+msgid "Do not enter the same words consecutively."
+msgstr "같은 단어를 연속해서 입력하지 마십시오."
+
+#: ../panels/power/cc-power-panel.c:1842
+msgid "Screen dims when the computer operates on battery power."
+msgstr "컴퓨터가 배터리 전원으로 동작하면 화면이 어두워 집니다."
+
+#: ../panels/printers/cc-printer-panel.c:1136
+msgid ""
+"Media control access not permission.\n"
+"To use, change access permission to \"allow\""
+msgstr ""
+"매체제어 접근 권한이 없습니다.\n"
+"사용하시려면 접근 권한을 \"allow\"로 변경하십시오."
+
+#: ../panels/user-accounts/um-user-panel.c:997
+msgid ""
+"User infomations has changed.\n"
+"Changes take effect after your session needs to be restarted.\n"
+"Do you want restart?"
+msgstr ""
+"사용자 정보가 변경되었습니다.\n"
+"세션을 다시 시작해야 변경 사항이 적용됩니다.\n"
+"다시 시작하시겠습니까?"
+
+#: ../panels/font/gnome-font-panel.desktop.in.in:3
+msgid "Change your font"
+msgstr "폰트를 변경합니다"
+
+#: ../panels/font/font-chooser-widget.ui:53
+msgid "Search font name"
+msgstr "글꼴 검색"
+
+#: ../panels/font/font-chooser-widget.ui:121
+#: ../panels/font/font-chooser-widget.ui:248
+msgid "Preview text"
+msgstr "미리보기 텍스트"
+
+#: ../panels/font/font-chooser-widget.ui:134
+#: ../panels/font/font-chooser-widget.ui:223
+#: ../panels/font/font-chooser-widget.ui:276
+msgid "Size"
+msgstr "크기"
+
+#: ../panels/font/font-chooser-widget.ui:201
+msgid "No Fonts Found"
+msgstr "글꼴이 없습니다"
+
+#: ../panels/font/cc-font-button.c:483
+#: ../panels/font/cc-font-button.c:617
+msgid "Pick a Font"
+msgstr "글꼴 고르기"
+
+#: ../panels/keyboard/keyboard-shortcuts.c:368:
+#: ../panels/keyboard/cc-keyboard-option.c:259:
+#: ../panels/keyboard/cc-keyboard-option.c:378:
+#: ../panels/keyboard/cc-keyboard-shortcut-editor.ui:85:
+msgid "Not use"
+msgstr "미사용"
+
+#: ../panels/themes/data/themes/gooroom-themes.ini:2
+msgid "Gooroom Icon Theme 1"
+msgstr "구름 테마 1"
+
+#: ../panels/themes/data/themes/gooroom-themes.ini:6
+msgid "Gooroom Icon Theme 2"
+msgstr "구름 테마 2"
+
+#: ../panels/themes/data/themes/gooroom-themes.ini:10
+msgid "Gooroom Icon Theme 3"
+msgstr "구름 테마 3"
+
+#: ../panels/themes/data/themes/gooroom-themes.ini:14
+msgid "Gooroom Icon Theme 4"
+msgstr "구름 테마 4"
+
+#: panels/background/background-chooser.ui:70
+msgid "Add Image"
+msgstr "이미지 추가하기"
+
+#: panels/background/cc-panel-background.ui:379
+msgid "Apply same all screen"
+msgstr "모든 화면 동일 적용"
+
+#: panels/background/cc-panel-background.ui:375
+msgid "Apply each of home and lock screen"
+msgstr "홈 화면과 잠금 화면 별도 적용"
+
+#: panels/background/cc-panel-background.ui:67
+msgid "Background Type"
+msgstr "배경화면 적용 타입"
+
+#: panels/background/cc-panel-background.ui:164
+msgid "Home Background"
+msgstr "배경화면"
+
+#: panels/background/cc-panel-background.ui:310
+msgid "Image"
+msgstr "이미지"
+
+#: panels/background/cc-panel-background.ui:243
+msgid "Lock Background"
+msgstr "잠금화면"
+
+#: panels/background/background-chooser.ui:18
+msgid "Single Colors"
+msgstr "단일 색상"
+
+#: panels/background/background-chooser.ui:39
+msgid "Select Background"
+msgstr "배경 선택"
 
 # 권한 이름
 #~ msgid "Add user accounts and change passwords"
